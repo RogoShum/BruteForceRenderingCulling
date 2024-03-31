@@ -1,0 +1,18 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "srcalpha",
+        "dstrgb": "1-srcalpha"
+    },
+    "vertex": "brute_force_rendering_culling:linearize_depth",
+    "fragment": "brute_force_rendering_culling:linearize_depth",
+    "attributes": [
+        "Position"
+    ],
+    "samplers": [
+        { "name": "Sampler7" }
+    ],
+    "uniforms": [
+        { "name": "DepthSize", "type": "float", "count": 2, "values": [1.0, 1.0] }
+    ]
+}

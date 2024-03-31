@@ -1,0 +1,26 @@
+{
+  "key.category.brute_force_rendering_culling": "野蛮渲染剔除",
+  "brute_force_rendering_culling.key.config": "配置菜单",
+  "brute_force_rendering_culling.key.debug": "测试界面",
+
+  "brute_force_rendering_culling.cull_entity": "剔除实体",
+  "brute_force_rendering_culling.cull_chunk": "剔除区块",
+  "brute_force_rendering_culling.sampler": "深度采样率",
+  "brute_force_rendering_culling.culling_map_update_delay": "剔除图更新推迟",
+  "brute_force_rendering_culling.entity_culling": "实体剔除",
+  "brute_force_rendering_culling.block_culling": "方块实体剔除",
+  "brute_force_rendering_culling.entity_culling_time": "实体剔除耗时",
+  "brute_force_rendering_culling.block_culling_time": "方块剔除耗时",
+  "brute_force_rendering_culling.entity_culling_init": "实体剔除图更新耗时",
+  "brute_force_rendering_culling.chunk_culling_init": "区块剔除图更新耗时",
+
+  "brute_force_rendering_culling.chunk_culling": "区块剔除",
+  "brute_force_rendering_culling.chunk_culling_time": "区块剔除耗时",
+  "brute_force_rendering_culling.vanilla_chunk_culling_time": "原版区块剔除耗时",
+
+  "brute_force_rendering_culling.culling_block_update_rate": "被剔除方块更新频率",
+  "brute_force_rendering_culling.culling_entity_update_rate": "被剔除实体更新频率",
+
+  "brute_force_rendering_culling.enable": "开启",
+  "brute_force_rendering_culling.disable": "关闭"
+}

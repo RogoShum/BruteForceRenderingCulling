@@ -1,0 +1,62 @@
+package rogo.renderingculling.mixin;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.TickingBlockEntity;
+import net.minecraft.world.phys.AABB;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import rogo.renderingculling.api.Config;
+import rogo.renderingculling.api.CullingHandler;
+
+import java.util.function.Consumer;
+
+@Mixin(Level.class)
+public abstract class MixinLevel {
+
+    @Inject(method = "guardEntityTick", at=@At(value = "HEAD"), cancellable = true)
+    public <T extends Entity> void onEntityTick(Consumer<T> p_46654_, T entity, CallbackInfo ci) {
+        if(!Config.CULL_ENTITY.get() || (entity.level instanceof ServerLevel)) return;
+        AABB aabb = entity.getBoundingBoxForCulling().inflate(0.5D);
+        if (aabb.hasNaN() || aabb.getSize() == 0.0D) {
+            aabb = new AABB(entity.getX() - 2.0D, entity.getY() - 2.0D, entity.getZ() - 2.0D, entity.getX() + 2.0D, entity.getY() + 2.0D, entity.getZ() + 2.0D);
+        }
+        if(CullingHandler.FRUSTUM != null && !CullingHandler.FRUSTUM.isVisible(aabb)) {
+            if(entity.tickCount % (20-Config.CULLING_ENTITY_RATE.get()+1) != 0) {
+                entity.tickCount++;
+                ci.cancel();
+            }
+        } else if(CullingHandler.INSTANCE.culledEntity.contains(entity)) {
+            if(entity.tickCount % (20-Config.CULLING_ENTITY_RATE.get()+1) != 0) {
+                entity.tickCount++;
+                ci.cancel();
+            }
+        }
+    }
+
+    @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;getPos()Lnet/minecraft/core/BlockPos;"))
+    private BlockPos injected(TickingBlockEntity instance) {
+        if(!Config.CULL_ENTITY.get() || ((Object)this) instanceof ServerLevel) {
+            return instance.getPos();
+        }
+
+        AABB aabb = new AABB(instance.getPos()).inflate(0.5D);
+        if(CullingHandler.FRUSTUM != null && !CullingHandler.FRUSTUM.isVisible(aabb)) {
+            if(Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % (20-Config.CULLING_BLOCK_RATE.get()+1) == 0) {
+                return instance.getPos();
+            }
+        } else if(CullingHandler.INSTANCE.culledBlock.contains(instance.getPos())) {
+            if(Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % (20-Config.CULLING_BLOCK_RATE.get()+1) == 0) {
+                return instance.getPos();
+            }
+        } else
+            return instance.getPos();
+        return instance.getPos().north(20000).west(20000);
+    }
+}
