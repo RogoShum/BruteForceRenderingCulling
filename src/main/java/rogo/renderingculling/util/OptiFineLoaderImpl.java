@@ -28,7 +28,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
     @Override
     public boolean renderingShader() {
         try {
-            Field field = CullingHandler.OptiFine.getDeclaredField("isRenderingWorld");
+            Field field = CullingHandler.OptiFine.getDeclaredField("shaderPackLoaded");
             field.setAccessible(true);
             return (Boolean) field.get(null);
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -53,10 +53,11 @@ public class OptiFineLoaderImpl implements ShaderLoader {
             Field glFramebuffer = buffer.getClass().getDeclaredField("glFramebuffer");
             glFramebuffer.setAccessible(true);
             GlStateManager._glBindFramebuffer(36160, (int) glFramebuffer.get(buffer));
+            GlStateManager._viewport(0, 0, Minecraft.getInstance().getMainRenderTarget().viewWidth, Minecraft.getInstance().getMainRenderTarget().viewHeight);
             return;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.fillInStackTrace();
         }
-        GlStateManager._glBindFramebuffer(36160, 0);
+        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }

@@ -43,6 +43,6 @@ public class IrisLoaderImpl implements ShaderLoader {
 
     @Override
     public void bindDefaultFrameBuffer() {
-        GlStateManager._glBindFramebuffer(36160, 0);
+        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }

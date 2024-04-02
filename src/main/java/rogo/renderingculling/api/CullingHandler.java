@@ -47,6 +47,7 @@ import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
@@ -77,6 +78,7 @@ public class CullingHandler {
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
+    public static boolean applyFrustum;
     public boolean DEBUG = false;
     public static int DEPTH_TEXTURE;
     public static ShaderLoader SHADER_LOADER = null;
@@ -101,7 +103,6 @@ public class CullingHandler {
     private long preEntityCullingTime = 0;
     private long preBlockCullingTime = 0;
     private long preChunkCullingTime = 0;
-    public long countApplyFrustumTime = 0;
     public long preApplyFrustumTime = 0;
     public long applyFrustumTime = 0;
     public int chunkCulling = 0;
@@ -113,6 +114,8 @@ public class CullingHandler {
     public int cullingInitCount = 0;
     public int preCullingInitCount = 0;
     public boolean checkCulling = false;
+    private boolean usingShader = false;
+    private String shaderName = "";
     public static Camera camera;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
 
@@ -230,6 +233,7 @@ public class CullingHandler {
             ENTITY_CULLING_MAP.cleanup();
             ENTITY_CULLING_MAP = null;
         }
+        SHADER_DEPTH_BUFFER_ID.clear();
     }
 
     @SubscribeEvent
@@ -356,6 +360,10 @@ public class CullingHandler {
             }
             CullingHandler.FRUSTUM = new Frustum(frustum).offsetToFullyIncludeCameraCube(32);
             this.beforeRenderingWorld();
+        } else if (s.equals("terrain_setup")) {
+            applyFrustum = true;
+        }  else if (s.equals("compilechunks")) {
+            applyFrustum = false;
         } else if (s.equals("hand")) {
             updatingDepth = true;
             this.afterRenderingWorld();
@@ -422,6 +430,37 @@ public class CullingHandler {
     }
 
     public void beforeRenderingWorld() {
+        if(SHADER_LOADER != null) {
+            boolean clear = false;
+            if(SHADER_LOADER.renderingShader() && !usingShader) {
+                clear = true;
+                usingShader = true;
+            }
+
+            if(!SHADER_LOADER.renderingShader() && usingShader) {
+                clear = true;
+                usingShader = false;
+            }
+
+            if(SHADER_LOADER.renderingShader() && OptiFine != null) {
+                String shaderPack = "";
+                try {
+                    Field field = CullingHandler.OptiFine.getDeclaredField("currentShaderName");
+                    field.setAccessible(true);
+                    shaderPack = (String) field.get(null);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    e.fillInStackTrace();
+                }
+                if(!Objects.equals(shaderName, shaderPack)) {
+                    shaderName = shaderPack;
+                    clear = true;
+                }
+            }
+
+            if(clear)
+                cleanup();
+        }
+
         if (anyCulling()) {
             if (!checkCulling) {
                 if(Config.CULL_CHUNK.get()) {
@@ -489,7 +528,6 @@ public class CullingHandler {
             bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
             RenderSystem.setShaderTexture(0, depthTexture);
             tesselator.end();
-            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
             DEPTH_TEXTURE = DEPTH_BUFFER_TARGET.getColorTextureId();
 
             net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
@@ -584,6 +622,14 @@ public class CullingHandler {
         RenderSystem.setShader(()-> instance);
     }
 
+    public static void bindMainFrameTarget() {
+        if(SHADER_LOADER != null && SHADER_LOADER.renderingShader()) {
+            SHADER_LOADER.bindDefaultFrameBuffer();
+        } else {
+            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
+        }
+    }
+
     public boolean renderingOculus() {
         return SHADER_LOADER != null && OptiFine == null && SHADER_LOADER.renderingShader();
     }
@@ -602,10 +648,6 @@ public class CullingHandler {
 
     public boolean isNextLoop() {
         return nextTick[0];
-    }
-
-    public boolean shouldSkipSetupRender(Camera camera) {
-        return false;
     }
 
     public static boolean anyCulling() {

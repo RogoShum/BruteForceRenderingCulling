@@ -23,22 +23,13 @@ import rogo.renderingculling.api.IRenderChunkInfo;
 @Mixin(LevelRenderer.class)
 public class MixinLevelRender implements IEntitiesForRender {
 
-    @Shadow
-    private ClientLevel level;
-
     @Final
     @Shadow
     private ObjectArrayList<?> renderChunksInFrustum;
 
-    @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
-    public void onSetupRender(Frustum p_194355_, CallbackInfo ci) {
-        CullingHandler.INSTANCE.countApplyFrustumTime = System.nanoTime();
-    }
-
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onapplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        CullingHandler.INSTANCE.preApplyFrustumTime += System.nanoTime() - CullingHandler.INSTANCE.countApplyFrustumTime;
-        if (Config.CULL_CHUNK.get()) {
+        if (Config.CULL_CHUNK.get() && CullingHandler.SHADER_LOADER == null) {
             this.renderChunksInFrustum.removeIf((o -> {
                 ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
                 return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());

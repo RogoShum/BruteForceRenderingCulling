@@ -35,6 +35,4 @@ public abstract class MixinRenderSectionManager {
         if(!((IChunkGraphInfo)node).isVisible())
             cir.setReturnValue(true);
     }
-
-
 }

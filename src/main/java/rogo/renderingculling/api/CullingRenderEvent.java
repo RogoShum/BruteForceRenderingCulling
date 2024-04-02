@@ -80,9 +80,6 @@ public class CullingRenderEvent {
                 drawString(entityCulling, width, height - heightScale);
             }
 
-            String vanillaChunkCullingTime = new TranslatableComponent("brute_force_rendering_culling.vanilla_chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.applyFrustumTime/1000/CullingHandler.INSTANCE.fps) + " μs";
-            drawString(vanillaChunkCullingTime, width, height - heightScale);
-
             String Sampler = new TranslatableComponent("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.SAMPLING.get() * 100.0D))) + "%");
             drawString(Sampler, width, height - heightScale);
 
@@ -209,7 +206,7 @@ public class CullingRenderEvent {
         bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
         RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
         tessellator.end();
-        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
+
 
         if(CullingHandler.INSTANCE.checkCulling)
             return;
@@ -220,7 +217,6 @@ public class CullingRenderEvent {
             RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
             CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingHandler.INSTANCED_ENTITY_CULLING_SHADER);
-            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
 
         if(Config.CULL_CHUNK.get() && CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData()) {
@@ -234,8 +230,8 @@ public class CullingRenderEvent {
             bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
             RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
             tessellator.end();
-            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
+        CullingHandler.bindMainFrameTarget();
     }
 
     public static void setUniform(ShaderInstance shader) {
