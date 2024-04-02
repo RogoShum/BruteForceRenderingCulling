@@ -112,15 +112,6 @@ public class ConfigScreen extends Screen {
             Config.CULLING_ENTITY_RATE.set(i);
             Config.CULLING_ENTITY_RATE.save();
         });
-        NeatSliderButton blockUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*3+12, 100, 14, Config.CULLING_BLOCK_RATE.get()/20f,
-                (sliderButton) -> {
-                    Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 20.0D)));
-                    return (new TranslatableComponent("brute_force_rendering_culling.culling_block_update_rate")).append(": ").append(component);
-                }, (value) -> {
-            int i = (int) (value*20);
-            Config.CULLING_BLOCK_RATE.set(i);
-            Config.CULLING_BLOCK_RATE.save();
-        });
         NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
                 , (button) -> {
             CullingHandler.INSTANCE.checkCulling = !CullingHandler.INSTANCE.checkCulling;
@@ -148,7 +139,6 @@ public class ConfigScreen extends Screen {
         this.addWidget(sampler);
         this.addWidget(delay);
         this.addWidget(entityUpdateRate);
-        this.addWidget(blockUpdateRate);
         this.addWidget(close);
         this.addWidget(chunk);
         this.addWidget(debug);

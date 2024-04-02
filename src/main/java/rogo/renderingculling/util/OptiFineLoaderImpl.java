@@ -28,7 +28,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
     @Override
     public boolean renderingShader() {
         try {
-            Field field = CullingHandler.OptiFine.getDeclaredField("shaderPackLoaded");
+            Field field = CullingHandler.OptiFine.getDeclaredField("isRenderingWorld");
             field.setAccessible(true);
             return (Boolean) field.get(null);
         } catch (NoSuchFieldException | IllegalAccessException e) {

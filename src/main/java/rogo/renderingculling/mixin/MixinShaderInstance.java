@@ -1,13 +1,16 @@
 package rogo.renderingculling.mixin;
 
+import com.mojang.blaze3d.shaders.ProgramManager;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.ShaderInstance;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.CullingRenderEvent;
 import rogo.renderingculling.api.ICullingShader;
 
@@ -41,6 +44,10 @@ public abstract class MixinShaderInstance implements ICullingShader {
     public Uniform CULLING_VIEW_MAT;
     @Nullable
     public Uniform CULLING_PROJ_MAT;
+
+    @Final
+    @Shadow
+    private int programId;
 
     @Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/server/packs/resources/ResourceProvider;Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/vertex/VertexFormat;)V")
     public void construct(CallbackInfo ci) {
@@ -97,6 +104,11 @@ public abstract class MixinShaderInstance implements ICullingShader {
         return CULLING_PROJ_MAT;
     }
 
+    @Inject(at = @At("TAIL"), method = "apply")
+    public void onApply(CallbackInfo ci) {
+        if(CullingHandler.updatingDepth)
+            ProgramManager.glUseProgram(this.programId);
+    }
 
     @Mixin(RenderSystem.class)
     public static class MixinRenderSystem {

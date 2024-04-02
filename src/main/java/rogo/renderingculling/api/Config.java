@@ -12,7 +12,6 @@ public class Config {
     public static ForgeConfigSpec.BooleanValue CULL_CHUNK;
     public static ForgeConfigSpec.IntValue UPDATE_DELAY;
     public static ForgeConfigSpec.IntValue CULLING_ENTITY_RATE;
-    public static ForgeConfigSpec.IntValue CULLING_BLOCK_RATE;
 
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_SKIP;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCK_ENTITY_SKIP;
@@ -37,10 +36,6 @@ public class Config {
 
         CLIENT_BUILDER.push("Culling entity update frequency");
         CULLING_ENTITY_RATE = CLIENT_BUILDER.defineInRange("frequency", 20, 0, 20);
-        CLIENT_BUILDER.pop();
-
-        CLIENT_BUILDER.push("Culling block update frequency");
-        CULLING_BLOCK_RATE = CLIENT_BUILDER.defineInRange("frequency", 20, 0, 20);
         CLIENT_BUILDER.pop();
 
         List<String> list = new ArrayList<>();

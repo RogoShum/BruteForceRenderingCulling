@@ -18,7 +18,6 @@
   "brute_force_rendering_culling.chunk_culling_time": "区块剔除耗时",
   "brute_force_rendering_culling.vanilla_chunk_culling_time": "原版区块剔除耗时",
 
-  "brute_force_rendering_culling.culling_block_update_rate": "被剔除方块更新频率",
   "brute_force_rendering_culling.culling_entity_update_rate": "被剔除实体更新频率",
 
   "brute_force_rendering_culling.enable": "开启",

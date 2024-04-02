@@ -39,24 +39,4 @@ public abstract class MixinLevel {
             }
         }
     }
-
-    @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;getPos()Lnet/minecraft/core/BlockPos;"))
-    private BlockPos injected(TickingBlockEntity instance) {
-        if(!Config.CULL_ENTITY.get() || ((Object)this) instanceof ServerLevel) {
-            return instance.getPos();
-        }
-
-        AABB aabb = new AABB(instance.getPos()).inflate(0.5D);
-        if(CullingHandler.FRUSTUM != null && !CullingHandler.FRUSTUM.isVisible(aabb)) {
-            if(Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % (20-Config.CULLING_BLOCK_RATE.get()+1) == 0) {
-                return instance.getPos();
-            }
-        } else if(CullingHandler.INSTANCE.culledBlock.contains(instance.getPos())) {
-            if(Minecraft.getInstance().player != null && Minecraft.getInstance().player.tickCount % (20-Config.CULLING_BLOCK_RATE.get()+1) == 0) {
-                return instance.getPos();
-            }
-        } else
-            return instance.getPos();
-        return instance.getPos().north(20000).west(20000);
-    }
 }

@@ -13,7 +13,6 @@ import com.mojang.math.Vector3f;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
@@ -77,6 +76,7 @@ public class CullingHandler {
     public static ShaderInstance COPY_DEPTH_SHADER;
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
+    public static boolean updatingDepth;
     public boolean DEBUG = false;
     public static int DEPTH_TEXTURE;
     public static ShaderLoader SHADER_LOADER = null;
@@ -357,8 +357,10 @@ public class CullingHandler {
             CullingHandler.FRUSTUM = new Frustum(frustum).offsetToFullyIncludeCameraCube(32);
             this.beforeRenderingWorld();
         } else if (s.equals("hand")) {
+            updatingDepth = true;
             this.afterRenderingWorld();
             CullingRenderEvent.onUpdateCullingMap();
+            updatingDepth = false;
         } else if (s.equals("chunk_graph_rebuild")) {
             chunkCount = 0;
             chunkCulling = 0;
