@@ -2,7 +2,6 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "mixins": [
-    "MixinChunkGraphInfo",
     "MixinMinecraft",
     "MixinRenderSectionManager"
   ],
