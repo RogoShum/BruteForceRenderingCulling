@@ -35,7 +35,9 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @Nullable
     public Uniform ENTITY_CULLING_SIZE;
     @Nullable
-    public Uniform DEPTH_OFFSET;
+    public Uniform LEVEL_HEIGHT_OFFSET;
+    @Nullable
+    public Uniform LEVEL_MIN_SECTION;
     @Nullable
     public Uniform CULLING_FRUSTUM;
     @Nullable
@@ -55,7 +57,8 @@ public abstract class MixinShaderInstance implements ICullingShader {
         this.RENDER_DISTANCE = this.getUniform("RenderDistance");
         this.DEPTH_SIZE = this.getUniform("DepthSize");
         this.CULLING_SIZE = this.getUniform("CullingSize");
-        this.DEPTH_OFFSET = this.getUniform("DepthOffset");
+        this.LEVEL_HEIGHT_OFFSET = this.getUniform("LevelHeightOffset");
+        this.LEVEL_MIN_SECTION = this.getUniform("LevelMinSection");
         this.ENTITY_CULLING_SIZE = this.getUniform("EntityCullingSize");
         this.CULLING_FRUSTUM = this.getUniform("CullingFrustum");
         this.FRUSTUM_POS = this.getUniform("FrustumPos");
@@ -84,8 +87,12 @@ public abstract class MixinShaderInstance implements ICullingShader {
         return CULLING_SIZE;
     }
     @Override
-    public Uniform getDepthOffset() {
-        return DEPTH_OFFSET;
+    public Uniform getLevelHeightOffset() {
+        return LEVEL_HEIGHT_OFFSET;
+    }
+    @Override
+    public Uniform getLevelMinSection() {
+        return LEVEL_MIN_SECTION;
     }
     @Override
     public Uniform getEntityCullingSize() {

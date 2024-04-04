@@ -31,7 +31,7 @@ public class ChunkCullingMap extends CullingMap {
         int z = pos.getZ() + renderDistance;
         int y = pos.getY();
 
-        return x * spacePartitionSize * 16 + z * 16 + y;
+        return x * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + z * CullingHandler.LEVEL_HEIGHT_OFFSET + y;
     }
 
     public Vec2i getScreenPosFromIndex(int idx) {
@@ -44,7 +44,7 @@ public class ChunkCullingMap extends CullingMap {
         screenIndex.clear();
         for(int x = -renderDistance; x <= renderDistance; ++x) {
             for (int z = -renderDistance; z <= renderDistance; ++z) {
-                for (int y = 0; y < 16; ++y) {
+                for (int y = 0; y < CullingHandler.LEVEL_HEIGHT_OFFSET; ++y) {
                     BlockPos pos = new BlockPos(x, y, z);
                     Vec2i coord = getScreenPosFromIndex(getPosIndex(pos));
                     if(coord.x() >= 0 && coord.y() >= 0 && coord.x() < this.width && coord.y() < this.height) {
@@ -62,8 +62,11 @@ public class ChunkCullingMap extends CullingMap {
         int cameraZ = (int)camera.z >> 4;
         BlockPos cameraPos = new BlockPos(cameraX, cameraY, cameraZ);
 
+        if(pos.getY() < 0)
+            pos = new BlockPos(pos.getX(), pos.getY()-9, pos.getZ());
+
         int chunkX = pos.getX() >> 4;
-        int chunkY = pos.getY()/16;
+        int chunkY = pos.getY()/16 + CullingHandler.LEVEL_MIN_SECTION_ABS;
         int chunkZ = pos.getZ() >> 4;
         pos = new BlockPos(chunkX, chunkY, chunkZ).subtract(cameraPos).atY(chunkY);
 

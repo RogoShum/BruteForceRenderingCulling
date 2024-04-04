@@ -9,7 +9,8 @@ uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
-uniform float DepthOffset;
+uniform int LevelHeightOffset;
+uniform int LevelMinSection;
 
 flat in int spacePartitionSize;
 flat in vec4[6] frustum;
@@ -86,9 +87,9 @@ void main() {
     int renderDistance = int(RenderDistance);
     int spacePartitionSize = renderDistance*2+1;
 
-    int chunkX = screenIndex / (spacePartitionSize * 16) - renderDistance;
-    int chunkZ = (screenIndex / 16) % spacePartitionSize - renderDistance;
-    int chunkY = screenIndex % 16;
+    int chunkX = screenIndex / (spacePartitionSize * LevelHeightOffset) - renderDistance;
+    int chunkZ = (screenIndex / LevelHeightOffset) % spacePartitionSize - renderDistance;
+    int chunkY = screenIndex % LevelHeightOffset + LevelMinSection;
     vec3 chunkBasePos = vec3(chunkX, chunkY, chunkZ);
     vec3 chunkPos = vec3(chunkBasePos+blockToChunk(CullingCameraPos))*16;
     chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
@@ -134,7 +135,7 @@ void main() {
         minY = screenPos.y;
     }
 
-    float chunkDepth = LinearizeDepth(chunkCenterDepth)-DepthOffset;
+    float chunkDepth = LinearizeDepth(chunkCenterDepth)-24;
     if(chunkDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;

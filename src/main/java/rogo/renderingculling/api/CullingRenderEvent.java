@@ -3,16 +3,12 @@ package rogo.renderingculling.api;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.gui.ForgeIngameGui;
@@ -284,8 +280,11 @@ public class CullingRenderEvent {
         if(shaderInstance.getEntityCullingSize() != null) {
             shaderInstance.getEntityCullingSize().set((float) CullingHandler.ENTITY_CULLING_MAP_TARGET.width, (float) CullingHandler.ENTITY_CULLING_MAP_TARGET.height);
         }
-        if(shaderInstance.getDepthOffset() != null) {
-            shaderInstance.getDepthOffset().set(24f);
+        if(shaderInstance.getLevelHeightOffset() != null) {
+            shaderInstance.getLevelHeightOffset().set(CullingHandler.LEVEL_HEIGHT_OFFSET);
+        }
+        if(shaderInstance.getLevelMinSection() != null && Minecraft.getInstance().level != null) {
+            shaderInstance.getLevelMinSection().set(Minecraft.getInstance().level.getMinSection());
         }
     }
 }

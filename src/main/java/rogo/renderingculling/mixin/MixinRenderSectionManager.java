@@ -14,7 +14,7 @@ import rogo.renderingculling.api.CullingHandler;
 public abstract class MixinRenderSectionManager {
     @Inject(method = "addVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
     public void onBfsEnqueue(RenderSection section, Direction flow, CallbackInfo ci) {
-        if(!CullingHandler.INSTANCE.shouldRenderChunk(
+        if(!section.isEmpty() && !CullingHandler.INSTANCE.shouldRenderChunk(
                 new AABB(section.getOriginX(), section.getOriginY(), section.getOriginZ(), (section.getOriginX() + 16), (section.getOriginY() + 16), (section.getOriginZ() + 16))))
             ci.cancel();
     }

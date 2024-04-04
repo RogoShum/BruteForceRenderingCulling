@@ -116,6 +116,8 @@ public class CullingHandler {
     public boolean checkCulling = false;
     private boolean usingShader = false;
     private String shaderName = "";
+    protected static int LEVEL_HEIGHT_OFFSET;
+    protected static int LEVEL_MIN_SECTION_ABS;
     public static Camera camera;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
 
@@ -212,6 +214,8 @@ public class CullingHandler {
                 clientTickCount++;
                 if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
                     CHUNK_CULLING_MAP.setDone();
+                    LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
+                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
                 }
             } else {
                 cleanup();
@@ -548,7 +552,7 @@ public class CullingHandler {
 
             if(Config.CULL_CHUNK.get()) {
                 int renderingDiameter = Minecraft.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
-                int maxSize = renderingDiameter * 16 * renderingDiameter;
+                int maxSize = renderingDiameter * LEVEL_HEIGHT_OFFSET * renderingDiameter;
                 int cullingSize = (int) Math.sqrt(maxSize) + 1;
 
                 if (CHUNK_CULLING_MAP_TARGET.width != cullingSize || CHUNK_CULLING_MAP_TARGET.height != cullingSize) {
