@@ -364,7 +364,7 @@ public class CullingHandler {
             applyFrustum = true;
         }  else if (s.equals("compilechunks")) {
             applyFrustum = false;
-        } else if (s.equals("hand")) {
+        } else if (s.equals("destroyProgress")) {
             updatingDepth = true;
             this.afterRenderingWorld();
             CullingRenderEvent.onUpdateCullingMap();

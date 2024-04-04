@@ -111,7 +111,7 @@ void main() {
         minY = screenPos.y;
     }
 
-    entityDepth = LinearizeDepth(entityDepth)-sqrt(halfWidth*halfWidth+halfWidth*halfWidth)*1.2 - DepthOffset*0.25;
+    entityDepth = LinearizeDepth(entityDepth)-sqrt(halfWidth*halfWidth+halfWidth*halfWidth)*1.2 - 4.0;
 
     if(entityDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);

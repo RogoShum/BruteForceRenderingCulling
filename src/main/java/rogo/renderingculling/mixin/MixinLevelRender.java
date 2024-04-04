@@ -20,6 +20,8 @@ import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.IEntitiesForRender;
 import rogo.renderingculling.api.IRenderChunkInfo;
 
+import java.lang.reflect.Field;
+
 @Mixin(LevelRenderer.class)
 public class MixinLevelRender implements IEntitiesForRender {
 
@@ -29,7 +31,23 @@ public class MixinLevelRender implements IEntitiesForRender {
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onapplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.CULL_CHUNK.get() && CullingHandler.SHADER_LOADER == null) {
+        if (Config.CULL_CHUNK.get()) {
+            if(CullingHandler.OptiFine != null) {
+                try {
+                    Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+
+                    if (value instanceof ObjectArrayList) {
+                        ((ObjectArrayList<?>)value).removeIf((o -> {
+                            ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
+                            return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());
+                        }));
+                    }
+                } catch (NoSuchFieldException | IllegalAccessException ignored) {
+                }
+            }
+
             this.renderChunksInFrustum.removeIf((o -> {
                 ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
                 return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());

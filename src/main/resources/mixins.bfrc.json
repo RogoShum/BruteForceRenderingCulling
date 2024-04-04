@@ -17,7 +17,6 @@
     "AccessorMinecraft",
     "MixinBlockEntityRender",
     "MixinEntityRender",
-    "MixinFrustum",
     "MixinInactiveProfiler",
     "MixinLevel",
     "MixinLevelRender",
