@@ -10,6 +10,8 @@ import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
+import static net.minecraftforge.common.extensions.IForgeBlockEntity.INFINITE_EXTENT_AABB;
+
 public class EntityCullingMap extends CullingMap {
     private final EntityMap entityMap = new EntityMap();
 
@@ -28,6 +30,19 @@ public class EntityCullingMap extends CullingMap {
     }
 
     public boolean isObjectVisible(Object o) {
+        AABB aabb = null;
+        if(o instanceof BlockEntity) {
+            aabb = ((BlockEntity) o).getRenderBoundingBox();
+        } else if(o instanceof Entity) {
+            aabb = ((Entity) o).getBoundingBox();
+        } else if(o instanceof IAABBObject) {
+            aabb = ((IAABBObject) o).getAABB();
+        }
+
+        if(aabb == INFINITE_EXTENT_AABB) {
+            return true;
+        }
+
         int idx = entityMap.getIndex(o);
         idx = 1+idx*4;
         if(entityMap.tempObjectTimer.contains(o))
