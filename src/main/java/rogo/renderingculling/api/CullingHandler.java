@@ -75,6 +75,7 @@ public class CullingHandler {
     public static ShaderInstance CHUNK_CULLING_SHADER;
     public static ShaderInstance LINEARIZE_DEPTH_SHADER;
     public static ShaderInstance COPY_DEPTH_SHADER;
+    public static ShaderInstance SPACE_DEPTH_SHADER;
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
@@ -183,6 +184,7 @@ public class CullingHandler {
             LINEARIZE_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "linearize_depth"), DefaultVertexFormat.POSITION);
             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
+            SPACE_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "space_depth"), DefaultVertexFormat.POSITION);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
