@@ -8,14 +8,17 @@
     "fragment": "brute_force_rendering_culling:entity_culling",
     "attributes": [],
     "samplers": [
-        { "name": "Sampler7" }
+        { "name": "Sampler0" },
+        { "name": "Sampler1" },
+        { "name": "Sampler2" },
+        { "name": "Sampler3" },
+        { "name": "Sampler4" }
     ],
     "uniforms": [
         { "name": "CullingViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "CullingProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "EntityCullingSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
-        { "name": "DepthSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
-        { "name": "DepthOffset", "type": "float", "count": 1, "values": [ 0.0] },
+        { "name": "DepthSize", "type": "float", "count": 10, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
         { "name": "FrustumPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingFrustum", "type": "float", "count": 24, "values": [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ] }
     ]

@@ -1,22 +1,38 @@
 #version 150
 
-uniform sampler2D Sampler7;
-
 uniform vec2 EntityCullingSize;
-uniform vec2 DepthSize;
 uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform float DepthOffset;
 uniform vec3 FrustumPos;
 
+uniform sampler2D Sampler0;
+uniform sampler2D Sampler1;
+uniform sampler2D Sampler2;
+uniform sampler2D Sampler3;
+uniform sampler2D Sampler4;
+
 flat in vec3 Pos;
 flat in vec2 Size;
 flat in vec4[6] frustum;
+flat in vec2[5] DepthScreenSize;
 
 out vec4 fragColor;
 
 float near = 0.1;
 float far  = 1000.0;
+
+int getSampler(float xLength, float yLength) {
+    for(int i = 0; i < DepthScreenSize.length(); ++i) {
+        float xStep = 3.0 / DepthScreenSize[i].x;
+        float yStep = 3.0 / DepthScreenSize[i].y;
+        if(xStep > xLength && yStep > yLength) {
+            return i;
+        }
+    }
+
+    return DepthScreenSize.length() - 1;
+}
 
 float LinearizeDepth(float depth) {
     float z = depth * 2.0 - 1.0;
@@ -72,6 +88,19 @@ bool isVisible(vec3 vec, float width, float height) {
     return calculateCube(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
+float getUVDepth(int idx, vec2 uv) {
+    if(idx == 0)
+        return texture(Sampler0, uv).r * 500;
+    else if(idx == 1)
+        return texture(Sampler1, uv).r * 500;
+    else if(idx == 2)
+        return texture(Sampler2, uv).r * 500;
+    else if(idx == 3)
+        return texture(Sampler3, uv).r * 500;
+
+    return texture(Sampler4, uv).r * 500;
+}
+
 void main() {
     float halfWidth = Size.x*0.5;
     float halfHeight = Size.y*0.5;
@@ -118,8 +147,12 @@ void main() {
         return;
     }
 
-    float xStep = 1.0/DepthSize.x;
-    float yStep = 1.0/DepthSize.y;
+    int idx = getSampler(
+    min(1.0, max(0.0, maxX))-min(1.0, max(0.0, minX)),
+    min(1.0, max(0.0, maxY))-min(1.0, max(0.0, minY)));
+
+    float xStep = 1.0/DepthScreenSize[idx].x;
+    float yStep = 1.0/DepthScreenSize[idx].y;
 
     minX = min(1.0, max(0.0, minX-xStep));
     maxX = min(1.0, max(0.0, maxX+xStep));
@@ -128,7 +161,7 @@ void main() {
 
     for(float x = minX; x <= maxX; x += xStep) {
         for(float y = minY; y <= maxY; y += yStep) {
-            float pixelDepth = texture(Sampler7, vec2(x, y)).r * 500;
+            float pixelDepth = getUVDepth(idx, vec2(x, y));
             if(entityDepth < pixelDepth) {
                 fragColor = vec4(0.0, 1.0, 0.0, 1.0);
                 return;

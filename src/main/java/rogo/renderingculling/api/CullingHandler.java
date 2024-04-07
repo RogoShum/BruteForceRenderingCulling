@@ -49,6 +49,7 @@ import rogo.renderingculling.util.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
@@ -68,20 +69,21 @@ public class CullingHandler {
         PROJECTION_MATRIX.setIdentity();
     }
 
-    public static RenderTarget DEPTH_BUFFER_TARGET;
+    public static final int depthSize = 5;
+    public static int DEPTH_INDEX;
+    public static int MAIN_DEPTH_TEXTURE = 0;
+    public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[depthSize];
     public static RenderTarget MONOCHROME_DEPTH_TARGET;
     public static RenderTarget CHUNK_CULLING_MAP_TARGET;
     public static RenderTarget ENTITY_CULLING_MAP_TARGET;
     public static ShaderInstance CHUNK_CULLING_SHADER;
-    public static ShaderInstance LINEARIZE_DEPTH_SHADER;
     public static ShaderInstance COPY_DEPTH_SHADER;
-    public static ShaderInstance SPACE_DEPTH_SHADER;
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
     public static boolean applyFrustum;
     public boolean DEBUG = false;
-    public static int DEPTH_TEXTURE;
+    public static int[] DEPTH_TEXTURE = new int[depthSize];
     public static ShaderLoader SHADER_LOADER = null;
     public static Class<?> OptiFine = null;
 
@@ -124,8 +126,10 @@ public class CullingHandler {
 
     static {
         RenderSystem.recordRenderCall(() -> {
-            DEPTH_BUFFER_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
-            DEPTH_BUFFER_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            for(int i = 0; i < DEPTH_BUFFER_TARGET.length; ++i) {
+                DEPTH_BUFFER_TARGET[i] = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
+                DEPTH_BUFFER_TARGET[i].setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            }
             CHUNK_CULLING_MAP_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
             CHUNK_CULLING_MAP_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
             MONOCHROME_DEPTH_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
@@ -181,10 +185,8 @@ public class CullingHandler {
         LOGGER.debug("try init shader chunk_culling");
         try {
             CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "chunk_culling"), DefaultVertexFormat.POSITION);
-            LINEARIZE_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "linearize_depth"), DefaultVertexFormat.POSITION);
-            INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
+             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
-            SPACE_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "space_depth"), DefaultVertexFormat.POSITION);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -490,16 +492,18 @@ public class CullingHandler {
 
     public void afterRenderingWorld() {
         if (anyCulling() && !checkCulling) {
-            float scale = (float) (double) Config.SAMPLING.get();
+            float sampling = (float) (double) Config.SAMPLING.get();
             Window window = Minecraft.getInstance().getWindow();
             int width = window.getWidth();
             int height = window.getHeight();
 
-            int scaleWidth = Math.max(1, (int) (width * scale));
-            int scaleHeight = Math.max(1, (int) (height * scale));
-            if (DEPTH_BUFFER_TARGET.width != scaleWidth || DEPTH_BUFFER_TARGET.height != scaleHeight) {
-                DEPTH_BUFFER_TARGET.resize(scaleWidth, scaleHeight, Minecraft.ON_OSX);
-            }
+            runOnDepthFrame((depthContext) -> {
+                int scaleWidth = Math.max(1, (int) (width * sampling * depthContext.scale()));
+                int scaleHeight = Math.max(1, (int) (height * sampling * depthContext.scale()));
+                if (depthContext.frame().width != scaleWidth || depthContext.frame().height != scaleHeight) {
+                    depthContext.frame().resize(scaleWidth, scaleHeight, Minecraft.ON_OSX);
+                }
+            });
 
             int depthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTextureId();
             if (SHADER_LOADER != null && SHADER_LOADER.renderingShader()) {
@@ -522,19 +526,23 @@ public class CullingHandler {
                 }
             }
 
-            useShader(CullingHandler.COPY_DEPTH_SHADER);
-            CullingHandler.DEPTH_BUFFER_TARGET.clear(Minecraft.ON_OSX);
-            CullingHandler.DEPTH_BUFFER_TARGET.bindWrite(false);
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder bufferbuilder = tesselator.getBuilder();
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-            bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
-            bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
-            RenderSystem.setShaderTexture(0, depthTexture);
-            tesselator.end();
-            DEPTH_TEXTURE = DEPTH_BUFFER_TARGET.getColorTextureId();
+            MAIN_DEPTH_TEXTURE = depthTexture;
+
+            runOnDepthFrame((depthContext) -> {
+                useShader(CullingHandler.COPY_DEPTH_SHADER);
+                depthContext.frame().clear(Minecraft.ON_OSX);
+                depthContext.frame().bindWrite(false);
+                Tesselator tesselator = Tesselator.getInstance();
+                BufferBuilder bufferbuilder = tesselator.getBuilder();
+                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+                bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
+                bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
+                bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
+                bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
+                RenderSystem.setShaderTexture(0, depthContext.lastTexture());
+                tesselator.end();
+                DEPTH_TEXTURE[depthContext.index()] = depthContext.frame().getColorTextureId();
+            });
 
             net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
                     , camera, Minecraft.getInstance().getFrameTime());
@@ -634,6 +642,21 @@ public class CullingHandler {
         } else {
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
+    }
+
+    public static void runOnDepthFrame(Consumer<DepthContext> consumer) {
+        float f = 1.0f;
+        for (DEPTH_INDEX = 0; DEPTH_INDEX < DEPTH_BUFFER_TARGET.length; ++DEPTH_INDEX) {
+            int lastTexture = DEPTH_INDEX == 0 ? MAIN_DEPTH_TEXTURE : DEPTH_BUFFER_TARGET[DEPTH_INDEX-1].getColorTextureId();
+            consumer.accept(new DepthContext(DEPTH_BUFFER_TARGET[DEPTH_INDEX], DEPTH_INDEX, f, lastTexture));
+            f *= 0.5f;
+        }
+    }
+
+    public static void callDepthTexture() {
+        CullingHandler.runOnDepthFrame((depthContext) -> {
+            RenderSystem.setShaderTexture(depthContext.index(), CullingHandler.DEPTH_TEXTURE[depthContext.index()]);
+        });
     }
 
     public boolean renderingOculus() {

@@ -123,15 +123,15 @@ public class CullingRenderEvent {
                 return;
 
             Tesselator tessellator = Tesselator.getInstance();
-            height = (int) (minecraft.getWindow().getGuiScaledHeight());
-            width = (int) (minecraft.getWindow().getGuiScaledWidth());
+            height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25);
+            width = (int) (minecraft.getWindow().getGuiScaledWidth() * 0.25);
             RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
             bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight(), 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
             bufferbuilder.vertex(width, minecraft.getWindow().getGuiScaledHeight(), 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
             bufferbuilder.vertex(width, minecraft.getWindow().getGuiScaledHeight()-height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
             bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
-            RenderSystem.setShaderTexture(0, CullingHandler.MONOCHROME_DEPTH_TARGET.getColorTextureId());
+            RenderSystem.setShaderTexture(0, CullingHandler.DEPTH_TEXTURE[0]);
             RenderSystem.enableBlend();
             RenderSystem.depthMask(false);
             RenderSystem.defaultBlendFunc();
@@ -188,29 +188,13 @@ public class CullingRenderEvent {
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
 
-        CullingHandler.useShader(CullingHandler.SPACE_DEPTH_SHADER);
-        if(CullingHandler.MONOCHROME_DEPTH_TARGET.width != Minecraft.getInstance().getMainRenderTarget().width || CullingHandler.MONOCHROME_DEPTH_TARGET.height != Minecraft.getInstance().getMainRenderTarget().height) {
-            CullingHandler.MONOCHROME_DEPTH_TARGET.resize(Minecraft.getInstance().getMainRenderTarget().width, Minecraft.getInstance().getMainRenderTarget().height, Minecraft.ON_OSX);
-        }
-
-        CullingHandler.MONOCHROME_DEPTH_TARGET.clear(Minecraft.ON_OSX);
-        CullingHandler.MONOCHROME_DEPTH_TARGET.bindWrite(false);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
-        RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
-        tessellator.end();
-
-
         if(CullingHandler.INSTANCE.checkCulling)
             return;
 
         if(Config.CULL_ENTITY.get() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
             CullingHandler.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingHandler.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
-            RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
+            CullingHandler.callDepthTexture();
             CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingHandler.INSTANCED_ENTITY_CULLING_SHADER);
         }
@@ -224,9 +208,10 @@ public class CullingRenderEvent {
             bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
             bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
             bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
-            RenderSystem.setShaderTexture(7, CullingHandler.DEPTH_TEXTURE);
+            CullingHandler.callDepthTexture();
             tessellator.end();
         }
+
         CullingHandler.bindMainFrameTarget();
     }
 
@@ -268,15 +253,20 @@ public class CullingRenderEvent {
             shaderInstance.getCullingFrustum().set(array);
         }
         if(shaderInstance.getRenderDistance() != null) {
-            if(shader == CullingHandler.SPACE_DEPTH_SHADER) {
-                shaderInstance.getRenderDistance().set(16f);
-            } else {
-                float distance = Minecraft.getInstance().options.getEffectiveRenderDistance();
-                shaderInstance.getRenderDistance().set(distance);
-            }
+            float distance = Minecraft.getInstance().options.getEffectiveRenderDistance();
+            shaderInstance.getRenderDistance().set(distance);
         }
         if(shaderInstance.getDepthSize() != null) {
-            shaderInstance.getDepthSize().set((float) CullingHandler.DEPTH_BUFFER_TARGET.width, (float) CullingHandler.DEPTH_BUFFER_TARGET.height);
+            float[] array = new float[CullingHandler.depthSize*2];
+            for(int i = 0; i < CullingHandler.depthSize; ++i) {
+                int arrayIdx = i*2;
+                array[arrayIdx] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].width;
+                array[arrayIdx+1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].height;
+            }
+            shaderInstance.getDepthSize().set(array);
+        }
+        if(shader == CullingHandler.COPY_DEPTH_SHADER && CullingHandler.DEPTH_INDEX > 0 && shader.SCREEN_SIZE != null) {
+            shader.SCREEN_SIZE.set((float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX-1].width, (float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX-1].height);
         }
         if(shaderInstance.getCullingSize() != null) {
             shaderInstance.getCullingSize().set((float) CullingHandler.CHUNK_CULLING_MAP_TARGET.width, (float) CullingHandler.CHUNK_CULLING_MAP_TARGET.height);

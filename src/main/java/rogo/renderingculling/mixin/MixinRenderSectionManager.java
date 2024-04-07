@@ -3,6 +3,10 @@ package rogo.renderingculling.mixin;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSectionManager;
 
+import me.jellysquid.mods.sodium.client.render.chunk.graph.ChunkGraphInfo;
+import me.jellysquid.mods.sodium.client.render.chunk.graph.ChunkGraphIterationQueue;
+import me.jellysquid.mods.sodium.client.util.frustum.Frustum;
+import net.minecraft.client.Camera;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;

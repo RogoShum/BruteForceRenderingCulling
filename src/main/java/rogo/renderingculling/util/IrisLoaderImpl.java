@@ -1,5 +1,5 @@
 package rogo.renderingculling.util;
-
+/*
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
@@ -46,3 +46,4 @@ public class IrisLoaderImpl implements ShaderLoader {
         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }
+ */
