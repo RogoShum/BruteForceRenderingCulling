@@ -117,6 +117,11 @@ public class ConfigScreen extends Screen {
             CullingHandler.INSTANCE.checkCulling = !CullingHandler.INSTANCE.checkCulling;
         }, () -> (CullingHandler.INSTANCE.checkCulling ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Debug"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Debug"))));
+        NeatButton checkTexture = new NeatButton(width/2-50, height/2+heightScale*3+12, 100, 14
+                , (button) -> {
+            CullingHandler.INSTANCE.checkTexture = !CullingHandler.INSTANCE.checkTexture;
+        }, () -> (CullingHandler.INSTANCE.checkTexture ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Check Texture"))
+                : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Check Texture"))));
         NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.UPDATE_DELAY.get()/10f,
                 (sliderButton) -> {
                     Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
@@ -142,6 +147,7 @@ public class ConfigScreen extends Screen {
         this.addWidget(close);
         this.addWidget(chunk);
         this.addWidget(debug);
+        this.addWidget(checkTexture);
         super.init();
     }
 

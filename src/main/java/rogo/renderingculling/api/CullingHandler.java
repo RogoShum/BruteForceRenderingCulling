@@ -69,7 +69,7 @@ public class CullingHandler {
         PROJECTION_MATRIX.setIdentity();
     }
 
-    public static final int depthSize = 5;
+    public static final int depthSize = 4;
     public static int DEPTH_INDEX;
     public static int MAIN_DEPTH_TEXTURE = 0;
     public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[depthSize];
@@ -117,6 +117,7 @@ public class CullingHandler {
     public int cullingInitCount = 0;
     public int preCullingInitCount = 0;
     public boolean checkCulling = false;
+    public boolean checkTexture = false;
     private boolean usingShader = false;
     private String shaderName = "";
     protected static int LEVEL_HEIGHT_OFFSET;
@@ -649,7 +650,7 @@ public class CullingHandler {
         for (DEPTH_INDEX = 0; DEPTH_INDEX < DEPTH_BUFFER_TARGET.length; ++DEPTH_INDEX) {
             int lastTexture = DEPTH_INDEX == 0 ? MAIN_DEPTH_TEXTURE : DEPTH_BUFFER_TARGET[DEPTH_INDEX-1].getColorTextureId();
             consumer.accept(new DepthContext(DEPTH_BUFFER_TARGET[DEPTH_INDEX], DEPTH_INDEX, f, lastTexture));
-            f *= 0.5f;
+            f *= 0.3f;
         }
     }
 

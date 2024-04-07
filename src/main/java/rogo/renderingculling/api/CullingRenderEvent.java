@@ -119,34 +119,40 @@ public class CullingRenderEvent {
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
 
-            if(!CullingHandler.anyCulling())
+            if(!CullingHandler.INSTANCE.checkTexture)
                 return;
 
             Tesselator tessellator = Tesselator.getInstance();
-            height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25);
-            width = (int) (minecraft.getWindow().getGuiScaledWidth() * 0.25);
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight(), 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex(width, minecraft.getWindow().getGuiScaledHeight(), 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex(width, minecraft.getWindow().getGuiScaledHeight()-height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
-            RenderSystem.setShaderTexture(0, CullingHandler.DEPTH_TEXTURE[0]);
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
-            RenderSystem.defaultBlendFunc();
-            tessellator.end();
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
+            float screenScale = 1.0f;
+            double windowScale = 0.4;
+            for(int i = 0; i < CullingHandler.DEPTH_BUFFER_TARGET.length; ++i) {
+                int scaledHeight = (int) (minecraft.getWindow().getGuiScaledHeight() * windowScale * screenScale);
+                int scaledWidth = (int) (minecraft.getWindow().getGuiScaledWidth() * windowScale * screenScale);
+                int offsetHeight = (int) ((1-screenScale)* 2 * minecraft.getWindow().getGuiScaledHeight() * windowScale);
+                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+                bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-offsetHeight, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight()-offsetHeight, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight()-scaledHeight-offsetHeight, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-scaledHeight-offsetHeight, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                RenderSystem.setShaderTexture(0, CullingHandler.DEPTH_TEXTURE[i]);
+                RenderSystem.enableBlend();
+                RenderSystem.depthMask(false);
+                RenderSystem.defaultBlendFunc();
+                tessellator.end();
+                RenderSystem.depthMask(true);
+                RenderSystem.disableBlend();
+                screenScale *= 0.5f;
+            }
 
             if(Config.CULL_ENTITY.get()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
                 RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                bufferbuilder.vertex(0.0D, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double)height, height, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double)height, 0, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(0.0D, 0, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), 0, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, 0, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
                 RenderSystem.setShaderTexture(0, CullingHandler.ENTITY_CULLING_MAP_TARGET.getColorTextureId());
                 RenderSystem.enableBlend();
                 RenderSystem.depthMask(false);
@@ -160,10 +166,10 @@ public class CullingRenderEvent {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
                 RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-height*1.5, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double)height, minecraft.getWindow().getGuiScaledHeight()-height*1.5, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex((double)height, (double)minecraft.getWindow().getGuiScaledHeight()-height*2.5, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-                bufferbuilder.vertex(0.0D, (double)minecraft.getWindow().getGuiScaledHeight()-height*2.5, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height*2, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*2, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
+                bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
                 RenderSystem.setShaderTexture(0, CullingHandler.CHUNK_CULLING_MAP_TARGET.getColorTextureId());
                 RenderSystem.enableBlend();
                 RenderSystem.depthMask(false);
@@ -254,14 +260,26 @@ public class CullingRenderEvent {
         }
         if(shaderInstance.getRenderDistance() != null) {
             float distance = Minecraft.getInstance().options.getEffectiveRenderDistance();
+            if(shader == CullingHandler.COPY_DEPTH_SHADER) {
+                if(CullingHandler.DEPTH_INDEX > 0)
+                    distance = 2;
+                else
+                    distance = 0;
+            }
+
             shaderInstance.getRenderDistance().set(distance);
         }
         if(shaderInstance.getDepthSize() != null) {
             float[] array = new float[CullingHandler.depthSize*2];
-            for(int i = 0; i < CullingHandler.depthSize; ++i) {
-                int arrayIdx = i*2;
-                array[arrayIdx] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].width;
-                array[arrayIdx+1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].height;
+            if(shader == CullingHandler.COPY_DEPTH_SHADER) {
+                array[0] = (float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX].width;
+                array[1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX].height;
+            } else {
+                for(int i = 0; i < CullingHandler.depthSize; ++i) {
+                    int arrayIdx = i*2;
+                    array[arrayIdx] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].width;
+                    array[arrayIdx+1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].height;
+                }
             }
             shaderInstance.getDepthSize().set(array);
         }

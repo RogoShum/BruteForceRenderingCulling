@@ -1,6 +1,7 @@
 #version 150
 
 uniform sampler2D Sampler0;
+uniform float RenderDistance;
 
 flat in  vec2 DepthScreenSize;
 flat in float xStep;
@@ -30,5 +31,9 @@ void main() {
         }
     }
 
-    fragColor = vec4(vec3(LinearizeDepth(depth)/500.0), 1.0);
+    if(RenderDistance > 1) {
+        fragColor = vec4(vec3(depth), 1.0);
+    } else {
+        fragColor = vec4(vec3(LinearizeDepth(depth)/500.0), 1.0);
+    }
 }

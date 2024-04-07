@@ -10,12 +10,11 @@ uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler3;
-uniform sampler2D Sampler4;
 
 flat in vec3 Pos;
 flat in vec2 Size;
 flat in vec4[6] frustum;
-flat in vec2[5] DepthScreenSize;
+flat in vec2[4] DepthScreenSize;
 
 out vec4 fragColor;
 
@@ -95,10 +94,8 @@ float getUVDepth(int idx, vec2 uv) {
         return texture(Sampler1, uv).r * 500;
     else if(idx == 2)
         return texture(Sampler2, uv).r * 500;
-    else if(idx == 3)
-        return texture(Sampler3, uv).r * 500;
 
-    return texture(Sampler4, uv).r * 500;
+    return texture(Sampler3, uv).r * 500;
 }
 
 void main() {

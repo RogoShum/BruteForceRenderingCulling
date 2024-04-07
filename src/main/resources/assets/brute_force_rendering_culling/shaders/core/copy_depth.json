@@ -14,7 +14,7 @@
     ],
     "uniforms": [
         { "name": "ScreenSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
-        { "name": "DepthSize", "type": "float", "count": 10, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
-        { "name": "DepthScale", "type": "float", "count": 1, "values": [1.0] }
+        { "name": "DepthSize", "type": "float", "count": 8, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+        { "name": "RenderDistance", "type": "float", "count": 1, "values": [ 0.0] }
     ]
 }

@@ -4,7 +4,7 @@ uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler3;
-uniform sampler2D Sampler4;
+
 uniform vec2 CullingSize;
 uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
@@ -16,7 +16,7 @@ uniform int LevelMinSection;
 
 flat in int spacePartitionSize;
 flat in vec4[6] frustum;
-flat in vec2[5] DepthScreenSize;
+flat in vec2[4] DepthScreenSize;
 
 out vec4 fragColor;
 
@@ -25,8 +25,8 @@ float far  = 1000.0;
 
 int getSampler(float xLength, float yLength) {
     for(int i = 0; i < DepthScreenSize.length(); ++i) {
-        float xStep = 5.0 / DepthScreenSize[i].x;
-        float yStep = 5.0 / DepthScreenSize[i].y;
+        float xStep = 3.0 / DepthScreenSize[i].x;
+        float yStep = 3.0 / DepthScreenSize[i].y;
         if(xStep > xLength && yStep > yLength) {
             return i;
         }
@@ -104,10 +104,8 @@ float getUVDepth(int idx, vec2 uv) {
     return texture(Sampler1, uv).r * 500;
     else if(idx == 2)
     return texture(Sampler2, uv).r * 500;
-    else if(idx == 3)
-    return texture(Sampler3, uv).r * 500;
 
-    return texture(Sampler4, uv).r * 500;
+    return texture(Sampler3, uv).r * 500;
 }
 
 void main() {
