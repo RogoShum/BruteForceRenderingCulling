@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.SimpleFramebuffer;
@@ -104,6 +105,7 @@ public class CullingHandler implements ModInitializer {
     protected static int LEVEL_MIN_SECTION_ABS;
     public static Camera camera;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
+    public static boolean loadShader = false;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -123,9 +125,7 @@ public class CullingHandler implements ModInitializer {
         INSTANCE = this;
         callWhenOn(EnvType.CLIENT, () -> () -> {
             registerEvents();
-            MinecraftForge.EVENT_BUS.register(new CullingRenderEvent());
-            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(INSTANCE::doClientStuff);
+            Config.init();
             this.registerShader();
             try {
                 OptiFine = Class.forName("net.optifine.shaders.Shaders");
@@ -163,10 +163,12 @@ public class CullingHandler implements ModInitializer {
     private void initShader() {
         LOGGER.debug("try init shader chunk_culling");
         try {
+            loadShader = true;
             CHUNK_CULLING_SHADER = new Shader(MinecraftClient.getInstance().getResourceManager(), fromID("chunk_culling"), VertexFormats.POSITION);
             LINEARIZE_DEPTH_SHADER = new Shader(MinecraftClient.getInstance().getResourceManager(), fromID("linearize_depth"), VertexFormats.POSITION);
             INSTANCED_ENTITY_CULLING_SHADER = new Shader(MinecraftClient.getInstance().getResourceManager(), fromID("instanced_entity_culling"), VertexFormats.POSITION);
             COPY_DEPTH_SHADER = new Shader(MinecraftClient.getInstance().getResourceManager(), fromID("copy_depth"), VertexFormats.POSITION);
+            loadShader = false;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -237,7 +239,7 @@ public class CullingHandler implements ModInitializer {
 
     public boolean shouldRenderChunk(Box aabb) {
         chunkCount++;
-        if (!Config.CULL_CHUNK.get() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
+        if (!Config.CULL_CHUNK.getValue() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
         BlockPos pos = new BlockPos(aabb.getCenter());
@@ -268,10 +270,10 @@ public class CullingHandler implements ModInitializer {
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, Box aabb, BlockPos pos) {
         blockCount++;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.get()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.getValue()) return false;
         if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
-        String type = BlockEntityType.getKey(blockEntity.getType()).toString();
-        if (Config.BLOCK_ENTITY_SKIP.get().contains(type))
+        String type = BlockEntityType.getId(blockEntity.getType()).toString();
+        if (Config.BLOCK_ENTITY_SKIP.getValue().contains(type))
             return false;
 
         long time = System.nanoTime();
@@ -304,9 +306,9 @@ public class CullingHandler implements ModInitializer {
         entityCount++;
         if (entity instanceof PlayerEntity || entity.isGlowing()) return false;
         if (entity.squaredDistanceTo(camera.getPos()) < 4) return false;
-        if (Config.ENTITY_SKIP.get().contains(entity.getType().getUntranslatedName()))
+        if (Config.ENTITY_SKIP.getValue().contains(entity.getType().getUntranslatedName()))
             return false;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.get()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.getValue()) return false;
 
         long time = System.nanoTime();
 
@@ -363,7 +365,7 @@ public class CullingHandler implements ModInitializer {
     }
 
     public void onProfilerPush(String s) {
-        if (Config.CULL_CHUNK.get() && s.equals("apply_frustum")) {
+        if (Config.CULL_CHUNK.getValue() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -450,15 +452,15 @@ public class CullingHandler implements ModInitializer {
 
         if (anyCulling()) {
             if (!checkCulling) {
-                if(Config.CULL_CHUNK.get()) {
+                if(Config.CULL_CHUNK.getValue()) {
                     long time = System.nanoTime();
-                    if (Config.CULL_CHUNK.get() && CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
+                    if (Config.CULL_CHUNK.getValue() && CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
                         CHUNK_CULLING_MAP.readData();
                     }
                     preChunkCullingInitTime += System.nanoTime() - time;
                 }
 
-                if(Config.CULL_ENTITY.get()) {
+                if(Config.CULL_ENTITY.getValue()) {
                     long time = System.nanoTime();
                     if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
                         ENTITY_CULLING_MAP.readData();
@@ -471,7 +473,7 @@ public class CullingHandler implements ModInitializer {
 
     public void afterRenderingWorld() {
         if (anyCulling() && !checkCulling) {
-            float scale = (float) (double) Config.SAMPLING.get();
+            float scale = (float) (double) Config.SAMPLING.getValue();
             Window window = MinecraftClient.getInstance().getWindow();
             int width = window.getWidth();
             int height = window.getHeight();
@@ -517,15 +519,12 @@ public class CullingHandler implements ModInitializer {
             tesselator.draw();
             DEPTH_TEXTURE = DEPTH_BUFFER_TARGET.getColorAttachment();
 
-            net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(MinecraftClient.getInstance().gameRenderer
-                    , camera, MinecraftClient.getInstance().getFrameTime());
-            MatrixStack viewMatrix = new MatrixStack();
-            viewMatrix.mulPose(Vec3f.POSITIVE_Z.getDegreesQuaternion(cameraSetup.getRoll()));
-            viewMatrix.mulPose(Vec3f.POSITIVE_X.getDegreesQuaternion(camera.getXRot()));
-            viewMatrix.mulPose(Vec3f.POSITIVE_Y.getDegreesQuaternion(camera.getYRot() + 180.0F));
+            MatrixStack matrices = new MatrixStack();
+            matrices.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(camera.getPitch()));
+            matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(camera.getYaw() + 180.0F));
             Vec3d cameraPos = camera.getPos();
-            viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
-            VIEW_MATRIX = viewMatrix.peek().getPositionMatrix().copy();
+            matrices.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
+            VIEW_MATRIX = matrices.peek().getPositionMatrix().copy();
         }
     }
 
@@ -533,23 +532,23 @@ public class CullingHandler implements ModInitializer {
         if (anyCulling()) {
             preCullingInitCount++;
 
-            if(Config.CULL_CHUNK.get()) {
-                int renderingDiameter = MinecraftClient.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
+            if(Config.CULL_CHUNK.getValue()) {
+                int renderingDiameter = MinecraftClient.getInstance().options.getViewDistance() * 2 + 1;
                 int maxSize = renderingDiameter * LEVEL_HEIGHT_OFFSET * renderingDiameter;
                 int cullingSize = (int) Math.sqrt(maxSize) + 1;
 
-                if (CHUNK_CULLING_MAP_TARGET.width != cullingSize || CHUNK_CULLING_MAP_TARGET.height != cullingSize) {
+                if (CHUNK_CULLING_MAP_TARGET.textureWidth != cullingSize || CHUNK_CULLING_MAP_TARGET.textureHeight != cullingSize) {
                     CHUNK_CULLING_MAP_TARGET.resize(cullingSize, cullingSize, MinecraftClient.IS_SYSTEM_MAC);
                     if (CHUNK_CULLING_MAP != null) {
                         CHUNK_CULLING_MAP.cleanup();
-                        CHUNK_CULLING_MAP = new ChunkCullingMap(CHUNK_CULLING_MAP_TARGET.width, CHUNK_CULLING_MAP_TARGET.height);
-                        CHUNK_CULLING_MAP.generateIndex(MinecraftClient.getInstance().options.getEffectiveRenderDistance());
+                        CHUNK_CULLING_MAP = new ChunkCullingMap(CHUNK_CULLING_MAP_TARGET.textureWidth, CHUNK_CULLING_MAP_TARGET.textureHeight);
+                        CHUNK_CULLING_MAP.generateIndex(MinecraftClient.getInstance().options.getViewDistance());
                     }
                 }
 
                 if (CHUNK_CULLING_MAP == null) {
-                    CHUNK_CULLING_MAP = new ChunkCullingMap(CHUNK_CULLING_MAP_TARGET.width, CHUNK_CULLING_MAP_TARGET.height);
-                    CHUNK_CULLING_MAP.generateIndex(MinecraftClient.getInstance().options.getEffectiveRenderDistance());
+                    CHUNK_CULLING_MAP = new ChunkCullingMap(CHUNK_CULLING_MAP_TARGET.textureWidth, CHUNK_CULLING_MAP_TARGET.textureHeight);
+                    CHUNK_CULLING_MAP.generateIndex(MinecraftClient.getInstance().options.getViewDistance());
                 }
 
                 long time = System.nanoTime();
@@ -557,19 +556,19 @@ public class CullingHandler implements ModInitializer {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if(Config.CULL_ENTITY.get()) {
+            if(Config.CULL_ENTITY.getValue()) {
                 if (ENTITY_CULLING_MAP == null) {
-                    ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
+                    ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.textureWidth, ENTITY_CULLING_MAP_TARGET.textureHeight);
                 }
 
                 int tableCapacity = CullingHandler.ENTITY_CULLING_MAP.getEntityTable().size()/64;
                 tableCapacity = tableCapacity*64+64;
                 int cullingSize = (int) Math.sqrt(tableCapacity)+1;
-                if(CullingHandler.ENTITY_CULLING_MAP_TARGET.width != cullingSize || CullingHandler.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
+                if(CullingHandler.ENTITY_CULLING_MAP_TARGET.textureWidth != cullingSize || CullingHandler.ENTITY_CULLING_MAP_TARGET.textureHeight != cullingSize) {
                     CullingHandler.ENTITY_CULLING_MAP_TARGET.resize(cullingSize, cullingSize, MinecraftClient.IS_SYSTEM_MAC);
                     if (ENTITY_CULLING_MAP != null) {
                         EntityCullingMap temp = ENTITY_CULLING_MAP;
-                        ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
+                        ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.textureWidth, ENTITY_CULLING_MAP_TARGET.textureHeight);
                         ENTITY_CULLING_MAP.getEntityTable().copyTemp(temp.getEntityTable(), clientTickCount);
                         temp.cleanup();
                     }
@@ -579,12 +578,12 @@ public class CullingHandler implements ModInitializer {
                 ENTITY_CULLING_MAP.transferData();
                 preEntityCullingInitTime += System.nanoTime() - time;
 
-                if(MinecraftClient.getInstance().level != null) {
+                if(MinecraftClient.getInstance().world != null) {
                     CullingHandler.ENTITY_CULLING_MAP.getEntityTable().tick(clientTickCount);
-                    Iterable<Entity> entities = MinecraftClient.getInstance().level.entitiesForRendering();
+                    Iterable<Entity> entities = MinecraftClient.getInstance().world.getEntities();
                     entities.forEach(entity -> CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
-                    for(Object levelrenderer$renderchunkinfo : ((IEntitiesForRender)MinecraftClient.getInstance().levelRenderer).renderChunksInFrustum()) {
-                        List<BlockEntity> list = ((IRenderChunkInfo)levelrenderer$renderchunkinfo).getRenderChunk().getCompiledChunk().getRenderableBlockEntities();
+                    for(Object levelrenderer$renderchunkinfo : ((IEntitiesForRender)MinecraftClient.getInstance().worldRenderer).renderChunksInFrustum()) {
+                        List<BlockEntity> list = ((IRenderChunkInfo)levelrenderer$renderchunkinfo).getRenderChunk().getData().getBlockEntities();
                         list.forEach(entity -> CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
                     }
 
@@ -613,7 +612,7 @@ public class CullingHandler implements ModInitializer {
         if(SHADER_LOADER != null && SHADER_LOADER.renderingShader()) {
             SHADER_LOADER.bindDefaultFrameBuffer();
         } else {
-            MinecraftClient.getInstance().getMainFramebuffer().bindWrite(true);
+            MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
         }
     }
 
@@ -638,6 +637,6 @@ public class CullingHandler implements ModInitializer {
     }
 
     public static boolean anyCulling() {
-        return Config.CULL_ENTITY.get() || Config.CULL_CHUNK.get();
+        return Config.CULL_ENTITY.getValue() || Config.CULL_CHUNK.getValue();
     }
 }

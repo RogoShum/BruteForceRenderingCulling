@@ -3,13 +3,16 @@ package rogo.renderingculling.mixin;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gl.GlProgramManager;
 import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.gl.Program;
 import net.minecraft.client.render.Shader;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.CullingRenderEvent;
@@ -23,6 +26,10 @@ public abstract class MixinShaderInstance implements ICullingShader {
     public GlUniform getUniform(String p_173349_) {
         return null;
     }
+
+    @Final
+    @Shadow
+    private static String CORE_DIRECTORY;
 
     @Nullable
     public GlUniform CULLING_CAMERA_POS;
@@ -64,6 +71,34 @@ public abstract class MixinShaderInstance implements ICullingShader {
         this.FRUSTUM_POS = this.getUniform("FrustumPos");
         this.CULLING_VIEW_MAT = this.getUniform("CullingViewMat");
         this.CULLING_PROJ_MAT = this.getUniform("CullingProjMat");
+    }
+
+    @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Identifier;<init>(Ljava/lang/String;)V"))
+    public String onInit(String string) {
+        if(CullingHandler.loadShader) {
+            string = string.replace(CORE_DIRECTORY, "");
+            string = string.replace(".json", "");
+            Identifier rl = Identifier.tryParse(string);
+            string = rl.getNamespace() + ":" + CORE_DIRECTORY + rl.getPath() + ".json";
+        }
+        return string;
+    }
+
+    @ModifyArg(method = "loadProgram", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Identifier;<init>(Ljava/lang/String;)V"))
+    private static String onGetOrCreate(String string) {
+        if(CullingHandler.loadShader) {
+            string = string.replace(CORE_DIRECTORY, "");
+            Program.Type type = Program.Type.FRAGMENT;
+            if(string.contains(".fsh"))
+                string = string.replace(".fsh", "");
+            else if(string.contains(".vsh")) {
+                string = string.replace(".vsh", "");
+                type = Program.Type.VERTEX;
+            }
+            Identifier rl = Identifier.tryParse(string);
+            string = rl.getNamespace() + ":" + CORE_DIRECTORY + rl.getPath() + type.getFileExtension();
+        }
+        return string;
     }
 
     @Override

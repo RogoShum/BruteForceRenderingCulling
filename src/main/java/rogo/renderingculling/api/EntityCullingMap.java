@@ -19,7 +19,7 @@ public class EntityCullingMap extends CullingMap {
 
     @Override
     int delayCount() {
-        return Config.UPDATE_DELAY.get();
+        return Config.UPDATE_DELAY.getValue();
     }
 
     @Override
@@ -28,19 +28,6 @@ public class EntityCullingMap extends CullingMap {
     }
 
     public boolean isObjectVisible(Object o) {
-        Box aabb = null;
-        if(o instanceof BlockEntity) {
-            aabb = ((BlockEntity) o).getRenderBoundingBox();
-        } else if(o instanceof Entity) {
-            aabb = ((Entity) o).getBoundingBox();
-        } else if(o instanceof IAABBObject) {
-            aabb = ((IAABBObject) o).getAABB();
-        }
-
-        if(aabb == INFINITE_EXTENT_AABB) {
-            return true;
-        }
-
         int idx = entityMap.getIndex(o);
         idx = 1+idx*4;
         if(entityMap.tempObjectTimer.contains(o))
@@ -134,7 +121,7 @@ public class EntityCullingMap extends CullingMap {
                 if(o instanceof Entity) {
                     addAttribute(consumer, ((Entity) o).getBoundingBox(), index);
                 } else if(o instanceof BlockEntity) {
-                    addAttribute(consumer, ((BlockEntity) o).getRenderBoundingBox(), index);
+                    addAttribute(consumer, new Box(((BlockEntity) o).getPos()), index);
                 } else if (o instanceof IAABBObject) {
                     addAttribute(consumer, ((IAABBObject) o).getAABB(), index);
                 }
