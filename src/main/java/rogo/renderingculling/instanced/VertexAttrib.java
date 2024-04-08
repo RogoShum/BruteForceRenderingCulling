@@ -26,7 +26,7 @@ public abstract class VertexAttrib implements AutoCloseable {
         int vertexSize = 0;
         if(this.vertices.size() > 1) {
             for(GLVertex vertex : vertices) {
-                vertexSize += vertex.size()*vertex.elementType().getSize();
+                vertexSize += vertex.size()*vertex.elementType().getByteLength();
             }
         }
         this.vertexSize = vertexSize;
@@ -58,11 +58,11 @@ public abstract class VertexAttrib implements AutoCloseable {
         int offset = 0;
 
         for(GLVertex vertex : vertices) {
-            GlStateManager._vertexAttribPointer(vertex.index(), vertex.size(), vertex.elementType().getGlType(), false, vertexSize, offset);
+            GlStateManager._vertexAttribPointer(vertex.index(), vertex.size(), vertex.elementType().getId(), false, vertexSize, offset);
             GlStateManager._enableVertexAttribArray(vertex.index());
             if(needUpdate())
                 GL33.glVertexAttribDivisor(vertex.index(), 1);
-            offset+=vertex.size()*vertex.elementType().getSize();
+            offset+=vertex.size()*vertex.elementType().getByteLength();
         }
     }
 

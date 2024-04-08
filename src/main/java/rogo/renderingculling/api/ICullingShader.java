@@ -1,17 +1,18 @@
 package rogo.renderingculling.api;
 
-import com.mojang.blaze3d.shaders.Uniform;
+
+import net.minecraft.client.gl.GlUniform;
 
 public interface ICullingShader {
-    Uniform getRenderDistance();
-    Uniform getCullingCameraPos();
-    Uniform getDepthSize();
-    Uniform getCullingSize();
-    Uniform getLevelHeightOffset();
-    Uniform getLevelMinSection();
-    Uniform getEntityCullingSize();
-    Uniform getCullingFrustum();
-    Uniform getFrustumPos();
-    Uniform getCullingViewMat();
-    Uniform getCullingProjMat();
+    GlUniform getRenderDistance();
+    GlUniform getCullingCameraPos();
+    GlUniform getDepthSize();
+    GlUniform getCullingSize();
+    GlUniform getLevelHeightOffset();
+    GlUniform getLevelMinSection();
+    GlUniform getEntityCullingSize();
+    GlUniform getCullingFrustum();
+    GlUniform getFrustumPos();
+    GlUniform getCullingViewMat();
+    GlUniform getCullingProjMat();
 }

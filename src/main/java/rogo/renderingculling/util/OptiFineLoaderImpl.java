@@ -2,6 +2,7 @@ package rogo.renderingculling.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import rogo.renderingculling.api.CullingHandler;
 
 import java.lang.reflect.Field;
@@ -22,7 +23,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
             e.fillInStackTrace();
         }
 
-        return Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+        return MinecraftClient.getInstance().getFramebuffer().fbo;
     }
 
     @Override
@@ -53,11 +54,11 @@ public class OptiFineLoaderImpl implements ShaderLoader {
             Field glFramebuffer = buffer.getClass().getDeclaredField("glFramebuffer");
             glFramebuffer.setAccessible(true);
             GlStateManager._glBindFramebuffer(36160, (int) glFramebuffer.get(buffer));
-            GlStateManager._viewport(0, 0, Minecraft.getInstance().getMainRenderTarget().viewWidth, Minecraft.getInstance().getMainRenderTarget().viewHeight);
+            GlStateManager._viewport(0, 0, MinecraftClient.getInstance().getFramebuffer().textureWidth, MinecraftClient.getInstance().getFramebuffer().textureHeight);
             return;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.fillInStackTrace();
         }
-        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
+        MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
     }
 }

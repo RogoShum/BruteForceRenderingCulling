@@ -20,7 +20,7 @@
 		]
 	},
 	"mixins": [
-		"brute_force_rendering_culling.mixins.json"
+		"mixins.bfrc.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.15.9",

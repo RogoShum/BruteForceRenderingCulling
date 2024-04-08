@@ -1,6 +1,6 @@
 package rogo.renderingculling.instanced.attribute;
 
-import com.mojang.blaze3d.vertex.VertexFormatElement;
+import net.minecraft.client.render.VertexFormatElement;
 
 public abstract class GLVertex {
     private final int size;
@@ -25,5 +25,5 @@ public abstract class GLVertex {
         return size;
     }
 
-    public abstract VertexFormatElement.Type elementType();
+    public abstract VertexFormatElement.DataType elementType();
 }

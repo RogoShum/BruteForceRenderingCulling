@@ -1,9 +1,10 @@
 package rogo.renderingculling.mixin;
 
-import com.mojang.blaze3d.shaders.ProgramManager;
-import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.gl.GlProgramManager;
+import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.render.Shader;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,44 +15,43 @@ import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.CullingRenderEvent;
 import rogo.renderingculling.api.ICullingShader;
 
-import javax.annotation.Nullable;
 
-@Mixin(ShaderInstance.class)
+@Mixin(Shader.class)
 public abstract class MixinShaderInstance implements ICullingShader {
     @Shadow
     @Nullable
-    public Uniform getUniform(String p_173349_) {
+    public GlUniform getUniform(String p_173349_) {
         return null;
     }
 
     @Nullable
-    public Uniform CULLING_CAMERA_POS;
+    public GlUniform CULLING_CAMERA_POS;
     @Nullable
-    public Uniform RENDER_DISTANCE;
+    public GlUniform RENDER_DISTANCE;
     @Nullable
-    public Uniform DEPTH_SIZE;
+    public GlUniform DEPTH_SIZE;
     @Nullable
-    public Uniform CULLING_SIZE;
+    public GlUniform CULLING_SIZE;
     @Nullable
-    public Uniform ENTITY_CULLING_SIZE;
+    public GlUniform ENTITY_CULLING_SIZE;
     @Nullable
-    public Uniform LEVEL_HEIGHT_OFFSET;
+    public GlUniform LEVEL_HEIGHT_OFFSET;
     @Nullable
-    public Uniform LEVEL_MIN_SECTION;
+    public GlUniform LEVEL_MIN_SECTION;
     @Nullable
-    public Uniform CULLING_FRUSTUM;
+    public GlUniform CULLING_FRUSTUM;
     @Nullable
-    public Uniform FRUSTUM_POS;
+    public GlUniform FRUSTUM_POS;
     @Nullable
-    public Uniform CULLING_VIEW_MAT;
+    public GlUniform CULLING_VIEW_MAT;
     @Nullable
-    public Uniform CULLING_PROJ_MAT;
+    public GlUniform CULLING_PROJ_MAT;
 
     @Final
     @Shadow
     private int programId;
 
-    @Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/server/packs/resources/ResourceProvider;Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/vertex/VertexFormat;)V")
+    @Inject(at = @At("TAIL"), method = "<init>")
     public void construct(CallbackInfo ci) {
         this.CULLING_CAMERA_POS = this.getUniform("CullingCameraPos");
         this.RENDER_DISTANCE = this.getUniform("RenderDistance");
@@ -67,60 +67,60 @@ public abstract class MixinShaderInstance implements ICullingShader {
     }
 
     @Override
-    public Uniform getCullingFrustum() {return CULLING_FRUSTUM;}
+    public GlUniform getCullingFrustum() {return CULLING_FRUSTUM;}
     @Override
-    public Uniform getCullingCameraPos() {
+    public GlUniform getCullingCameraPos() {
         return CULLING_CAMERA_POS;
     }
 
     @Override
-    public Uniform getRenderDistance() {
+    public GlUniform getRenderDistance() {
         return RENDER_DISTANCE;
     }
 
     @Override
-    public Uniform getDepthSize() {
+    public GlUniform getDepthSize() {
         return DEPTH_SIZE;
     }
     @Override
-    public Uniform getCullingSize() {
+    public GlUniform getCullingSize() {
         return CULLING_SIZE;
     }
     @Override
-    public Uniform getLevelHeightOffset() {
+    public GlUniform getLevelHeightOffset() {
         return LEVEL_HEIGHT_OFFSET;
     }
     @Override
-    public Uniform getLevelMinSection() {
+    public GlUniform getLevelMinSection() {
         return LEVEL_MIN_SECTION;
     }
     @Override
-    public Uniform getEntityCullingSize() {
+    public GlUniform getEntityCullingSize() {
         return ENTITY_CULLING_SIZE;
     }
     @Override
-    public Uniform getFrustumPos() {
+    public GlUniform getFrustumPos() {
         return FRUSTUM_POS;
     }
     @Override
-    public Uniform getCullingViewMat() {
+    public GlUniform getCullingViewMat() {
         return CULLING_VIEW_MAT;
     }
     @Override
-    public Uniform getCullingProjMat() {
+    public GlUniform getCullingProjMat() {
         return CULLING_PROJ_MAT;
     }
 
-    @Inject(at = @At("TAIL"), method = "apply")
+    @Inject(at = @At("TAIL"), method = "bind")
     public void onApply(CallbackInfo ci) {
         if(CullingHandler.updatingDepth)
-            ProgramManager.glUseProgram(this.programId);
+            GlProgramManager.useProgram(this.programId);
     }
 
     @Mixin(RenderSystem.class)
     public static class MixinRenderSystem {
         @Inject(at = @At(value = "TAIL"), method = "setupShaderLights")
-        private static void shader(ShaderInstance p_157462_, CallbackInfo ci) {
+        private static void shader(Shader p_157462_, CallbackInfo ci) {
             CullingRenderEvent.setUniform(p_157462_);
         }
     }

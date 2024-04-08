@@ -1,16 +1,14 @@
 package rogo.renderingculling.api;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.function.Consumer;
-
-import static net.minecraftforge.common.extensions.IForgeBlockEntity.INFINITE_EXTENT_AABB;
 
 public class EntityCullingMap extends CullingMap {
     private final EntityMap entityMap = new EntityMap();
@@ -26,11 +24,11 @@ public class EntityCullingMap extends CullingMap {
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.ENTITY_CULLING_MAP_TARGET.frameBufferId;
+        return CullingHandler.ENTITY_CULLING_MAP_TARGET.fbo;
     }
 
     public boolean isObjectVisible(Object o) {
-        AABB aabb = null;
+        Box aabb = null;
         if(o instanceof BlockEntity) {
             aabb = ((BlockEntity) o).getRenderBoundingBox();
         } else if(o instanceof Entity) {
@@ -116,15 +114,15 @@ public class EntityCullingMap extends CullingMap {
             innerCount = 0;
         }
 
-        private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, AABB aabb, int index) {
+        private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, Box aabb, int index) {
             consumer.accept(buffer -> {
                 buffer.put((float) index);
 
-                float size = (float) Math.max(aabb.getXsize(), aabb.getZsize());
+                float size = (float) Math.max(aabb.getXLength(), aabb.getZLength());
                 buffer.put(size);
-                buffer.put((float) aabb.getYsize());
+                buffer.put((float) aabb.getYLength());
 
-                Vec3 pos = aabb.getCenter();
+                Vec3d pos = aabb.getCenter();
                 buffer.put((float) pos.x);
                 buffer.put((float) pos.y);
                 buffer.put((float) pos.z);

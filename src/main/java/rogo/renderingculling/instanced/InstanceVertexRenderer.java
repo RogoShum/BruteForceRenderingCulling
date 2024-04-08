@@ -1,13 +1,11 @@
 package rogo.renderingculling.instanced;
 
-import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferRenderer;
+import net.minecraft.client.render.Shader;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.util.Window;
 import org.lwjgl.opengl.GL31;
 import rogo.renderingculling.api.CullingRenderEvent;
 
@@ -15,7 +13,7 @@ import java.nio.FloatBuffer;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL15.glBindBuffer;
-@OnlyIn(Dist.CLIENT)
+
 public class InstanceVertexRenderer implements AutoCloseable {
     protected final VertexAttrib main;
     protected final VertexAttrib update;
@@ -23,11 +21,11 @@ public class InstanceVertexRenderer implements AutoCloseable {
     protected int indexCount;
     protected int instanceCount;
     protected final VertexAttrib mainAttrib;
-    protected final VertexFormat.Mode mode;
-    private VertexFormat.IndexType indexType;
+    protected final VertexFormat.DrawMode mode;
+    private VertexFormat.IntType indexType;
     private boolean updating = false;
 
-    public InstanceVertexRenderer(VertexFormat.Mode mode, VertexAttrib mainAttrib, Consumer<FloatBuffer> consumer, VertexAttrib update) {
+    public InstanceVertexRenderer(VertexFormat.DrawMode mode, VertexAttrib mainAttrib, Consumer<FloatBuffer> consumer, VertexAttrib update) {
         this.main = mainAttrib;
         this.update = update;
         RenderSystem.glGenVertexArrays((p_166881_) -> {
@@ -36,7 +34,7 @@ public class InstanceVertexRenderer implements AutoCloseable {
         this.mode = mode;
         this.mainAttrib = mainAttrib;
         init(consumer);
-        this.indexCount = mode.indexCount(mainAttrib.vertexCount());
+        this.indexCount = mode.getSize(mainAttrib.vertexCount());
     }
 
     public void init(Consumer<FloatBuffer> buffer) {
@@ -49,9 +47,9 @@ public class InstanceVertexRenderer implements AutoCloseable {
 
     public void bind() {
         RenderSystem.glBindBuffer(34963, () -> {
-            RenderSystem.AutoStorageIndexBuffer rendersystem$autostorageindexbuffer = RenderSystem.getSequentialBuffer(this.mode, this.indexCount);
-            this.indexType = rendersystem$autostorageindexbuffer.type();
-            return rendersystem$autostorageindexbuffer.name();
+            RenderSystem.IndexBuffer rendersystem$autostorageindexbuffer = RenderSystem.getSequentialBuffer(this.mode, this.indexCount);
+            this.indexType = rendersystem$autostorageindexbuffer.getElementFormat();
+            return rendersystem$autostorageindexbuffer.getId();
         });
     }
 
@@ -86,7 +84,7 @@ public class InstanceVertexRenderer implements AutoCloseable {
         RenderSystem.glBindVertexArray(() -> 0);
     }
 
-    public void drawWithShader(ShaderInstance p_166870_) {
+    public void drawWithShader(Shader p_166870_) {
         if (!RenderSystem.isOnRenderThread()) {
             RenderSystem.recordRenderCall(() -> {
                 this._drawWithShader(p_166870_);
@@ -96,63 +94,63 @@ public class InstanceVertexRenderer implements AutoCloseable {
         }
     }
 
-    public void _drawWithShader(ShaderInstance p_166879_) {
+    public void _drawWithShader(Shader p_166879_) {
         if (this.indexCount != 0 && this.instanceCount > 0) {
             RenderSystem.assertOnRenderThread();
-            BufferUploader.reset();
+            BufferRenderer.unbindAll();
 
             for(int i = 0; i < 12; ++i) {
                 int j = RenderSystem.getShaderTexture(i);
-                p_166879_.setSampler("Sampler" + i, j);
+                p_166879_.addSampler("Sampler" + i, j);
             }
 
-            if (p_166879_.MODEL_VIEW_MATRIX != null) {
-                p_166879_.MODEL_VIEW_MATRIX.set(RenderSystem.getModelViewMatrix());
+            if (p_166879_.modelViewMat != null) {
+                p_166879_.modelViewMat.set(RenderSystem.getModelViewMatrix());
             }
 
-            if (p_166879_.PROJECTION_MATRIX != null) {
-                p_166879_.PROJECTION_MATRIX.set(RenderSystem.getProjectionMatrix());
+            if (p_166879_.projectionMat != null) {
+                p_166879_.projectionMat.set(RenderSystem.getProjectionMatrix());
             }
 
-            if (p_166879_.INVERSE_VIEW_ROTATION_MATRIX != null) {
-                p_166879_.INVERSE_VIEW_ROTATION_MATRIX.set(RenderSystem.getInverseViewRotationMatrix());
+            if (p_166879_.viewRotationMat != null) {
+                p_166879_.viewRotationMat.method_39978(RenderSystem.getInverseViewRotationMatrix());
             }
 
-            if (p_166879_.COLOR_MODULATOR != null) {
-                p_166879_.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
+            if (p_166879_.colorModulator != null) {
+                p_166879_.colorModulator.set(RenderSystem.getShaderColor());
             }
 
-            if (p_166879_.FOG_START != null) {
-                p_166879_.FOG_START.set(RenderSystem.getShaderFogStart());
+            if (p_166879_.fogStart != null) {
+                p_166879_.fogStart.set(RenderSystem.getShaderFogStart());
             }
 
-            if (p_166879_.FOG_END != null) {
-                p_166879_.FOG_END.set(RenderSystem.getShaderFogEnd());
+            if (p_166879_.fogEnd != null) {
+                p_166879_.fogEnd.set(RenderSystem.getShaderFogEnd());
             }
 
-            if (p_166879_.FOG_COLOR != null) {
-                p_166879_.FOG_COLOR.set(RenderSystem.getShaderFogColor());
+            if (p_166879_.fogColor != null) {
+                p_166879_.fogColor.set(RenderSystem.getShaderFogColor());
             }
 
-            if (p_166879_.FOG_SHAPE != null) {
-                p_166879_.FOG_SHAPE.set(RenderSystem.getShaderFogShape().getIndex());
+            if (p_166879_.fogShape != null) {
+                p_166879_.fogShape.set(RenderSystem.getShaderFogShape().getId());
             }
 
-            if (p_166879_.TEXTURE_MATRIX != null) {
-                p_166879_.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
+            if (p_166879_.textureMat != null) {
+                p_166879_.textureMat.set(RenderSystem.getTextureMatrix());
             }
 
-            if (p_166879_.GAME_TIME != null) {
-                p_166879_.GAME_TIME.set(RenderSystem.getShaderGameTime());
+            if (p_166879_.gameTime != null) {
+                p_166879_.gameTime.set(RenderSystem.getShaderGameTime());
             }
 
-            if (p_166879_.SCREEN_SIZE != null) {
-                Window window = Minecraft.getInstance().getWindow();
-                p_166879_.SCREEN_SIZE.set((float)window.getWidth(), (float)window.getHeight());
+            if (p_166879_.screenSize != null) {
+                Window window = MinecraftClient.getInstance().getWindow();
+                p_166879_.screenSize.set((float)window.getWidth(), (float)window.getHeight());
             }
 
-            if (p_166879_.LINE_WIDTH != null && (this.mode == VertexFormat.Mode.LINES || this.mode == VertexFormat.Mode.LINE_STRIP)) {
-                p_166879_.LINE_WIDTH.set(RenderSystem.getShaderLineWidth());
+            if (p_166879_.lineWidth != null && (this.mode == VertexFormat.DrawMode.LINES || this.mode == VertexFormat.DrawMode.LINE_STRIP)) {
+                p_166879_.lineWidth.set(RenderSystem.getShaderLineWidth());
             }
 
             CullingRenderEvent.setUniform(p_166879_);
@@ -162,9 +160,9 @@ public class InstanceVertexRenderer implements AutoCloseable {
             bind();
 
             enableVertexAttribArray();
-            p_166879_.apply();
-            GL31.glDrawElementsInstanced(this.mode.asGLMode, this.indexCount, this.indexType.asGLType, 0 , this.instanceCount);
-            p_166879_.clear();
+            p_166879_.bind();
+            GL31.glDrawElementsInstanced(this.mode.mode, this.indexCount, this.indexType.type, 0 , this.instanceCount);
+            p_166879_.unbind();
             disableVertexAttribArray();
 
             unbind();

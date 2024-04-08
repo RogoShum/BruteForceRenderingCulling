@@ -1,21 +1,21 @@
 package rogo.renderingculling.mixin;
 
-import com.mojang.math.Vector4f;
-import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.render.Frustum;
+import net.minecraft.util.math.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Frustum.class)
 public interface AccessorFrustum {
-    @Accessor("camX")
+    @Accessor("x")
     double camX();
 
-    @Accessor("camY")
+    @Accessor("y")
     double camY();
 
-    @Accessor("camZ")
+    @Accessor("z")
     double camZ();
 
-    @Accessor("frustumData")
+    @Accessor("homogeneousCoordinates")
     Vector4f[] frustumData();
 }

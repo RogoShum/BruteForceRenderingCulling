@@ -2,17 +2,13 @@ package rogo.renderingculling.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.Font;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.*;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 
@@ -20,7 +16,7 @@ import java.util.List;
 
 public class ConfigScreen extends Screen {
 
-    public ConfigScreen(Component titleIn) {
+    public ConfigScreen(Text titleIn) {
         super(titleIn);
     }
 
@@ -30,8 +26,8 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(PoseStack p_96557_) {
-        Minecraft minecraft = Minecraft.getInstance();
+    public void renderBackground(MatrixStack p_96557_) {
+        MinecraftClient minecraft = MinecraftClient.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth()/2;
         int widthScale = width/4;
         Font font = minecraft.font;
@@ -42,9 +38,9 @@ public class ConfigScreen extends Screen {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferbuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         bufferbuilder.vertex(width-widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         bufferbuilder.vertex(width+widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         bufferbuilder.vertex(width+widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
@@ -52,7 +48,7 @@ public class ConfigScreen extends Screen {
         bufferbuilder.end();
         BufferUploader.end(bufferbuilder);
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferbuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
@@ -65,15 +61,15 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        if(CullingHandler.CONFIG_KEY.matches(p_96552_, p_96553_)) {
-            this.onClose();
+        if(CullingHandler.CONFIG_KEY.matchesKey(p_96552_, p_96553_)) {
+            this.close();
             return true;
         }
-        if (this.minecraft.options.keyInventory.matches(p_96552_, p_96553_)) {
-            this.onClose();
+        if (this.client.options.inventoryKey.matchesKey(p_96552_, p_96553_)) {
+            this.close();
             return true;
-        } else if (this.minecraft.options.keyPlayerList.matches(p_96552_, p_96553_)) {
-            this.onClose();
+        } else if (this.client.options.playerListKey.matchesKey(p_96552_, p_96553_)) {
+            this.close();
             return true;
         } else {
             return super.keyPressed(p_96552_, p_96553_, p_96554_);
@@ -87,16 +83,16 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        Player player = Minecraft.getInstance().player;
+        PlayerEntity player = MinecraftClient.getInstance().player;
         if(player == null) {
             onClose();
             return;
         }
 
-        int heightScale = (int) (minecraft.font.lineHeight*2f)+1;
+        int heightScale = (int) (client.font.lineHeight*2f)+1;
         NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.SAMPLING.get(),
                 (sliderButton) -> {
-                    Component component = new TextComponent((int)(sliderButton.getValue() * 100.0D) + "%");
+                    Text component = new TextComponent((int)(sliderButton.getValue() * 100.0D) + "%");
                     return (new TranslatableComponent("brute_force_rendering_culling.sampler")).append(": ").append(component);
                 }, (value) -> {
             double v = Float.parseFloat(String.format("%.2f",value));
@@ -105,7 +101,7 @@ public class ConfigScreen extends Screen {
         });
         NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.CULLING_ENTITY_RATE.get()/20f,
                 (sliderButton) -> {
-                    Component component = new TextComponent( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
+                    Text component = new TextComponent( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*20);
@@ -119,7 +115,7 @@ public class ConfigScreen extends Screen {
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Debug"))));
         NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.UPDATE_DELAY.get()/10f,
                 (sliderButton) -> {
-                    Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
+                    Text component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*10);
@@ -151,7 +147,7 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         List<? extends GuiEventListener> children = children();
         for (GuiEventListener button : children) {
             if(button instanceof AbstractWidget b)

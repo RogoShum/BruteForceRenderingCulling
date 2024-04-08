@@ -2,15 +2,7 @@ package rogo.renderingculling.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 
-import java.util.function.Supplier;
 
 public class NeatButton extends Button {
     public NeatButton(int p_93721_, int p_93722_, int p_93723_, int p_93724_, OnPress p_93726_, Supplier<Component> updateMessage) {
