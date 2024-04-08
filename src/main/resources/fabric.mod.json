@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "brute_force_rendering_culling",
+	"version": "${version}",
+	"name": "brute_force_rendering_culling",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/brute_force_rendering_culling/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"rogo.renderingculling.api.CullingHandler"
+		]
+	},
+	"mixins": [
+		"brute_force_rendering_culling.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15.9",
+		"minecraft": "~1.18.2",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
