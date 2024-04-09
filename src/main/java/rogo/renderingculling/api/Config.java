@@ -1,5 +1,6 @@
 package rogo.renderingculling.api;
 
+import com.google.common.collect.ImmutableList;
 import io.github.fablabsmc.fablabs.api.fiber.v1.exception.ValueDeserializationException;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.serialization.FiberSerialization;
@@ -15,32 +16,105 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-    private static PropertyMirror<Double> SAMPLING = PropertyMirror.create(ConfigTypes.DOUBLE);
+    private static final PropertyMirror<Double> SAMPLING = PropertyMirror.create(ConfigTypes.DOUBLE);
+
     public static double getSampling() {
+        if(unload())
+            return 0.2;
+
         return SAMPLING.getValue();
     }
-    private static PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
-    private static PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
-    private static PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
-    private static PropertyMirror<Integer> CULLING_ENTITY_RATE = PropertyMirror.create(ConfigTypes.INTEGER);
 
-    private static PropertyMirror<List<String>> ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
-    private static PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
+    public static void setSampling(double value) {
+        SAMPLING.setValue(value);
+    }
+
+    private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
+
+    public static boolean getCullEntity() {
+        if(unload())
+            return false;
+        return CULL_ENTITY.getValue();
+    }
+
+    public static void setCullEntity(boolean value) {
+        CULL_ENTITY.setValue(value);
+    }
+
+    private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
+
+    public static boolean getCullChunk() {
+        if(unload())
+            return false;
+        return CULL_CHUNK.getValue();
+    }
+
+    public static void setCullChunk(boolean value) {
+        CULL_CHUNK.setValue(value);
+    }
+
+    private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
+
+    public static int getDepthUpdateDelay() {
+        if(unload())
+            return 1;
+        return UPDATE_DELAY.getValue();
+    }
+
+    public static void setDepthUpdateDelay(int value) {
+        UPDATE_DELAY.setValue(value);
+    }
+
+    private static final PropertyMirror<Integer> CULLING_ENTITY_RATE = PropertyMirror.create(ConfigTypes.INTEGER);
+
+    public static int getCullingEntityRate() {
+        if(unload())
+            return 20;
+        return CULLING_ENTITY_RATE.getValue();
+    }
+
+    public static void setCullingEntityRate(int value) {
+        CULLING_ENTITY_RATE.setValue(value);
+    }
+
+    private static final PropertyMirror<List<String>> ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
+
+    public static List<String> getEntitiesSkip() {
+        if(unload())
+            return ImmutableList.of();
+        return ENTITY_SKIP.getValue();
+    }
+
+    private static final PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
+
+    public static List<String> getBlockEntitiesSkip() {
+        if(unload())
+            return ImmutableList.of();
+        return BLOCK_ENTITY_SKIP.getValue();
+    }
 
     private static ConfigContext CONTEXT;
     private static ConfigBranch BRANCH;
+    private static boolean configLoaded = false;
+
+    private static boolean unload() {
+        return !configLoaded;
+    }
+
     private static String getTranslatedItem(String s) {
-        String Translated = new TranslatableComponent(s).getString();
-        return Translated;
+        return new TranslatableComponent(s).getString();
     }
 
     public static void save() {
         if(CONTEXT != null) {
-            writeConfig(CONTEXT);
+            try (OutputStream s = new BufferedOutputStream(Files.newOutputStream(CONTEXT.path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING))) {
+                FiberSerialization.serialize(CONTEXT.config, s, CONTEXT.serializer);
+            } catch (IOException ignored) {
+            }
         }
     }
 
-    public static void init() {
+    private static void init() {
         List<String> entityList = new ArrayList<>();
         entityList.add("create:stationary_contraption");
 
@@ -48,7 +122,7 @@ public class Config {
         blockList.add("minecraft:beacon");
 
         BRANCH = ConfigTree.builder()
-                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.2)
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.05)
                 .finishValue(SAMPLING::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.culling_map_update_delay"), ConfigTypes.INTEGER, 1)
@@ -64,25 +138,25 @@ public class Config {
                 .finishValue(CULLING_ENTITY_RATE::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.skip_culling_entities"), ConfigTypes.makeList(ConfigTypes.STRING), entityList)
-                .withComment("Example: \n" +
-                        "[\"minecraft:creeper\", \"minecraft:zombie\"]")
                 .finishValue(ENTITY_SKIP::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.skip_culling_block_entities"), ConfigTypes.makeList(ConfigTypes.STRING), blockList)
-                .withComment("Example: \n" +
-                        "[\"minecraft:chest\", \"minecraft:mob_spawner\"]")
                 .finishValue(BLOCK_ENTITY_SKIP::mirror)
                 .build();
     }
 
     public static void loadConfig() {
-        try {
-            Files.createDirectory(Paths.get("config"));
-        } catch (IOException ignored) {
+        if(!configLoaded) {
+            Config.init();
+            try {
+                Files.createDirectory(Paths.get("config"));
+            } catch (IOException ignored) {
+            }
+            JanksonValueSerializer serializer = new JanksonValueSerializer(false);
+            CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingHandler.MOD_ID + ".json"), serializer);
+            setupConfig(CONTEXT);
+            configLoaded = true;
         }
-        JanksonValueSerializer serializer = new JanksonValueSerializer(false);
-        CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingHandler.MOD_ID + ".json"), serializer);
-        setupConfig(CONTEXT);
     }
 
     private static void writeConfig(ConfigContext context) {

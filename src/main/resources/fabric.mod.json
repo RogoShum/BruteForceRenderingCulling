@@ -1,17 +1,16 @@
 {
 	"schemaVersion": 1,
 	"id": "brute_force_rendering_culling",
-	"version": "${version}",
+	"version": "0.4.4",
 	"name": "brute_force_rendering_culling",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "",
 	"authors": [
-		"Me!"
+		"RogoShum"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/RogoShum/BruteForceRenderingCulling"
 	},
-	"license": "CC0-1.0",
+	"license": "LGPL-3.0",
 	"icon": "assets/brute_force_rendering_culling/icon.png",
 	"environment": "*",
 	"entrypoints": {

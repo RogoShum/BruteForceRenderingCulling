@@ -35,8 +35,9 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	implementation "me.zeroeightsix:fiber:${project.fiber_version}"
+	include "me.zeroeightsix:fiber:${project.fiber_version}"
 	implementation 'org.joml:joml:1.10.4'
-	include 'org.joml:joml:1.10.4'
+
 	modImplementation "maven.modrinth:sodium:mc1.18.2-0.4.1"
 	modImplementation 'maven.modrinth:iris:1.6.11+1.18.2'
 }

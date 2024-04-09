@@ -31,7 +31,7 @@ public class MixinLevelRender implements IEntitiesForRender {
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onapplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.CULL_CHUNK.getValue()) {
+        if (Config.getCullChunk()) {
             if(CullingHandler.OptiFine != null) {
                 try {
                     Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");

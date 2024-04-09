@@ -19,6 +19,7 @@ import rogo.renderingculling.api.CullingHandler;
 import java.util.List;
 
 public class ConfigScreen extends Screen {
+    private boolean release = false;
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
@@ -65,10 +66,6 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        if(CullingHandler.CONFIG_KEY.matches(p_96552_, p_96553_)) {
-            this.onClose();
-            return true;
-        }
         if (this.minecraft.options.keyInventory.matches(p_96552_, p_96553_)) {
             this.onClose();
             return true;
@@ -82,6 +79,14 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
+        if(CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
+            if(release) {
+                this.onClose();
+                return true;
+            } else {
+                release = true;
+            }
+        }
         return super.keyReleased(p_94715_, p_94716_, p_94717_);
     }
 
@@ -94,22 +99,22 @@ public class ConfigScreen extends Screen {
         }
 
         int heightScale = (int) (minecraft.font.lineHeight*2f)+1;
-        NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.SAMPLING.getValue(),
+        NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.getSampling(),
                 (sliderButton) -> {
                     Component component = new TextComponent((int)(sliderButton.getValue() * 100.0D) + "%");
                     return (new TranslatableComponent("brute_force_rendering_culling.sampler")).append(": ").append(component);
                 }, (value) -> {
             double v = Float.parseFloat(String.format("%.2f",value));
-            Config.SAMPLING.setValue(v);
+            Config.setSampling(v);
             Config.save();
         });
-        NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.CULLING_ENTITY_RATE.getValue()/20f,
+        NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.getCullingEntityRate()/20f,
                 (sliderButton) -> {
                     Component component = new TextComponent( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*20);
-            Config.CULLING_ENTITY_RATE.setValue(i);
+            Config.setCullingEntityRate(i);
             Config.save();
         });
         NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
@@ -122,24 +127,24 @@ public class ConfigScreen extends Screen {
             CullingHandler.INSTANCE.checkTexture = !CullingHandler.INSTANCE.checkTexture;
         }, () -> (CullingHandler.INSTANCE.checkTexture ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Check Texture"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Check Texture"))));
-        NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.UPDATE_DELAY.getValue()/10f,
+        NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.getDepthUpdateDelay()/10f,
                 (sliderButton) -> {
                     Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*10);
-            Config.UPDATE_DELAY.setValue(i);
+            Config.setDepthUpdateDelay(i);
             Config.save();
         });
         NeatButton close = new NeatButton(width/2-50, height/2-heightScale*2+12, 100, 14 , (button) -> {
-            Config.CULL_ENTITY.setValue(!Config.CULL_ENTITY.getValue());
+            Config.setCullEntity(!Config.getCullEntity());
             Config.save();
-        }, () -> (Config.CULL_ENTITY.getValue() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))
+        }, () -> (Config.getCullEntity() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))));
         NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
-            Config.CULL_CHUNK.setValue(!Config.CULL_CHUNK.getValue());
+            Config.setCullChunk(!Config.getCullChunk());
             Config.save();
-        }, () -> (Config.CULL_CHUNK.getValue() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))
+        }, () -> (Config.getCullChunk() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))));
         this.addWidget(sampler);
         this.addWidget(delay);
@@ -165,13 +170,5 @@ public class ConfigScreen extends Screen {
         }
 
         this.renderBackground(matrixStack);
-    }
-
-    private boolean isSlotSelected(AbstractWidget button, double mouseX, double mouseY) {
-        return this.isPointInRegion(button.x, button.y, button.getWidth(), button.getWidth(), mouseX, mouseY);
-    }
-
-    protected boolean isPointInRegion(int x, int y, int width, int height, double mouseX, double mouseY) {
-        return mouseX >= (double)(x - 1) && mouseX < (double)(x + width + 1) && mouseY >= (double)(y - 1) && mouseY < (double)(y + height + 1);
     }
 }

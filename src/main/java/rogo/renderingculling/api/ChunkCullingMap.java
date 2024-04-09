@@ -16,7 +16,7 @@ public class ChunkCullingMap extends CullingMap {
 
     @Override
     int delayCount() {
-        return Config.UPDATE_DELAY.getValue();
+        return Config.getDepthUpdateDelay();
     }
 
     @Override

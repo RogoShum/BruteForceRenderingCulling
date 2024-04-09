@@ -117,7 +117,6 @@ public class CullingHandler implements ModInitializer {
     public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
     public static boolean SHADER_ENABLED = false;
-    public boolean configLoaded = false;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -139,7 +138,6 @@ public class CullingHandler implements ModInitializer {
         INSTANCE = this;
         callWhenOn(EnvType.CLIENT, () -> () -> {
             registerEvents();
-            Config.init();
             this.registerShader();
             try {
                 OptiFine = Class.forName("net.optifine.shaders.Shaders");
@@ -216,24 +214,24 @@ public class CullingHandler implements ModInitializer {
 
     private void onStartClientTick(Minecraft client) {
         if (client.player != null && client.level != null) {
-            if(!configLoaded) {
-                Config.loadConfig();
-                configLoaded = true;
-            }
+            Config.loadConfig();
             clientTickCount++;
             if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
                 CHUNK_CULLING_MAP.setDone();
                 LEVEL_HEIGHT_OFFSET = client.level.getMaxSection() - client.level.getMinSection();
                 LEVEL_MIN_SECTION_ABS = Math.abs(client.level.getMinSection());
             }
-            if (CONFIG_KEY.isDown()) {
-                client.setScreen(new ConfigScreen(new TranslatableComponent(MOD_ID + ".config")));
-            }
-            if (DEBUG_KEY.isDown()) {
-                DEBUG = !DEBUG;
-            }
         } else {
             cleanup();
+        }
+    }
+
+    private void onKeyPress() {
+        if (CONFIG_KEY.isDown()) {
+            Minecraft.getInstance().setScreen(new ConfigScreen(new TranslatableComponent(MOD_ID + ".config")));
+        }
+        if (DEBUG_KEY.isDown()) {
+            DEBUG = !DEBUG;
         }
     }
 
@@ -256,7 +254,7 @@ public class CullingHandler implements ModInitializer {
 
     public boolean shouldRenderChunk(AABB aabb) {
         chunkCount++;
-        if (!Config.CULL_CHUNK.getValue() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
+        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
         BlockPos pos = new BlockPos(aabb.getCenter());
@@ -287,10 +285,10 @@ public class CullingHandler implements ModInitializer {
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.getValue()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
         if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
-        if (Config.BLOCK_ENTITY_SKIP.getValue().contains(type))
+        if (Config.getBlockEntitiesSkip().contains(type))
             return false;
 
         long time = System.nanoTime();
@@ -323,9 +321,9 @@ public class CullingHandler implements ModInitializer {
         entityCount++;
         if (entity instanceof Player || entity.isCurrentlyGlowing()) return false;
         if (entity.distanceToSqr(CAMERA.getPosition()) < 4) return false;
-        if (Config.ENTITY_SKIP.getValue().contains(entity.getType().getDescriptionId()))
+        if (Config.getEntitiesSkip().contains(entity.getType().getDescriptionId()))
             return false;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.getValue()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
         long time = System.nanoTime();
 
@@ -382,7 +380,9 @@ public class CullingHandler implements ModInitializer {
     }
 
     public void onProfilerPush(String s) {
-        if (Config.CULL_CHUNK.getValue() && s.equals("apply_frustum")) {
+        if(s.equals("onKeyboardInput")) {
+            onKeyPress();
+        } else if (Config.getCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -469,15 +469,15 @@ public class CullingHandler implements ModInitializer {
 
         if (anyCulling()) {
             if (!checkCulling) {
-                if(Config.CULL_CHUNK.getValue()) {
+                if(Config.getCullChunk()) {
                     long time = System.nanoTime();
-                    if (Config.CULL_CHUNK.getValue() && CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
+                    if (CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
                         CHUNK_CULLING_MAP.readData();
                     }
                     preChunkCullingInitTime += System.nanoTime() - time;
                 }
 
-                if(Config.CULL_ENTITY.getValue()) {
+                if(Config.getCullEntity()) {
                     long time = System.nanoTime();
                     if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
                         ENTITY_CULLING_MAP.readData();
@@ -489,8 +489,8 @@ public class CullingHandler implements ModInitializer {
     }
 
     public void afterRenderingWorld() {
-        if (anyCulling() && !checkCulling) {
-            float sampling = (float) (double) Config.SAMPLING.getValue();
+        if (anyCulling() && !checkCulling && anyNeedTransfer()) {
+            float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();
             int width = window.getWidth();
             int height = window.getHeight();
@@ -555,7 +555,7 @@ public class CullingHandler implements ModInitializer {
         if (anyCulling()) {
             preCullingInitCount++;
 
-            if(Config.CULL_CHUNK.getValue()) {
+            if(Config.getCullChunk()) {
                 int renderingDiameter = Minecraft.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
                 int maxSize = renderingDiameter * LEVEL_HEIGHT_OFFSET * renderingDiameter;
                 int cullingSize = (int) Math.sqrt(maxSize) + 1;
@@ -579,7 +579,7 @@ public class CullingHandler implements ModInitializer {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if(Config.CULL_ENTITY.getValue()) {
+            if(Config.getCullEntity()) {
                 if (ENTITY_CULLING_MAP == null) {
                     ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
                 }
@@ -675,6 +675,11 @@ public class CullingHandler implements ModInitializer {
     }
 
     public static boolean anyCulling() {
-        return Config.CULL_ENTITY.getValue() || Config.CULL_CHUNK.getValue();
+        return Config.getCullEntity() || Config.getCullChunk();
+    }
+
+    public static boolean anyNeedTransfer() {
+        return (CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) ||
+                (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData());
     }
 }
