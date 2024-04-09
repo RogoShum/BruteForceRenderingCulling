@@ -1,7 +1,6 @@
 package rogo.renderingculling.instanced.attribute;
 
-
-import net.minecraft.client.render.VertexFormatElement;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 
 public class GLFloatVertex extends GLVertex{
 
@@ -26,7 +25,7 @@ public class GLFloatVertex extends GLVertex{
     }
 
     @Override
-    public VertexFormatElement.DataType elementType() {
-        return VertexFormatElement.DataType.FLOAT;
+    public VertexFormatElement.Type elementType() {
+        return VertexFormatElement.Type.FLOAT;
     }
 }

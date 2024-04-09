@@ -20,5 +20,8 @@
   "brute_force_rendering_culling.culling_entity_update_rate": "Culled entity update frequency",
 
   "brute_force_rendering_culling.enable": "Enable",
-  "brute_force_rendering_culling.disable": "Disable"
+  "brute_force_rendering_culling.disable": "Disable",
+
+  "brute_force_rendering_culling.skip_culling_entities": "Entities that skip culling",
+  "brute_force_rendering_culling.skip_culling_block_entities": "Block Entities that skip culling"
 }

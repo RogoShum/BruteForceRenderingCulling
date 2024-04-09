@@ -1,9 +1,9 @@
 #version 150
 
 uniform sampler2D Sampler0;
+uniform float RenderDistance;
 
-uniform vec2 DepthSize;
-
+flat in  vec2 DepthScreenSize;
 flat in float xStep;
 flat in float yStep;
 
@@ -18,10 +18,10 @@ float LinearizeDepth(float depth) {
 }
 
 void main() {
-    float minX = gl_FragCoord.x / DepthSize.x;
-    float minY = gl_FragCoord.y / DepthSize.y;
-    float maxX = min(gl_FragCoord.x+1, DepthSize.x)/DepthSize.x;
-    float maxY = min(gl_FragCoord.y+1, DepthSize.y)/DepthSize.y;
+    float minX = gl_FragCoord.x / DepthScreenSize.x;
+    float minY = gl_FragCoord.y / DepthScreenSize.y;
+    float maxX = min(gl_FragCoord.x+1, DepthScreenSize.x)/DepthScreenSize.x;
+    float maxY = min(gl_FragCoord.y+1, DepthScreenSize.y)/DepthScreenSize.y;
     float depth;
 
     for(float x = minX; x <= maxX; x+=xStep) {
@@ -31,5 +31,9 @@ void main() {
         }
     }
 
-    fragColor = vec4(vec3(LinearizeDepth(depth)/500.0), 1.0);
+    if(RenderDistance > 1) {
+        fragColor = vec4(vec3(depth), 1.0);
+    } else {
+        fragColor = vec4(vec3(LinearizeDepth(depth)/500.0), 1.0);
+    }
 }

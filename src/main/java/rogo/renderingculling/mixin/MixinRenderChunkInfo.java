@@ -1,20 +1,20 @@
 package rogo.renderingculling.mixin;
 
-import net.minecraft.client.render.chunk.ChunkBuilder;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import rogo.renderingculling.api.IRenderChunkInfo;
 
-@Mixin(targets = "net.minecraft.client.render.WorldRenderer$ChunkInfo")
+@Mixin(targets = "net.minecraft.client.renderer.LevelRenderer$RenderChunkInfo")
 public class MixinRenderChunkInfo implements IRenderChunkInfo {
 
     @Final
     @Shadow
-    ChunkBuilder.BuiltChunk chunk;
+    ChunkRenderDispatcher.RenderChunk chunk;
 
     @Override
-    public ChunkBuilder.BuiltChunk getRenderChunk() {
+    public ChunkRenderDispatcher.RenderChunk getRenderChunk() {
         return chunk;
     }
 }

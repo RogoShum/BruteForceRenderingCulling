@@ -1,7 +1,7 @@
 package rogo.renderingculling.api;
 
-import net.minecraft.client.render.chunk.ChunkBuilder;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 
 public interface IRenderChunkInfo {
-    ChunkBuilder.BuiltChunk getRenderChunk();
+    ChunkRenderDispatcher.RenderChunk getRenderChunk();
 }

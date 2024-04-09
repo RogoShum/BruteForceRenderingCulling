@@ -1,9 +1,9 @@
 package rogo.renderingculling.api;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
@@ -24,7 +24,7 @@ public class EntityCullingMap extends CullingMap {
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.ENTITY_CULLING_MAP_TARGET.fbo;
+        return CullingHandler.ENTITY_CULLING_MAP_TARGET.frameBufferId;
     }
 
     public boolean isObjectVisible(Object o) {
@@ -101,15 +101,15 @@ public class EntityCullingMap extends CullingMap {
             innerCount = 0;
         }
 
-        private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, Box aabb, int index) {
+        private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, AABB aabb, int index) {
             consumer.accept(buffer -> {
                 buffer.put((float) index);
 
-                float size = (float) Math.max(aabb.getXLength(), aabb.getZLength());
+                float size = (float) Math.max(aabb.getXsize(), aabb.getZsize());
                 buffer.put(size);
-                buffer.put((float) aabb.getYLength());
+                buffer.put((float) aabb.getYsize());
 
-                Vec3d pos = aabb.getCenter();
+                Vec3 pos = aabb.getCenter();
                 buffer.put((float) pos.x);
                 buffer.put((float) pos.y);
                 buffer.put((float) pos.z);
@@ -121,7 +121,7 @@ public class EntityCullingMap extends CullingMap {
                 if(o instanceof Entity) {
                     addAttribute(consumer, ((Entity) o).getBoundingBox(), index);
                 } else if(o instanceof BlockEntity) {
-                    addAttribute(consumer, new Box(((BlockEntity) o).getPos()), index);
+                    addAttribute(consumer, new AABB(((BlockEntity) o).getBlockPos()), index);
                 } else if (o instanceof IAABBObject) {
                     addAttribute(consumer, ((IAABBObject) o).getAABB(), index);
                 }

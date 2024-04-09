@@ -2,14 +2,14 @@ package rogo.renderingculling.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
 
 public class WorldUnloadEvent {
     
     public static final Event<WorldUnloadEvent.Unload> WORLD_UNLOAD = EventFactory.createArrayBacked(WorldUnloadEvent.Unload.class, callbacks -> (clientWorld) -> {
         if (EventFactory.isProfilingEnabled()) {
-            final Profiler profiler = clientWorld.getProfiler();
+            final ProfilerFiller profiler = clientWorld.getProfiler();
             profiler.push("bfrcClientWorldUnload");
 
             for (WorldUnloadEvent.Unload callback : callbacks) {
@@ -29,6 +29,6 @@ public class WorldUnloadEvent {
 
     @FunctionalInterface
     public interface Unload {
-        void onWorldUnload(ClientWorld world);
+        void onWorldUnload(ClientLevel world);
     }
 }

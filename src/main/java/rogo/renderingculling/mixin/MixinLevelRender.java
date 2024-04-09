@@ -1,12 +1,14 @@
 package rogo.renderingculling.mixin;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix4f;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.chunk.ChunkBuilder;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,25 +22,25 @@ import rogo.renderingculling.api.IRenderChunkInfo;
 
 import java.lang.reflect.Field;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public class MixinLevelRender implements IEntitiesForRender {
 
     @Final
     @Shadow
-    private ObjectArrayList<?> chunkInfos;
+    private ObjectArrayList<?> renderChunksInFrustum;
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
-    public void onApplyFrustum(Frustum p_194355_, CallbackInfo ci) {
+    public void onapplyFrustum(Frustum p_194355_, CallbackInfo ci) {
         if (Config.CULL_CHUNK.getValue()) {
             if(CullingHandler.OptiFine != null) {
                 try {
-                    Field field = WorldRenderer.class.getDeclaredField("renderInfosTerrain");
+                    Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
                     field.setAccessible(true);
                     Object value = field.get(this);
 
                     if (value instanceof ObjectArrayList) {
                         ((ObjectArrayList<?>)value).removeIf((o -> {
-                            ChunkBuilder.BuiltChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
+                            ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
                             return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());
                         }));
                     }
@@ -46,21 +48,21 @@ public class MixinLevelRender implements IEntitiesForRender {
                 }
             }
 
-            this.chunkInfos.removeIf((o -> {
-                ChunkBuilder.BuiltChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
+            this.renderChunksInFrustum.removeIf((o -> {
+                ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
                 return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());
             }));
         }
     }
 
-    @Inject(method = "setupFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Frustum;<init>(Lnet/minecraft/util/math/Matrix4f;Lnet/minecraft/util/math/Matrix4f;)V"))
-    public void onSetupFrustum(MatrixStack p_172962_, Vec3d p_172963_, Matrix4f p_172964_, CallbackInfo ci) {
+    @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix4f;)V"))
+    public void onapplyFrustum(PoseStack p_172962_, Vec3 p_172963_, Matrix4f p_172964_, CallbackInfo ci) {
         CullingHandler.PROJECTION_MATRIX = p_172964_.copy();
     }
 
     @Override
     public ObjectArrayList<?> renderChunksInFrustum() {
-        return chunkInfos;
+        return renderChunksInFrustum;
     }
 }
 

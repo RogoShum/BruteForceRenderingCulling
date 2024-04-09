@@ -1,7 +1,7 @@
 package rogo.renderingculling.api;
 
-import net.minecraft.util.math.Box;
+import net.minecraft.world.phys.AABB;
 
 public interface IAABBObject {
-    Box getAABB();
+    AABB getAABB();
 }

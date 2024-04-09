@@ -1,12 +1,13 @@
 package rogo.renderingculling.util;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.pipeline.SodiumTerrainPipeline;
 import net.coderbot.iris.pipeline.WorldRenderingPipeline;
 import net.coderbot.iris.pipeline.newshader.NewWorldRenderingPipeline;
 import net.irisshaders.iris.api.v0.IrisApi;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.lang.reflect.Field;
 
@@ -32,7 +33,7 @@ public class IrisLoaderImpl implements ShaderLoader {
             }
         }
 
-        return MinecraftClient.getInstance().getFramebuffer().fbo;
+        return Minecraft.getInstance().getMainRenderTarget().frameBufferId;
     }
 
     @Override
@@ -42,6 +43,6 @@ public class IrisLoaderImpl implements ShaderLoader {
 
     @Override
     public void bindDefaultFrameBuffer() {
-        MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
+        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }

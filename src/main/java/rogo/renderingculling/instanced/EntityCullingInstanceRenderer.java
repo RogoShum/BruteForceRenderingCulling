@@ -1,6 +1,6 @@
 package rogo.renderingculling.instanced;
 
-import net.minecraft.client.render.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.lwjgl.opengl.GL15;
 
 import java.nio.FloatBuffer;
@@ -8,7 +8,7 @@ import java.nio.FloatBuffer;
 public class EntityCullingInstanceRenderer extends InstanceVertexRenderer {
 
     public EntityCullingInstanceRenderer() {
-        super(VertexFormat.DrawMode.QUADS, new PixelVertexBuffer(0), EntityCullingInstanceRenderer::init, new EntityUpdateVertex(1));
+        super(VertexFormat.Mode.QUADS, new PixelVertexBuffer(0), EntityCullingInstanceRenderer::init, new EntityUpdateVertex(1));
     }
 
     private static void init(FloatBuffer buffer) {

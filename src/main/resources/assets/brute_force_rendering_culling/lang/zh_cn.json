@@ -20,5 +20,8 @@
   "brute_force_rendering_culling.culling_entity_update_rate": "被剔除实体更新频率",
 
   "brute_force_rendering_culling.enable": "开启",
-  "brute_force_rendering_culling.disable": "关闭"
+  "brute_force_rendering_culling.disable": "关闭",
+
+  "brute_force_rendering_culling.skip_culling_entities": "不被剔除的实体",
+  "brute_force_rendering_culling.skip_culling_block_entities": "不被剔除的方块实体"
 }

@@ -1,8 +1,8 @@
 package rogo.renderingculling.api;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.util.Vec2i;
 
 import java.util.HashMap;
@@ -21,11 +21,11 @@ public class ChunkCullingMap extends CullingMap {
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.CHUNK_CULLING_MAP_TARGET.fbo;
+        return CullingHandler.CHUNK_CULLING_MAP_TARGET.frameBufferId;
     }
 
     public int getPosIndex(BlockPos pos) {
-        int renderDistance = MinecraftClient.getInstance().options.getViewDistance();
+        int renderDistance = Minecraft.getInstance().options.getEffectiveRenderDistance();
         int spacePartitionSize = 2 * renderDistance + 1;
         int x = pos.getX() + renderDistance;
         int z = pos.getZ() + renderDistance;
@@ -56,7 +56,7 @@ public class ChunkCullingMap extends CullingMap {
     }
 
     public boolean isChunkVisible(BlockPos pos) {
-        Vec3d camera = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+        Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         int cameraX = (int)camera.x >> 4;
         int cameraY = (int)camera.y/16;
         int cameraZ = (int)camera.z >> 4;
@@ -68,7 +68,7 @@ public class ChunkCullingMap extends CullingMap {
         int chunkX = pos.getX() >> 4;
         int chunkY = pos.getY()/16 + CullingHandler.LEVEL_MIN_SECTION_ABS;
         int chunkZ = pos.getZ() >> 4;
-        pos = new BlockPos(chunkX, chunkY, chunkZ).subtract(cameraPos).withY(chunkY);
+        pos = new BlockPos(chunkX, chunkY, chunkZ).subtract(cameraPos).atY(chunkY);
 
         if(screenIndex.containsKey(pos)) {
             Integer index = screenIndex.get(pos);

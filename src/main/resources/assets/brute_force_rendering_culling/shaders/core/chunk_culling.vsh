@@ -6,10 +6,12 @@
 in vec3 Position;
 
 uniform float[24] CullingFrustum;
+uniform float[8] DepthSize;
 uniform float RenderDistance;
 
 flat out int spacePartitionSize;
 flat out vec4[6] frustum;
+flat out vec2[4] DepthScreenSize;
 
 void main() {
     spacePartitionSize = 2 * int(RenderDistance) + 1;
@@ -20,6 +22,13 @@ void main() {
     vec4(CullingFrustum[12], CullingFrustum[13], CullingFrustum[14], CullingFrustum[15]),
     vec4(CullingFrustum[16], CullingFrustum[17], CullingFrustum[18], CullingFrustum[19]),
     vec4(CullingFrustum[20], CullingFrustum[21], CullingFrustum[22], CullingFrustum[23])
+    );
+
+    DepthScreenSize = vec2[](
+    vec2(DepthSize[0], DepthSize[1]),
+    vec2(DepthSize[2], DepthSize[3]),
+    vec2(DepthSize[4], DepthSize[5]),
+    vec2(DepthSize[6], DepthSize[7])
     );
 
     frustum = frustumData;
