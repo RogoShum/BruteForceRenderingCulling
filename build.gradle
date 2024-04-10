@@ -37,7 +37,9 @@ dependencies {
 	implementation "me.zeroeightsix:fiber:${project.fiber_version}"
 	include "me.zeroeightsix:fiber:${project.fiber_version}"
 	implementation 'org.joml:joml:1.10.4'
-
+	implementation("org.anarres:jcpp:1.4.14")
+	modImplementation("io.github.douira:glsl-transformer:2.0.0-pre13")
+	//include 'org.joml:joml:1.10.4'
 	modImplementation "maven.modrinth:sodium:mc1.18.2-0.4.1"
 	modImplementation 'maven.modrinth:iris:1.6.11+1.18.2'
 }
