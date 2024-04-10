@@ -32,7 +32,7 @@ public class Config {
     private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
 
     public static boolean getCullEntity() {
-        if(unload())
+        if(unload() || !CullingHandler.gl33())
             return false;
         return CULL_ENTITY.getValue();
     }

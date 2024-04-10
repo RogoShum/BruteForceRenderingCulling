@@ -30,6 +30,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
@@ -681,5 +683,14 @@ public class CullingHandler implements ModInitializer {
     public static boolean anyNeedTransfer() {
         return (CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) ||
                 (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData());
+    }
+
+    private static int gl33 = -1;
+    public static boolean gl33() {
+        if(RenderSystem.isOnRenderThread()) {
+            if(gl33 < 0)
+                gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
+        }
+        return gl33 == 1;
     }
 }
