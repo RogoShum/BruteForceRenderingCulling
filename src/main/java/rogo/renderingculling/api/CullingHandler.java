@@ -40,6 +40,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorLevelRender;
@@ -259,7 +261,7 @@ public class CullingHandler {
 
     public boolean shouldRenderChunk(AABB aabb) {
         chunkCount++;
-        if (!Config.CULL_CHUNK.get() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
+        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
         BlockPos pos = new BlockPos(aabb.getCenter());
@@ -290,10 +292,10 @@ public class CullingHandler {
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.get()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
         if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
-        if (Config.BLOCK_ENTITY_SKIP.get().contains(type))
+        if (Config.getBlockEntitiesSkip().contains(type))
             return false;
 
         long time = System.nanoTime();
@@ -326,9 +328,9 @@ public class CullingHandler {
         entityCount++;
         if (entity instanceof Player || entity.isCurrentlyGlowing()) return false;
         if (entity.distanceToSqr(camera.getPosition()) < 4) return false;
-        if (Config.ENTITY_SKIP.get().contains(entity.getType().getRegistryName().toString()))
+        if (Config.getEntitiesSkip().contains(entity.getType().getRegistryName().toString()))
             return false;
-        if (ENTITY_CULLING_MAP == null || !Config.CULL_ENTITY.get()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
         long time = System.nanoTime();
 
@@ -385,7 +387,7 @@ public class CullingHandler {
     }
 
     public void onProfilerPush(String s) {
-        if (Config.CULL_CHUNK.get() && s.equals("apply_frustum")) {
+        if (Config.getCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -472,15 +474,15 @@ public class CullingHandler {
 
         if (anyCulling()) {
             if (!checkCulling) {
-                if(Config.CULL_CHUNK.get()) {
+                if(Config.getCullChunk()) {
                     long time = System.nanoTime();
-                    if (Config.CULL_CHUNK.get() && CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
+                    if (CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
                         CHUNK_CULLING_MAP.readData();
                     }
                     preChunkCullingInitTime += System.nanoTime() - time;
                 }
 
-                if(Config.CULL_ENTITY.get()) {
+                if(Config.getCullEntity()) {
                     long time = System.nanoTime();
                     if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
                         ENTITY_CULLING_MAP.readData();
@@ -492,8 +494,8 @@ public class CullingHandler {
     }
 
     public void afterRenderingWorld() {
-        if (anyCulling() && !checkCulling) {
-            float sampling = (float) (double) Config.SAMPLING.get();
+        if (anyCulling() && !checkCulling && anyNeedTransfer()) {
+            float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();
             int width = window.getWidth();
             int height = window.getHeight();
@@ -561,7 +563,7 @@ public class CullingHandler {
         if (anyCulling()) {
             preCullingInitCount++;
 
-            if(Config.CULL_CHUNK.get()) {
+            if(Config.getCullChunk()) {
                 int renderingDiameter = Minecraft.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
                 int maxSize = renderingDiameter * LEVEL_HEIGHT_OFFSET * renderingDiameter;
                 int cullingSize = (int) Math.sqrt(maxSize) + 1;
@@ -585,7 +587,7 @@ public class CullingHandler {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if(Config.CULL_ENTITY.get()) {
+            if(Config.getCullEntity()) {
                 if (ENTITY_CULLING_MAP == null) {
                     ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
                 }
@@ -681,6 +683,20 @@ public class CullingHandler {
     }
 
     public static boolean anyCulling() {
-        return Config.CULL_ENTITY.get() || Config.CULL_CHUNK.get();
+        return Config.getCullChunk() || Config.getCullEntity();
+    }
+
+    public static boolean anyNeedTransfer() {
+        return (CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) ||
+                (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData());
+    }
+
+    private static int gl33 = -1;
+    public static boolean gl33() {
+        if(RenderSystem.isOnRenderThread()) {
+            if(gl33 < 0)
+                gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
+        }
+        return gl33 == 1;
     }
 }

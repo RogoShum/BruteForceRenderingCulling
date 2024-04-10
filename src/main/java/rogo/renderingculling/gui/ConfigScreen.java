@@ -94,23 +94,21 @@ public class ConfigScreen extends Screen {
         }
 
         int heightScale = (int) (minecraft.font.lineHeight*2f)+1;
-        NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.SAMPLING.get(),
+        NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.getSampling(),
                 (sliderButton) -> {
                     Component component = new TextComponent((int)(sliderButton.getValue() * 100.0D) + "%");
                     return (new TranslatableComponent("brute_force_rendering_culling.sampler")).append(": ").append(component);
                 }, (value) -> {
             double v = Float.parseFloat(String.format("%.2f",value));
-            Config.SAMPLING.set(v);
-            Config.SAMPLING.save();
+            Config.setSampling(v);
         });
-        NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.CULLING_ENTITY_RATE.get()/20f,
+        NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.getCullingEntityRate()/20f,
                 (sliderButton) -> {
                     Component component = new TextComponent( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*20);
-            Config.CULLING_ENTITY_RATE.set(i);
-            Config.CULLING_ENTITY_RATE.save();
+            Config.setCullingEntityRate(i);
         });
         NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
                 , (button) -> {
@@ -122,24 +120,21 @@ public class ConfigScreen extends Screen {
             CullingHandler.INSTANCE.checkTexture = !CullingHandler.INSTANCE.checkTexture;
         }, () -> (CullingHandler.INSTANCE.checkTexture ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Check Texture"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Check Texture"))));
-        NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.UPDATE_DELAY.get()/10f,
+        NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.getDepthUpdateDelay()/10f,
                 (sliderButton) -> {
                     Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
                     return (new TranslatableComponent("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*10);
-            Config.UPDATE_DELAY.set(i);
-            Config.UPDATE_DELAY.save();
+            Config.setDepthUpdateDelay(i);
         });
         NeatButton close = new NeatButton(width/2-50, height/2-heightScale*2+12, 100, 14 , (button) -> {
-            Config.CULL_ENTITY.set(!Config.CULL_ENTITY.get());
-            Config.CULL_ENTITY.save();
-        }, () -> (Config.CULL_ENTITY.get() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))
+            Config.setCullEntity(!Config.getCullEntity());
+        }, () -> (Config.getCullEntity() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))
                 : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))));
         NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
-                Config.CULL_CHUNK.set(!Config.CULL_CHUNK.get());
-                Config.CULL_CHUNK.save();
-            }, () -> (Config.CULL_CHUNK.get() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))
+                Config.setCullChunk(!Config.getCullChunk());
+            }, () -> (Config.getCullChunk() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))
                     : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))));
         this.addWidget(sampler);
         this.addWidget(delay);
@@ -165,13 +160,5 @@ public class ConfigScreen extends Screen {
         }
 
         this.renderBackground(matrixStack);
-    }
-
-    private boolean isSlotSelected(AbstractWidget button, double mouseX, double mouseY) {
-        return this.isPointInRegion(button.x, button.y, button.getWidth(), button.getWidth(), mouseX, mouseY);
-    }
-
-    protected boolean isPointInRegion(int x, int y, int width, int height, double mouseX, double mouseY) {
-        return mouseX >= (double)(x - 1) && mouseX < (double)(x + width + 1) && mouseY >= (double)(y - 1) && mouseY < (double)(y + height + 1);
     }
 }

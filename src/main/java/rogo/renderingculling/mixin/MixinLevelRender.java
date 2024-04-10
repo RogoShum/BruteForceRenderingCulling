@@ -30,8 +30,8 @@ public class MixinLevelRender implements IEntitiesForRender {
     private ObjectArrayList<?> renderChunksInFrustum;
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
-    public void onapplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.CULL_CHUNK.get()) {
+    public void onApplyFrustum(Frustum p_194355_, CallbackInfo ci) {
+        if (Config.getCullChunk()) {
             if(CullingHandler.OptiFine != null) {
                 try {
                     Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
@@ -56,7 +56,7 @@ public class MixinLevelRender implements IEntitiesForRender {
     }
 
     @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lcom/mojang/math/Matrix4f;Lcom/mojang/math/Matrix4f;)V"))
-    public void onapplyFrustum(PoseStack p_172962_, Vec3 p_172963_, Matrix4f p_172964_, CallbackInfo ci) {
+    public void onApplyFrustum(PoseStack p_172962_, Vec3 p_172963_, Matrix4f p_172964_, CallbackInfo ci) {
         CullingHandler.PROJECTION_MATRIX = p_172964_.copy();
     }
 

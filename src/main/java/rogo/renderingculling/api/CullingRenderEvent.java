@@ -48,7 +48,7 @@ public class CullingRenderEvent {
                 CullingHandler.INSTANCE.cullingInitCount++;
             }
 
-            if (Config.CULL_CHUNK.get()) {
+            if (Config.getCullChunk()) {
                 String cullingInitTime = new TranslatableComponent("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
                 drawString(cullingInitTime, width, height - heightScale);
 
@@ -59,7 +59,7 @@ public class CullingRenderEvent {
             String chunkCulling = new TranslatableComponent("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
             drawString(chunkCulling, width, height - heightScale);
 
-            if (Config.CULL_ENTITY.get()) {
+            if (Config.getCullEntity()) {
                 String initTime = new TranslatableComponent("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
                 drawString(initTime, width, height - heightScale);
 
@@ -76,15 +76,15 @@ public class CullingRenderEvent {
                 drawString(entityCulling, width, height - heightScale);
             }
 
-            String Sampler = new TranslatableComponent("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.SAMPLING.get() * 100.0D))) + "%");
+            String Sampler = new TranslatableComponent("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
             drawString(Sampler, width, height - heightScale);
 
             String cull_chunk = new TranslatableComponent("brute_force_rendering_culling.cull_chunk").getString() + ": "
-                    + (Config.CULL_CHUNK.get() ? new TranslatableComponent("brute_force_rendering_culling.enable").getString() : new TranslatableComponent("brute_force_rendering_culling.disable").getString());
+                    + (Config.getCullChunk() ? new TranslatableComponent("brute_force_rendering_culling.enable").getString() : new TranslatableComponent("brute_force_rendering_culling.disable").getString());
             drawString(cull_chunk, width, height - heightScale);
 
             String cull = new TranslatableComponent("brute_force_rendering_culling.cull_entity").getString() + ": "
-                    + (Config.CULL_ENTITY.get() ? new TranslatableComponent("brute_force_rendering_culling.enable").getString() : new TranslatableComponent("brute_force_rendering_culling.disable").getString());
+                    + (Config.getCullEntity() ? new TranslatableComponent("brute_force_rendering_culling.enable").getString() : new TranslatableComponent("brute_force_rendering_culling.disable").getString());
             drawString(cull, width, height - heightScale);
 
             int index = Minecraft.getInstance().fpsString.indexOf("fps");
@@ -145,7 +145,7 @@ public class CullingRenderEvent {
                 screenScale *= 0.5f;
             }
 
-            if(Config.CULL_ENTITY.get()) {
+            if(Config.getCullEntity()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
                 RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -162,7 +162,7 @@ public class CullingRenderEvent {
                 RenderSystem.disableBlend();
             }
 
-            if(Config.CULL_CHUNK.get()) {
+            if(Config.getCullChunk()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
                 RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -197,7 +197,7 @@ public class CullingRenderEvent {
         if(CullingHandler.INSTANCE.checkCulling)
             return;
 
-        if(Config.CULL_ENTITY.get() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
+        if(Config.getCullEntity() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
             CullingHandler.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingHandler.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
             CullingHandler.callDepthTexture();
@@ -205,7 +205,7 @@ public class CullingRenderEvent {
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingHandler.INSTANCED_ENTITY_CULLING_SHADER);
         }
 
-        if(Config.CULL_CHUNK.get() && CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData()) {
+        if(Config.getCullChunk() && CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData()) {
             CullingHandler.useShader(CullingHandler.CHUNK_CULLING_SHADER);
             CullingHandler.CHUNK_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingHandler.CHUNK_CULLING_MAP_TARGET.bindWrite(false);
