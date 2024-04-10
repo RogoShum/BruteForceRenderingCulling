@@ -1,6 +1,5 @@
 package rogo.renderingculling.mixin;
 
-/*
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSectionManager;
 import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
@@ -22,4 +21,3 @@ public abstract class MixinRenderSectionManager {
             cir.setReturnValue(false);
     }
 }
- */

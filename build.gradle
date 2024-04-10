@@ -37,8 +37,8 @@ dependencies {
 	implementation "me.zeroeightsix:fiber:${project.fiber_version}"
 	include "me.zeroeightsix:fiber:${project.fiber_version}"
 
-	//modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.8"
-	//modImplementation 'maven.modrinth:iris:1.6.17+1.20.1'
+	modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.8"
+	modImplementation 'maven.modrinth:iris:1.6.17+1.20.1'
 }
 
 processResources {
