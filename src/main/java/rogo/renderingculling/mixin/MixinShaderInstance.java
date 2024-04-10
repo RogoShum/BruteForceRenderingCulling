@@ -29,7 +29,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
 
     @Final
     @Shadow
-    private static String SHADER_PATH;
+    private static String SHADER_CORE_PATH;
 
     @Nullable
     public Uniform CULLING_CAMERA_POS;
@@ -76,10 +76,10 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
     public String onInit(String string) {
         if(CullingHandler.SHADER_ENABLED) {
-            string = string.replace(SHADER_PATH, "");
+            string = string.replace(SHADER_CORE_PATH, "");
             string = string.replace(".json", "");
             ResourceLocation rl = ResourceLocation.tryParse(string);
-            string = rl.getNamespace() + ":" + SHADER_PATH + rl.getPath() + ".json";
+            string = rl.getNamespace() + ":" + SHADER_CORE_PATH + rl.getPath() + ".json";
         }
         return string;
     }
@@ -87,7 +87,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @ModifyArg(method = "getOrCreate", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
     private static String onGetOrCreate(String string) {
         if(CullingHandler.SHADER_ENABLED) {
-            string = string.replace(SHADER_PATH, "");
+            string = string.replace(SHADER_CORE_PATH, "");
             Program.Type type = Program.Type.FRAGMENT;
             if(string.contains(".fsh"))
                 string = string.replace(".fsh", "");
@@ -96,7 +96,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
                 type = Program.Type.VERTEX;
             }
             ResourceLocation rl = ResourceLocation.tryParse(string);
-            string = rl.getNamespace() + ":" + SHADER_PATH + rl.getPath() + type.getExtension();
+            string = rl.getNamespace() + ":" + SHADER_CORE_PATH + rl.getPath() + type.getExtension();
         }
         return string;
     }

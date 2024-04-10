@@ -8,7 +8,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.serialization.JanksonValueSerial
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.PropertyMirror;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 
 import java.io.*;
 import java.nio.file.*;
@@ -32,7 +32,7 @@ public class Config {
     private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
 
     public static boolean getCullEntity() {
-        if(unload())
+        if(unload() || !CullingHandler.gl33())
             return false;
         return CULL_ENTITY.getValue();
     }
@@ -102,7 +102,7 @@ public class Config {
     }
 
     private static String getTranslatedItem(String s) {
-        return new TranslatableComponent(s).getString();
+        return Component.translatable(s).getString();
     }
 
     public static void save() {

@@ -45,11 +45,9 @@ public class InstanceVertexRenderer implements AutoCloseable {
     }
 
     public void bind() {
-        RenderSystem.glBindBuffer(34963, () -> {
-            RenderSystem.AutoStorageIndexBuffer rendersystem$autostorageindexbuffer = RenderSystem.getSequentialBuffer(this.mode, this.indexCount);
-            this.indexType = rendersystem$autostorageindexbuffer.type();
-            return rendersystem$autostorageindexbuffer.name();
-        });
+        RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(this.mode);
+        this.indexType = autoStorageIndexBuffer.type();
+        autoStorageIndexBuffer.bind(this.indexCount);
     }
 
     public void addInstanceAttrib(Consumer<FloatBuffer> consumer) {

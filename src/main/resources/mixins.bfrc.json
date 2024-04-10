@@ -2,8 +2,8 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "mixins": [
-    "MixinMinecraft",
-    "MixinRenderSectionManager"
+    "MixinMinecraft"
+    //"MixinRenderSectionManager"
   ],
   "minVersion": "0.8.1",
   "compatibilityLevel": "JAVA_17",
@@ -13,6 +13,7 @@
   },
   "client": [
     "AccessorFrustum",
+    "AccessorFrustum$AccessorFrustumIntersection",
     "AccessorLevelRender",
     "AccessorMinecraft",
     "MixinBlockEntityRender",

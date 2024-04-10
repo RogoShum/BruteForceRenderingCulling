@@ -8,8 +8,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -21,7 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -29,7 +28,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLCapabilities;
+import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
@@ -57,7 +61,7 @@ public class CullingHandler implements ModInitializer {
     public static Matrix4f PROJECTION_MATRIX = new Matrix4f();
 
     static {
-        PROJECTION_MATRIX.setIdentity();
+        PROJECTION_MATRIX.identity();
     }
 
     public static final int depthSize = 4;
@@ -228,7 +232,7 @@ public class CullingHandler implements ModInitializer {
 
     private void onKeyPress() {
         if (CONFIG_KEY.isDown()) {
-            Minecraft.getInstance().setScreen(new ConfigScreen(new TranslatableComponent(MOD_ID + ".config")));
+            Minecraft.getInstance().setScreen(new ConfigScreen(Component.translatable(MOD_ID + ".config")));
         }
         if (DEBUG_KEY.isDown()) {
             DEBUG = !DEBUG;
@@ -257,7 +261,7 @@ public class CullingHandler implements ModInitializer {
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
-        BlockPos pos = new BlockPos(aabb.getCenter());
+        BlockPos pos = BlockPos.containing(aabb.getCenter());
         boolean render;
         boolean actualRender = false;
         long time = System.nanoTime();
@@ -543,11 +547,11 @@ public class CullingHandler implements ModInitializer {
             });
 
             PoseStack viewMatrix = new PoseStack();
-            viewMatrix.mulPose(Vector3f.XP.rotationDegrees(CAMERA.getXRot()));
-            viewMatrix.mulPose(Vector3f.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
+            viewMatrix.mulPose(Axis.XP.rotationDegrees(CAMERA.getXRot()));
+            viewMatrix.mulPose(Axis.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
             Vec3 cameraPos = CAMERA.getPosition();
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
-            VIEW_MATRIX = viewMatrix.last().pose().copy();
+            VIEW_MATRIX = new Matrix4f(viewMatrix.last().pose());
         }
     }
 
@@ -681,5 +685,14 @@ public class CullingHandler implements ModInitializer {
     public static boolean anyNeedTransfer() {
         return (CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) ||
                 (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.needTransferData());
+    }
+
+    private static int gl33 = -1;
+    public static boolean gl33() {
+        if(RenderSystem.isOnRenderThread()) {
+            if(gl33 < 0)
+                gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
+        }
+        return gl33 == 1;
     }
 }

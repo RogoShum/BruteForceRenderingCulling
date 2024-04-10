@@ -5,13 +5,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Player;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
@@ -31,7 +30,7 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(PoseStack p_96557_) {
+    public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth()/2;
         int widthScale = width/4;
@@ -50,16 +49,14 @@ public class ConfigScreen extends Screen {
         bufferbuilder.vertex(width+widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         bufferbuilder.vertex(width+widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         bufferbuilder.vertex(width-widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.end();
-        BufferUploader.end(bufferbuilder);
+        BufferUploader.draw(bufferbuilder.end());
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.end();
-        BufferUploader.end(bufferbuilder);
+        BufferUploader.draw(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
@@ -101,8 +98,8 @@ public class ConfigScreen extends Screen {
         int heightScale = (int) (minecraft.font.lineHeight*2f)+1;
         NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.getSampling(),
                 (sliderButton) -> {
-                    Component component = new TextComponent((int)(sliderButton.getValue() * 100.0D) + "%");
-                    return (new TranslatableComponent("brute_force_rendering_culling.sampler")).append(": ").append(component);
+                    Component component = Component.literal((int)(sliderButton.getValue() * 100.0D) + "%");
+                    return (Component.translatable("brute_force_rendering_culling.sampler")).append(": ").append(component);
                 }, (value) -> {
             double v = Float.parseFloat(String.format("%.2f",value));
             Config.setSampling(v);
@@ -110,8 +107,8 @@ public class ConfigScreen extends Screen {
         });
         NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.getCullingEntityRate()/20f,
                 (sliderButton) -> {
-                    Component component = new TextComponent( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
-                    return (new TranslatableComponent("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
+                    Component component = Component.literal( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
+                    return (Component.translatable("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*20);
             Config.setCullingEntityRate(i);
@@ -120,17 +117,17 @@ public class ConfigScreen extends Screen {
         NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
                 , (button) -> {
             CullingHandler.INSTANCE.checkCulling = !CullingHandler.INSTANCE.checkCulling;
-        }, () -> (CullingHandler.INSTANCE.checkCulling ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Debug"))
-                : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Debug"))));
+        }, () -> (CullingHandler.INSTANCE.checkCulling ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.literal("Debug"))
+                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.literal("Debug"))));
         NeatButton checkTexture = new NeatButton(width/2-50, height/2+heightScale*3+12, 100, 14
                 , (button) -> {
             CullingHandler.INSTANCE.checkTexture = !CullingHandler.INSTANCE.checkTexture;
-        }, () -> (CullingHandler.INSTANCE.checkTexture ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TextComponent("Check Texture"))
-                : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TextComponent("Check Texture"))));
+        }, () -> (CullingHandler.INSTANCE.checkTexture ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.literal("Check Texture"))
+                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.literal("Check Texture"))));
         NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.getDepthUpdateDelay()/10f,
                 (sliderButton) -> {
-                    Component component = new TextComponent(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
-                    return (new TranslatableComponent("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
+                    Component component = Component.literal(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
+                    return (Component.translatable("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
                 }, (value) -> {
             int i = (int) (value*10);
             Config.setDepthUpdateDelay(i);
@@ -139,13 +136,13 @@ public class ConfigScreen extends Screen {
         NeatButton close = new NeatButton(width/2-50, height/2-heightScale*2+12, 100, 14 , (button) -> {
             Config.setCullEntity(!Config.getCullEntity());
             Config.save();
-        }, () -> (Config.getCullEntity() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))
-                : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_entity"))));
+        }, () -> (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))
+                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))));
         NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
             Config.setCullChunk(!Config.getCullChunk());
             Config.save();
-        }, () -> (Config.getCullChunk() ? new TranslatableComponent("brute_force_rendering_culling.disable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))
-                : new TranslatableComponent("brute_force_rendering_culling.enable").append(" ").append(new TranslatableComponent("brute_force_rendering_culling.cull_chunk"))));
+        }, () -> (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))
+                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))));
         this.addWidget(sampler);
         this.addWidget(delay);
         this.addWidget(entityUpdateRate);
@@ -162,13 +159,13 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         List<? extends GuiEventListener> children = children();
         for (GuiEventListener button : children) {
             if(button instanceof AbstractWidget b)
-                b.render(matrixStack, mouseX, mouseY, partialTicks);
+                b.render(guiGraphics, mouseX, mouseY, partialTicks);
         }
 
-        this.renderBackground(matrixStack);
+        this.renderBackground(guiGraphics);
     }
 }

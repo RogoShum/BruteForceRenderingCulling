@@ -40,7 +40,7 @@ public abstract class CullingMap {
             GL11.glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-            delayCount = delayCount();
+            delayCount = configDelayCount()+dynamicDelayCount();
         } else {
             delayCount--;
         }
@@ -56,7 +56,15 @@ public abstract class CullingMap {
         setTransferred(false);
     }
 
-    abstract int delayCount();
+    abstract int configDelayCount();
+
+    public int dynamicDelayCount() {
+        if(CullingHandler.INSTANCE.fps > 150) {
+            return CullingHandler.INSTANCE.fps / 150;
+        }
+
+        return 0;
+    }
 
     abstract int bindFrameBufferId();
 

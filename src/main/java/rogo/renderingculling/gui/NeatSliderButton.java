@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractOptionSliderButton;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -38,12 +39,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     }
 
     @Override
-    protected void renderBg(PoseStack p_93600_, Minecraft p_93601_, int p_93602_, int p_93603_) {
-
-    }
-
-    @Override
-    public void render(PoseStack p_93676_, int p_93677_, int p_93678_, float p_93679_) {
+    public void renderWidget(GuiGraphics guiGraphics, int p_93677_, int p_93678_, float p_93679_) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
@@ -54,22 +50,20 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         float alpha = this.isHoveredOrFocused() ? 0.7f : 0.5f;
-        bufferbuilder.vertex(this.x, this.y+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x+width, this.y+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x+width, this.y, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x, this.y, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.end();
-        BufferUploader.end(bufferbuilder);
+        bufferbuilder.vertex(this.getX(), this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX()+width, this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX()+width, this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX(), this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        BufferUploader.draw(bufferbuilder.end());
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         RenderSystem.defaultBlendFunc();
-        bufferbuilder.vertex(this.x-1, this.y+height+1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x+width+1, this.y+height+1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x+width+1, this.y-1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x-1, this.y-1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.end();
-        BufferUploader.end(bufferbuilder);
+        bufferbuilder.vertex(this.getX()-1, this.getY()+height+1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX()+width+1, this.getY()+height+1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX()+width+1, this.getY()-1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX()-1, this.getY()-1, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        BufferUploader.draw(bufferbuilder.end());
         int j = this.active ? 16777215 : 10526880;
-        drawCenteredString(p_93676_, font, this.getMessage(), this.x + this.width / 2, this.y + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
+        guiGraphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
         RenderSystem.disableBlend();
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
@@ -79,12 +73,11 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         alpha = this.isHoveredOrFocused() ? 1.0f : 0.0f;
-        bufferbuilder.vertex(this.x + (int)(this.value * (double)(this.width - 8)), this.y+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x + (int)(this.value * (double)(this.width - 8))+8, this.y+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x + (int)(this.value * (double)(this.width - 8))+8, this.y, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.x + (int)(this.value * (double)(this.width - 8)), this.y, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.end();
-        BufferUploader.end(bufferbuilder);
+        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8))+8, this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8))+8, this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        BufferUploader.draw(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
