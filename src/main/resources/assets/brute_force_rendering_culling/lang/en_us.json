@@ -1,0 +1,24 @@
+{
+  "key.category.brute_force_rendering_culling": "Brute force rendering culling",
+  "brute_force_rendering_culling.key.config": "Config menu",
+  "brute_force_rendering_culling.key.debug": "Debug UI",
+
+  "brute_force_rendering_culling.cull_entity": "Cull Entity",
+  "brute_force_rendering_culling.cull_chunk": "Cull chunk",
+  "brute_force_rendering_culling.sampler": "Depth Sampler Rate",
+  "brute_force_rendering_culling.culling_map_update_delay": "Culling Map update delay",
+  "brute_force_rendering_culling.entity_culling": "Culled entity",
+  "brute_force_rendering_culling.block_culling": "Culled block",
+  "brute_force_rendering_culling.entity_culling_time": "Entity culling cost",
+  "brute_force_rendering_culling.block_culling_time": "Block culling cost",
+  "brute_force_rendering_culling.entity_culling_init": "Entity Culling Map update cost",
+  "brute_force_rendering_culling.chunk_culling_init": "Chunk Culling Map update cost",
+
+  "brute_force_rendering_culling.chunk_culling": "Culled chunk",
+  "brute_force_rendering_culling.chunk_culling_time": "Chunk culling cost",
+
+  "brute_force_rendering_culling.culling_entity_update_rate": "Culled entity update frequency",
+
+  "brute_force_rendering_culling.enable": "Enable",
+  "brute_force_rendering_culling.disable": "Disable"
+}
