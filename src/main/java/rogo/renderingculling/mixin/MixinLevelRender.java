@@ -15,10 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.IEntitiesForRender;
-import rogo.renderingculling.api.IRenderChunkInfo;
+import rogo.renderingculling.api.*;
 
 import java.lang.reflect.Field;
 
@@ -41,7 +38,7 @@ public class MixinLevelRender implements IEntitiesForRender {
                     if (value instanceof ObjectArrayList) {
                         ((ObjectArrayList<?>)value).removeIf((o -> {
                             ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                            return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());
+                            return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk);
                         }));
                     }
                 } catch (NoSuchFieldException | IllegalAccessException ignored) {
@@ -50,7 +47,7 @@ public class MixinLevelRender implements IEntitiesForRender {
 
             this.renderChunksInFrustum.removeIf((o -> {
                 ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                return !CullingHandler.INSTANCE.shouldRenderChunk(chunk.getBoundingBox());
+                return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk);
             }));
         }
     }

@@ -3,6 +3,7 @@
   "package": "rogo.renderingculling.mixin",
   "mixins": [
     "MixinMinecraft",
+    "MixinRenderSection",
     "MixinRenderSectionManager"
   ],
   "minVersion": "0.8.1",
@@ -20,6 +21,7 @@
     "MixinInactiveProfiler",
     "MixinLevel",
     "MixinLevelRender",
+    "MixinRenderChunk",
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
