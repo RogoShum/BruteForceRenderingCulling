@@ -3,11 +3,12 @@
   "package": "rogo.renderingculling.mixin",
   "mixins": [
     "MixinMinecraft",
+    "MixinRenderSection",
     "MixinRenderSectionManager"
   ],
   "minVersion": "0.8.1",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "BruteForceRenderingCulling-fabric-1.18.2-refmap.json",
+  "refmap": "BruteForceRenderingCulling-fabric-1.20.1-refmap.json",
   "injectors": {
     "defaultRequire": 1
   },
@@ -21,9 +22,11 @@
     "MixinInactiveProfiler",
     "MixinLevel",
     "MixinLevelRender",
+    "MixinRenderChunk",
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
-    "fabric.MixinKeyboardHandler"
+    "fabric.MixinKeyboardHandler",
+    "fabric.MixinWindow"
   ]
 }

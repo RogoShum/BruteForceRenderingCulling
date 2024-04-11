@@ -11,13 +11,13 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.IRenderSectionVisibility;
 
 @Mixin(OcclusionCuller.class)
 public abstract class MixinRenderSectionManager {
     @Inject(method = "isSectionVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
     private static void onIsSectionVisible(RenderSection section, Viewport viewport, float maxDistance, CallbackInfoReturnable<Boolean> cir) {
-        if(!CullingHandler.INSTANCE.shouldRenderChunk(
-                new AABB(section.getOriginX(), section.getOriginY(), section.getOriginZ(), (section.getOriginX() + 16), (section.getOriginY() + 16), (section.getOriginZ() + 16))))
+        if(section.getFlags() != 0 && !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section))
             cir.setReturnValue(false);
     }
 }

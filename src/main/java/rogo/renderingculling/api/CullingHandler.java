@@ -242,7 +242,6 @@ public class CullingHandler implements ModInitializer {
     private void cleanup() {
         this.tick = 0;
         clientTickCount = 0;
-        visibleChunk.clear();
         visibleEntity.clear();
         visibleBlock.clear();
         if (CHUNK_CULLING_MAP != null) {
@@ -256,20 +255,20 @@ public class CullingHandler implements ModInitializer {
         SHADER_DEPTH_BUFFER_ID.clear();
     }
 
-    public boolean shouldRenderChunk(AABB aabb) {
+    public boolean shouldRenderChunk(IRenderSectionVisibility section) {
         chunkCount++;
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
-        BlockPos pos = BlockPos.containing(aabb.getCenter());
+
         boolean render;
         boolean actualRender = false;
         long time = System.nanoTime();
 
-        if (visibleChunk.contains(pos)) {
+        if (!section.shouldCheckVisibility(clientTickCount)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkVisible(pos);
+            actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
 
@@ -281,7 +280,7 @@ public class CullingHandler implements ModInitializer {
         if (!render) {
             chunkCulling++;
         } else if(actualRender) {
-            visibleChunk.updateUsageTick(pos, clientTickCount);
+            section.updateVisibleTick(clientTickCount);
         }
 
         return render;
@@ -407,7 +406,6 @@ public class CullingHandler implements ModInitializer {
             blockCount = 0;
 
             if (isNextLoop()) {
-                visibleChunk.tick(clientTickCount, 1);
                 visibleBlock.tick(clientTickCount, 1);
                 visibleEntity.tick(clientTickCount, 1);
                 if (tick == 0) {
