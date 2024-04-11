@@ -20,7 +20,7 @@ public class EntityCullingMap extends CullingMap {
     }
 
     @Override
-    int delayCount() {
+    int configDelayCount() {
         return Config.getDepthUpdateDelay();
     }
 

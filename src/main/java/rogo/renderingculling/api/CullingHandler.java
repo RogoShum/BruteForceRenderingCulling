@@ -259,20 +259,20 @@ public class CullingHandler {
         }
     }
 
-    public boolean shouldRenderChunk(AABB aabb) {
+    public boolean shouldRenderChunk(IRenderSectionVisibility section) {
         chunkCount++;
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
-        BlockPos pos = new BlockPos(aabb.getCenter());
+
         boolean render;
         boolean actualRender = false;
         long time = System.nanoTime();
 
-        if (visibleChunk.contains(pos)) {
+        if (!section.shouldCheckVisibility(clientTickCount)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkVisible(pos);
+            actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
 
@@ -284,7 +284,7 @@ public class CullingHandler {
         if (!render) {
             chunkCulling++;
         } else if(actualRender) {
-            visibleChunk.updateUsageTick(pos, clientTickCount);
+            section.updateVisibleTick(clientTickCount);
         }
 
         return render;

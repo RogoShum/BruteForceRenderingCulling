@@ -28,7 +28,7 @@ mixin {
 
 version = 'forge-1.18.2-'+modVersion
 group = 'rogo.brute_force_rendering_culling' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'BruteForceRenderingCulling'
+archivesBaseName = 'Brute force Rendering Culling'
 
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)

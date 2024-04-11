@@ -15,7 +15,7 @@ public class ChunkCullingMap extends CullingMap {
     }
 
     @Override
-    int delayCount() {
+    int configDelayCount() {
         return Config.getDepthUpdateDelay();
     }
 
@@ -55,20 +55,18 @@ public class ChunkCullingMap extends CullingMap {
         }
     }
 
-    public boolean isChunkVisible(BlockPos pos) {
+    public boolean isChunkVisible(double x, double y, double z) {
         Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         int cameraX = (int)camera.x >> 4;
-        int cameraY = (int)camera.y/16;
         int cameraZ = (int)camera.z >> 4;
-        BlockPos cameraPos = new BlockPos(cameraX, cameraY, cameraZ);
 
-        if(pos.getY() < 0)
-            pos = new BlockPos(pos.getX(), pos.getY()-9, pos.getZ());
+        if(y < 0)
+            y -= 9;
 
-        int chunkX = pos.getX() >> 4;
-        int chunkY = pos.getY()/16 + CullingHandler.LEVEL_MIN_SECTION_ABS;
-        int chunkZ = pos.getZ() >> 4;
-        pos = new BlockPos(chunkX, chunkY, chunkZ).subtract(cameraPos).atY(chunkY);
+        int chunkX = (int) x >> 4;
+        int chunkY = (int) y / 16 + CullingHandler.LEVEL_MIN_SECTION_ABS;
+        int chunkZ = (int) z >> 4;
+        BlockPos pos = new BlockPos(chunkX - cameraX, chunkY, chunkZ - cameraZ);
 
         if(screenIndex.containsKey(pos)) {
             Integer index = screenIndex.get(pos);
