@@ -377,7 +377,7 @@ public class CullingHandler implements ModInitializer {
             this.afterRenderingWorld();
             CullingRenderEvent.onUpdateCullingMap();
             updatingDepth = false;
-        } else if (s.equals("chunk_graph_rebuild")) {
+        } else if (s.equals("chunk_render_lists")) {
             chunkCount = 0;
             chunkCulling = 0;
         }

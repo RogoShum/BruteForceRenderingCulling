@@ -27,6 +27,7 @@ public class Config {
 
     public static void setSampling(double value) {
         SAMPLING.setValue(value);
+        save();
     }
 
     private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
@@ -39,6 +40,7 @@ public class Config {
 
     public static void setCullEntity(boolean value) {
         CULL_ENTITY.setValue(value);
+        save();
     }
 
     private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
@@ -51,6 +53,7 @@ public class Config {
 
     public static void setCullChunk(boolean value) {
         CULL_CHUNK.setValue(value);
+        save();
     }
 
     private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
@@ -63,6 +66,7 @@ public class Config {
 
     public static void setDepthUpdateDelay(int value) {
         UPDATE_DELAY.setValue(value);
+        save();
     }
 
     private static final PropertyMirror<Integer> CULLING_ENTITY_RATE = PropertyMirror.create(ConfigTypes.INTEGER);
@@ -75,6 +79,7 @@ public class Config {
 
     public static void setCullingEntityRate(int value) {
         CULLING_ENTITY_RATE.setValue(value);
+        save();
     }
 
     private static final PropertyMirror<List<String>> ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));

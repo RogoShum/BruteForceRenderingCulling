@@ -45,17 +45,17 @@ public class ConfigScreen extends Screen {
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width-widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width-widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width+widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width+widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width-widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
@@ -103,7 +103,6 @@ public class ConfigScreen extends Screen {
                 }, (value) -> {
             double v = Float.parseFloat(String.format("%.2f",value));
             Config.setSampling(v);
-            Config.save();
         });
         NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.getCullingEntityRate()/20f,
                 (sliderButton) -> {
@@ -112,7 +111,6 @@ public class ConfigScreen extends Screen {
                 }, (value) -> {
             int i = (int) (value*20);
             Config.setCullingEntityRate(i);
-            Config.save();
         });
         NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
                 , (button) -> {
@@ -131,16 +129,13 @@ public class ConfigScreen extends Screen {
                 }, (value) -> {
             int i = (int) (value*10);
             Config.setDepthUpdateDelay(i);
-            Config.save();
         });
         NeatButton close = new NeatButton(width/2-50, height/2-heightScale*2+12, 100, 14 , (button) -> {
             Config.setCullEntity(!Config.getCullEntity());
-            Config.save();
         }, () -> (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))
                 : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))));
         NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
             Config.setCullChunk(!Config.getCullChunk());
-            Config.save();
         }, () -> (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))
                 : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))));
         this.addWidget(sampler);
@@ -160,11 +155,13 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(guiGraphics);
+
         List<? extends GuiEventListener> children = children();
         for (GuiEventListener button : children) {
             if(button instanceof AbstractWidget b)
                 b.render(guiGraphics, mouseX, mouseY, partialTicks);
         }
+
+        this.renderBackground(guiGraphics);
     }
 }
