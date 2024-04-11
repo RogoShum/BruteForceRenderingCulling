@@ -97,7 +97,7 @@ public class Config {
     static {
         ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
         CLIENT_BUILDER.push("Sampling multiple");
-        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.03, 0.0, 1.0);
+        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.05, 0.0, 1.0);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Culling Map update delay");
