@@ -85,8 +85,13 @@ public class Config {
         return BLOCK_ENTITY_SKIP.get();
     }
 
+    private static boolean loaded = false;
+
+    public static void setLoaded() {
+        loaded = true;
+    }
     private static boolean unload() {
-        return false;
+        return !loaded;
     }
 
     static {

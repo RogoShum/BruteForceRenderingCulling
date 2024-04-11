@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 
@@ -135,6 +136,7 @@ dependencies {
     // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
@@ -150,7 +152,18 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     compileOnly fg.deobf("maven.modrinth:embeddium:0.3.12+mc1.20.1")
+    implementation fg.deobf("maven.modrinth:embeddium:0.3.12+mc1.20.1")
     compileOnly fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
+    implementation fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
+}
+
+mixin {
+    // MixinGradle Settings
+    add sourceSets.main, 'mixins.bfrc.refmap.json'
+    config 'mixins.bfrc.json'
+
+    debug.verbose = true
+    debug.export = true
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

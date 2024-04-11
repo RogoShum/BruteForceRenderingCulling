@@ -59,10 +59,10 @@ import java.util.function.Consumer;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
 
-@Mod("assets/brute_force_rendering_culling")
+@Mod("brute_force_rendering_culling")
 public class CullingHandler {
     public static CullingHandler INSTANCE;
-    public static final String MOD_ID = "assets/brute_force_rendering_culling";
+    public static final String MOD_ID = "brute_force_rendering_culling";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static EntityCullingMap ENTITY_CULLING_MAP = null;
     public static ChunkCullingMap CHUNK_CULLING_MAP = null;
@@ -159,14 +159,14 @@ public class CullingHandler {
 
             if (OptiFine != null) {
                 try {
-                    SHADER_LOADER = Class.forName("rogo.rogo.renderingculling.util.OptiFineLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
+                    SHADER_LOADER = Class.forName("rogo.renderingculling.util.OptiFineLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
                 } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
                 }
             }
 
             if (FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("oculus"))) {
                 try {
-                    SHADER_LOADER = Class.forName("rogo.rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
+                    SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
@@ -223,6 +223,7 @@ public class CullingHandler {
                     LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
                 }
+                Config.setLoaded();
             } else {
                 cleanup();
             }
@@ -379,7 +380,7 @@ public class CullingHandler {
             this.afterRenderingWorld();
             CullingRenderEvent.onUpdateCullingMap();
             updatingDepth = false;
-        } else if (s.equals("chunk_graph_rebuild")) {
+        } else if (s.equals("chunk_render_lists")) {
             chunkCount = 0;
             chunkCulling = 0;
         }

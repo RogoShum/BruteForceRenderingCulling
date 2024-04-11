@@ -18,6 +18,7 @@ import rogo.renderingculling.api.CullingHandler;
 import java.util.List;
 
 public class ConfigScreen extends Screen {
+    private boolean release = false;
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
@@ -44,17 +45,17 @@ public class ConfigScreen extends Screen {
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height+heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width-widthScale, height-heightScale, 100.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width-widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width+widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width+widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width-widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, 90.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
@@ -62,10 +63,6 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        if(CullingHandler.CONFIG_KEY.matches(p_96552_, p_96553_)) {
-            this.onClose();
-            return true;
-        }
         if (this.minecraft.options.keyInventory.matches(p_96552_, p_96553_)) {
             this.onClose();
             return true;
@@ -79,6 +76,14 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
+        if(CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
+            if(release) {
+                this.onClose();
+                return true;
+            } else {
+                release = true;
+            }
+        }
         return super.keyReleased(p_94715_, p_94716_, p_94717_);
     }
 
@@ -130,9 +135,9 @@ public class ConfigScreen extends Screen {
         }, () -> (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))
                 : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))));
         NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
-                Config.setCullChunk(!Config.getCullChunk());
-            }, () -> (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))
-                    : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))));
+            Config.setCullChunk(!Config.getCullChunk());
+        }, () -> (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))
+                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))));
         this.addWidget(sampler);
         this.addWidget(delay);
         this.addWidget(entityUpdateRate);
@@ -150,11 +155,13 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(guiGraphics);
+
         List<? extends GuiEventListener> children = children();
         for (GuiEventListener button : children) {
             if(button instanceof AbstractWidget b)
                 b.render(guiGraphics, mouseX, mouseY, partialTicks);
         }
+
+        this.renderBackground(guiGraphics);
     }
 }

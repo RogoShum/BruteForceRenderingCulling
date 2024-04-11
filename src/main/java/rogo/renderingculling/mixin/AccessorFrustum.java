@@ -19,10 +19,4 @@ public interface AccessorFrustum {
 
     @Accessor("intersection")
     FrustumIntersection frustumIntersection();
-
-    @Mixin(FrustumIntersection.class)
-    interface AccessorFrustumIntersection {
-        @Accessor(value = "planes", remap = false)
-        Vector4f[] planes();
-    }
 }
