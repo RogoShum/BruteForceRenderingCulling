@@ -29,27 +29,29 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
-import rogo.renderingculling.util.*;
+import rogo.renderingculling.util.DepthContext;
+import rogo.renderingculling.util.LifeTimer;
+import rogo.renderingculling.util.ShaderLoader;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
 
 public class CullingHandler implements ModInitializer {
     public static CullingHandler INSTANCE;
@@ -196,14 +198,14 @@ public class CullingHandler implements ModInitializer {
     public static final KeyMapping CONFIG_KEY = KeyBindingHelper.registerKeyBinding(
             new KeyMapping(MOD_ID + ".key.config",
                     InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_R,
-            "key.category." + MOD_ID));
+                    GLFW.GLFW_KEY_R,
+                    "key.category." + MOD_ID));
 
     public static final KeyMapping DEBUG_KEY = KeyBindingHelper.registerKeyBinding(
             new KeyMapping(MOD_ID + ".key.debug",
                     InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_X,
-            "key.category." + MOD_ID));
+                    GLFW.GLFW_KEY_X,
+                    "key.category." + MOD_ID));
 
     private void registerEvents() {
         WorldUnloadEvent.WORLD_UNLOAD.register(this::onWorldUnload);
@@ -260,10 +262,9 @@ public class CullingHandler implements ModInitializer {
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
-
+        long time = System.nanoTime();
         boolean render;
         boolean actualRender = false;
-        long time = System.nanoTime();
 
         if (!section.shouldCheckVisibility(clientTickCount)) {
             render = true;
@@ -271,8 +272,6 @@ public class CullingHandler implements ModInitializer {
             actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
-
-        preChunkCullingTime += System.nanoTime() - time;
 
         if (checkCulling)
             render = !render;
@@ -282,7 +281,8 @@ public class CullingHandler implements ModInitializer {
         } else if(actualRender) {
             section.updateVisibleTick(clientTickCount);
         }
-
+        long costTime = System.nanoTime() - time;
+        preChunkCullingTime += costTime;
         return render;
     }
 
