@@ -1,19 +1,19 @@
 package rogo.renderingculling.mixin;
 
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
-import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
-import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
+import me.jellysquid.mods.sodium.client.render.chunk.RenderSectionManager;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.IRenderSectionVisibility;
 
-@Mixin(OcclusionCuller.class)
+@Mixin(RenderSectionManager.class)
 public abstract class MixinRenderSectionManager {
-    @Inject(method = "isSectionVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
-    private static void onIsSectionVisible(RenderSection section, Viewport viewport, float maxDistance, CallbackInfoReturnable<Boolean> cir) {
-        if(section.getFlags() != 0 && !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section))
-            cir.setReturnValue(false);
+    @Inject(method = "isSectionVisible", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/RenderSection;getLastVisibleFrame()I"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+    private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
+        cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
 }

@@ -3,6 +3,7 @@
   "package": "rogo.renderingculling.mixin",
   "mixins": [
     "MixinMinecraft",
+    "MixinOcclusionCuller",
     "MixinRenderSection",
     "MixinRenderSectionManager"
   ],

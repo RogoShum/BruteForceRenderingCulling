@@ -54,7 +54,8 @@ public class Config {
     public static int getDepthUpdateDelay() {
         if(unload())
             return 1;
-        return UPDATE_DELAY.get();
+        int dynamicWithShader = CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
+        return UPDATE_DELAY.get() + dynamicWithShader;
     }
 
     public static void setDepthUpdateDelay(int value) {
