@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.instanced.EntityCullingInstanceRenderer;
@@ -55,7 +56,7 @@ public class CullingRenderEvent {
                 String cullingInitTime = new TranslatableComponent("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
                 drawString(cullingInitTime, width, height - heightScale);
 
-                String chunkCullingTime = new TranslatableComponent("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                String chunkCullingTime = new TranslatableComponent("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
                 drawString(chunkCullingTime, width, height - heightScale);
             }
 

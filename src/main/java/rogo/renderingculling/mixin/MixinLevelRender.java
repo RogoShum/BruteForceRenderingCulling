@@ -38,7 +38,7 @@ public class MixinLevelRender implements IEntitiesForRender {
                     if (value instanceof ObjectArrayList) {
                         ((ObjectArrayList<?>)value).removeIf((o -> {
                             ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                            return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk);
+                            return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
                         }));
                     }
                 } catch (NoSuchFieldException | IllegalAccessException ignored) {
@@ -47,7 +47,7 @@ public class MixinLevelRender implements IEntitiesForRender {
 
             this.renderChunksInFrustum.removeIf((o -> {
                 ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk);
+                return !CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
             }));
         }
     }
