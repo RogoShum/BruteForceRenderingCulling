@@ -41,20 +41,12 @@ public class ChunkCullingMap extends CullingMap {
         int posX = chunkX - cameraX + renderDistance;
         int posZ = chunkZ - cameraZ + renderDistance;
 
-        int index = 1 + (posX * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + posZ * CullingHandler.LEVEL_HEIGHT_OFFSET + chunkY) << 2;
+        int index = 1 + (((posX * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + posZ * CullingHandler.LEVEL_HEIGHT_OFFSET + chunkY) << 2));
 
         if (index > 0 && index < cullingBuffer.limit()) {
             return (cullingBuffer.get(index) & 0xFF) > 0;
         }
 
         return false;
-    }
-
-    public boolean isTransferred() {
-        return transferred;
-    }
-
-    public void setTransferred(boolean transferred) {
-        this.transferred = transferred;
     }
 }

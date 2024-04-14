@@ -123,6 +123,7 @@ public class CullingHandler implements ModInitializer {
     public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
     public static boolean SHADER_ENABLED = false;
+    private int frame;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -257,16 +258,18 @@ public class CullingHandler implements ModInitializer {
         SHADER_DEPTH_BUFFER_ID.clear();
     }
 
-    public boolean shouldRenderChunk(IRenderSectionVisibility section) {
-        chunkCount++;
+    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if(count)
+            chunkCount++;
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
+
         long time = System.nanoTime();
         boolean render;
         boolean actualRender = false;
 
-        if (!section.shouldCheckVisibility(clientTickCount)) {
+        if (!section.shouldCheckVisibility(frame)) {
             render = true;
         } else {
             actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
@@ -276,18 +279,25 @@ public class CullingHandler implements ModInitializer {
         if (checkCulling)
             render = !render;
 
-        if (!render) {
+        if (!render && count) {
             chunkCulling++;
         } else if(actualRender) {
-            section.updateVisibleTick(clientTickCount);
+            section.updateVisibleTick(frame);
         }
-        long costTime = System.nanoTime() - time;
-        preChunkCullingTime += costTime;
+        if(count)
+            preChunkCullingTime += System.nanoTime() - time;
         return render;
     }
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
+
+        //for valkyrien skies
+        if(CAMERA.getPosition().distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) >
+                Minecraft.getInstance().options.getEffectiveRenderDistance() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 2) {
+            return false;
+        }
+
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
         if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
@@ -438,6 +448,7 @@ public class CullingHandler implements ModInitializer {
     }
 
     public void beforeRenderingWorld() {
+        ++frame;
         if(SHADER_LOADER != null) {
             boolean clear = false;
             if(SHADER_LOADER.renderingShader() && !usingShader) {
@@ -657,7 +668,11 @@ public class CullingHandler implements ModInitializer {
     }
 
     public boolean renderingOculus() {
-        return SHADER_LOADER != null && OptiFine == null && SHADER_LOADER.renderingShader();
+        return renderingShader() && OptiFine == null;
+    }
+
+    public boolean renderingShader() {
+        return SHADER_LOADER != null && SHADER_LOADER.renderingShader();
     }
 
     public boolean isNextTick(int tick) {

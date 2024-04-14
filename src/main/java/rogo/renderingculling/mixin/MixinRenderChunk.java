@@ -15,16 +15,16 @@ public abstract class MixinRenderChunk implements IRenderSectionVisibility {
 
     @Shadow @Final private BlockPos.MutableBlockPos origin;
     @Unique
-    private int cullingLastVisibleTick;
+    private int cullingLastVisibleFrame;
 
     @Override
-    public boolean shouldCheckVisibility(int clientTick) {
-        return clientTick - cullingLastVisibleTick > 20;
+    public boolean shouldCheckVisibility(int frame) {
+        return frame != cullingLastVisibleFrame;
     }
 
     @Override
-    public void updateVisibleTick(int clientTick) {
-        cullingLastVisibleTick = clientTick;
+    public void updateVisibleTick(int frame) {
+        cullingLastVisibleFrame = frame;
     }
 
     @Override

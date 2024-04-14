@@ -1,8 +1,8 @@
 package rogo.renderingculling.api;
 
 public interface IRenderSectionVisibility {
-    boolean shouldCheckVisibility(int clientTick);
-    void updateVisibleTick(int clientTick);
+    boolean shouldCheckVisibility(int frame);
+    void updateVisibleTick(int frame);
 
     int getPositionX();
     int getPositionY();

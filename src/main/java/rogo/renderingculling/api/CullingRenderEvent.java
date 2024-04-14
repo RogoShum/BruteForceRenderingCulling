@@ -56,7 +56,7 @@ public class CullingRenderEvent {
                 String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
                 drawString(guiGraphics, cullingInitTime, width, height - heightScale);
 
-                String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / CullingHandler.INSTANCE.chunkCount) + " ns";
+                String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
                 drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
             }
 
