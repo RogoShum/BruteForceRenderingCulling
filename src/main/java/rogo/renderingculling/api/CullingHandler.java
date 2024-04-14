@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static java.lang.Thread.MAX_PRIORITY;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
 
@@ -128,6 +129,7 @@ public class CullingHandler {
     public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
     private int frame;
+    private OcclusionCullerThread occlusionCullerThread;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -222,6 +224,11 @@ public class CullingHandler {
                     CHUNK_CULLING_MAP.setDone();
                     LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
+
+                    occlusionCullerThread = new OcclusionCullerThread();
+                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
+                    occlusionCullerThread.setPriority(MAX_PRIORITY);
+                    occlusionCullerThread.start();
                 }
                 Config.setLoaded();
             } else {
@@ -273,7 +280,7 @@ public class CullingHandler {
         if (!section.shouldCheckVisibility(frame)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+            //actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
 
@@ -437,6 +444,10 @@ public class CullingHandler {
                     entityCullingInitTime = preEntityCullingInitTime;
                     preEntityCullingInitTime = 0;
 
+                    if(CullingHandler.CHUNK_CULLING_MAP != null) {
+                        CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount = CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount;
+                        CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount = 0;
+                    }
 
                     if (preChunkCullingTime != 0) {
                         chunkCullingTime = preChunkCullingTime;

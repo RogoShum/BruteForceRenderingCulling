@@ -15,7 +15,6 @@ import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
-import org.spongepowered.asm.mixin.gen.Accessor;
 import rogo.renderingculling.instanced.EntityCullingInstanceRenderer;
 import rogo.renderingculling.mixin.AccessorFrustum;
 
@@ -53,12 +52,21 @@ public class CullingRenderEvent {
                 CullingHandler.INSTANCE.cullingInitCount++;
             }
 
+            if(CullingHandler.INSTANCE.chunkCount == 0 ) {
+                CullingHandler.INSTANCE.chunkCount++;
+            }
+
             if (Config.getCullChunk()) {
                 String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
                 drawString(guiGraphics, cullingInitTime, width, height - heightScale);
 
                 String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
                 drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
+
+                if(CullingHandler.CHUNK_CULLING_MAP != null) {
+                    String chunkCullingCount = Component.translatable("brute_force_rendering_culling.chunk_update_count").getString() + ": " + CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount;
+                    drawString(guiGraphics, chunkCullingCount, width, height - heightScale);
+                }
             }
 
             String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
