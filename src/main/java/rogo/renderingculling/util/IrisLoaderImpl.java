@@ -25,7 +25,7 @@ public class IrisLoaderImpl implements ShaderLoader {
                 if (f != null) {
                     f.setAccessible(true);
                     SodiumTerrainPipeline sodiumTerrainPipeline = (SodiumTerrainPipeline) f.get(pipeline);
-                    GlFramebuffer glFramebuffer = sodiumTerrainPipeline.getTerrainFramebuffer();
+                    GlFramebuffer glFramebuffer = sodiumTerrainPipeline.getTerrainSolidFramebuffer();
                     return glFramebuffer.getId();
                 }
             } catch (NoSuchFieldException | IllegalAccessException ignored) {

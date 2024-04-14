@@ -184,7 +184,7 @@ dependencies {
     //implementation fg.deobf("org.embeddedt:embeddium-1.18.2:0.3.9-git.ea848f4+mc1.18.2")
     // Examples using mod jars from ./libs
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
-    implementation fg.deobf("blank:oculus-1.18.2:1.5.2")
+    implementation fg.deobf("blank:oculus-1.18.2:1.6.4")
     implementation fg.deobf("blank:rubidium-1.18.2:0.5.6")
     //implementation fg.deobf("blank:magick-1.18.2:0.9.1")
     //implementation fg.deobf("blank:rubidium-1.18.2:0.4.18")

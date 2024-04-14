@@ -124,8 +124,9 @@ public class CullingHandler {
     private String shaderName = "";
     protected static int LEVEL_HEIGHT_OFFSET;
     protected static int LEVEL_MIN_SECTION_ABS;
-    public static Camera camera;
+    public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
+    private int frame;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -259,39 +260,47 @@ public class CullingHandler {
         }
     }
 
-    public boolean shouldRenderChunk(IRenderSectionVisibility section) {
-        chunkCount++;
+    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if(count)
+            chunkCount++;
         if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
             return true;
         }
 
+        long time = System.nanoTime();
         boolean render;
         boolean actualRender = false;
-        long time = System.nanoTime();
 
-        if (!section.shouldCheckVisibility(clientTickCount)) {
+        if (!section.shouldCheckVisibility(frame)) {
             render = true;
         } else {
             actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
 
-        preChunkCullingTime += System.nanoTime() - time;
 
         if (checkCulling)
             render = !render;
 
-        if (!render) {
+        if (!render && count) {
             chunkCulling++;
         } else if(actualRender) {
-            section.updateVisibleTick(clientTickCount);
+            section.updateVisibleTick(frame);
         }
-
+        if(count)
+            preChunkCullingTime += System.nanoTime() - time;
         return render;
     }
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
+
+        //for valkyrien skies
+        if(CAMERA.getPosition().distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) >
+                Minecraft.getInstance().options.getEffectiveRenderDistance() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 2) {
+            return false;
+        }
+
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
         if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
@@ -327,7 +336,7 @@ public class CullingHandler {
     public boolean shouldSkipEntity(Entity entity) {
         entityCount++;
         if (entity instanceof Player || entity.isCurrentlyGlowing()) return false;
-        if (entity.distanceToSqr(camera.getPosition()) < 4) return false;
+        if (entity.distanceToSqr(CAMERA.getPosition()) < 4) return false;
         if (Config.getEntitiesSkip().contains(entity.getType().getRegistryName().toString()))
             return false;
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
@@ -393,7 +402,7 @@ public class CullingHandler {
                 chunkCulling = 0;
             }
         } else if (s.equals("center")) {
-            camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            CAMERA = Minecraft.getInstance().gameRenderer.getMainCamera();
             int tick = clientTickCount % 20;
             nextTick = new boolean[20];
 
@@ -441,6 +450,7 @@ public class CullingHandler {
     }
 
     public void beforeRenderingWorld() {
+        ++frame;
         if(SHADER_LOADER != null) {
             boolean clear = false;
             if(SHADER_LOADER.renderingShader() && !usingShader) {
@@ -548,12 +558,12 @@ public class CullingHandler {
             });
 
             net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
-                    , camera, Minecraft.getInstance().getFrameTime());
+                    , CAMERA, Minecraft.getInstance().getFrameTime());
             PoseStack viewMatrix = new PoseStack();
             viewMatrix.mulPose(Vector3f.ZP.rotationDegrees(cameraSetup.getRoll()));
-            viewMatrix.mulPose(Vector3f.XP.rotationDegrees(camera.getXRot()));
-            viewMatrix.mulPose(Vector3f.YP.rotationDegrees(camera.getYRot() + 180.0F));
-            Vec3 cameraPos = camera.getPosition();
+            viewMatrix.mulPose(Vector3f.XP.rotationDegrees(CAMERA.getXRot()));
+            viewMatrix.mulPose(Vector3f.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
+            Vec3 cameraPos = CAMERA.getPosition();
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
             VIEW_MATRIX = viewMatrix.last().pose().copy();
         }
@@ -663,7 +673,11 @@ public class CullingHandler {
     }
 
     public boolean renderingOculus() {
-        return SHADER_LOADER != null && OptiFine == null && SHADER_LOADER.renderingShader();
+        return renderingShader() && OptiFine == null;
+    }
+
+    public boolean renderingShader() {
+        return SHADER_LOADER != null && SHADER_LOADER.renderingShader();
     }
 
     public boolean isNextTick(int tick) {
