@@ -39,6 +39,7 @@ import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
 import rogo.renderingculling.util.LifeTimer;
+import rogo.renderingculling.util.OcclusionCullerThread;
 import rogo.renderingculling.util.ShaderLoader;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static java.lang.Thread.MAX_PRIORITY;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
 
@@ -227,6 +229,11 @@ public class CullingHandler implements ModInitializer {
                 CHUNK_CULLING_MAP.setDone();
                 LEVEL_HEIGHT_OFFSET = client.level.getMaxSection() - client.level.getMinSection();
                 LEVEL_MIN_SECTION_ABS = Math.abs(client.level.getMinSection());
+
+                OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
+                occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
+                occlusionCullerThread.setPriority(MAX_PRIORITY);
+                occlusionCullerThread.start();
             }
         } else {
             cleanup();
@@ -272,9 +279,10 @@ public class CullingHandler implements ModInitializer {
         if (!section.shouldCheckVisibility(frame)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
             render = actualRender;
         }
+
 
         if (checkCulling)
             render = !render;
@@ -437,6 +445,10 @@ public class CullingHandler implements ModInitializer {
                     entityCullingInitTime = preEntityCullingInitTime;
                     preEntityCullingInitTime = 0;
 
+                    if(CullingHandler.CHUNK_CULLING_MAP != null) {
+                        CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount = CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount;
+                        CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount = 0;
+                    }
 
                     if (preChunkCullingTime != 0) {
                         chunkCullingTime = preChunkCullingTime;

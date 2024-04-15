@@ -16,6 +16,7 @@
 
   "brute_force_rendering_culling.chunk_culling": "Culled chunk",
   "brute_force_rendering_culling.chunk_culling_time": "Chunk culling cost",
+  "brute_force_rendering_culling.chunk_update_count": "Chunk Update Count",
 
   "brute_force_rendering_culling.culling_entity_update_rate": "Culled entity update frequency",
 
