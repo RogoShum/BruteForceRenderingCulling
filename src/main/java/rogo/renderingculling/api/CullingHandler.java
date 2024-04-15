@@ -167,7 +167,7 @@ public class CullingHandler {
                 }
             }
 
-            if (FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("oculus"))) {
+            if (hasMod("oculus")) {
                 try {
                     SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
@@ -215,27 +215,8 @@ public class CullingHandler {
         }
     }
 
-    @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
-                clientTickCount++;
-                if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
-                    CHUNK_CULLING_MAP.setDone();
-                    LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
-                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
-
-                    occlusionCullerThread = new OcclusionCullerThread();
-                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
-                    occlusionCullerThread.setPriority(MAX_PRIORITY);
-                    occlusionCullerThread.start();
-                }
-                Config.setLoaded();
-            } else {
-                cleanup();
-            }
-        }
-
+    public static boolean hasMod(String s) {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
     }
 
     private void cleanup() {
@@ -266,36 +247,38 @@ public class CullingHandler {
         }
     }
 
-    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
-        if(count)
-            chunkCount++;
-        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
-            return true;
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
+                clientTickCount++;
+                if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
+                    CHUNK_CULLING_MAP.setDone();
+                    LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
+                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
+
+                    DepthCuller<?> culler;
+
+                    if (hasMod("embeddium") || hasMod("rubidium")) {
+                        try {
+                            culler = Class.forName("rogo.renderingculling.util.SodiumDepthCuller").asSubclass(DepthCuller.class).newInstance();
+                        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        culler = new VanillaDepthCuller();
+                    }
+                    occlusionCullerThread = new OcclusionCullerThread(culler);
+                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
+                    occlusionCullerThread.setPriority(MAX_PRIORITY);
+                    occlusionCullerThread.start();
+                }
+                Config.setLoaded();
+            } else {
+                cleanup();
+            }
         }
 
-        long time = System.nanoTime();
-        boolean render;
-        boolean actualRender = false;
-
-        if (!section.shouldCheckVisibility(frame)) {
-            render = true;
-        } else {
-            //actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
-            render = actualRender;
-        }
-
-
-        if (checkCulling)
-            render = !render;
-
-        if (!render && count) {
-            chunkCulling++;
-        } else if(actualRender) {
-            section.updateVisibleTick(frame);
-        }
-        if(count)
-            preChunkCullingTime += System.nanoTime() - time;
-        return render;
     }
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
@@ -721,5 +704,45 @@ public class CullingHandler {
                 gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
         }
         return gl33 == 1;
+    }
+
+    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if(count)
+            chunkCount++;
+        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
+            return true;
+        }
+
+        long time = System.nanoTime();
+        boolean render;
+        boolean actualRender = false;
+
+        if (!section.shouldCheckVisibility(frame)) {
+            render = true;
+        } else {
+            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+            render = actualRender;
+        }
+
+
+        if (checkCulling)
+            render = !render;
+
+        if (!render && count) {
+            chunkCulling++;
+        } else if(actualRender) {
+            section.updateVisibleTick(frame);
+        }
+        if(count)
+            preChunkCullingTime += System.nanoTime() - time;
+        return render;
+    }
+
+    public int getFrame() {
+        return frame;
+    }
+
+    public DepthCuller<?> getDepthCuller() {
+        return occlusionCullerThread.getDepthCuller();
     }
 }

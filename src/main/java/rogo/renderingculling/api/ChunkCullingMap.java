@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -58,14 +59,20 @@ public class ChunkCullingMap extends CullingMap {
         return isChunkVisible(posX, chunkY, posZ);
     }
 
-    public boolean isChunkVisible(int posX, int posY, int posZ) {
-        int index = 1 + ((((posX + renderDistance) * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + (posZ + renderDistance) * CullingHandler.LEVEL_HEIGHT_OFFSET + posY) << 2));
+    @NotNull
+    private static BlockPos getOriginPos() {
+        Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        int cameraX = (int) camera.x >> 4;
+        int cameraY = (int) camera.y >> 4;
+        int cameraZ = (int) camera.z >> 4;
 
-        if (index > 0 && index < cullingBuffer.limit()) {
-            return (cullingBuffer.get(index) & 0xFF) > 0;
+        BlockPos origin = new BlockPos(cameraX, cameraY, cameraZ);
+        if (origin.getY() < Minecraft.getInstance().level.getMinSection()) {
+            origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMinSection(), cameraZ);
+        } else if (origin.getY() >= Minecraft.getInstance().level.getMaxSection()) {
+            origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMaxSection() - 1, cameraZ);
         }
-
-        return false;
+        return origin;
     }
 
     @Override
@@ -74,51 +81,31 @@ public class ChunkCullingMap extends CullingMap {
         updateVisibleChunks = true;
     }
 
+    public boolean isChunkVisible(int posX, int posY, int posZ) {
+        int index = 1 + ((((posX + renderDistance) * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + (posZ + renderDistance) * CullingHandler.LEVEL_HEIGHT_OFFSET + posY) << 2));
+
+        if (index > 0 && index < cullingBuffer.limit()) {
+            boolean visible = (cullingBuffer.get(index) & 0xFF) > 0;
+            return visible;
+        }
+
+        return false;
+    }
+
     public void updateVisibleChunks() {
         if(updateVisibleChunks) {
-            Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-            int cameraX = (int)camera.x >> 4;
-            int cameraY = (int)camera.y >> 4;
-            int cameraZ = (int)camera.z >> 4;
+            BlockPos origin = getOriginPos();
 
-            BlockPos origin = new BlockPos(cameraX, cameraY, cameraZ);
-            if (origin.getY() < Minecraft.getInstance().level.getMinSection()) {
-                origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMinSection(), cameraZ);
-            } else if (origin.getY() >= Minecraft.getInstance().level.getMaxSection()) {
-                origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMaxSection() - 1, cameraZ);
-            }
-
-            bfsSearch(origin);
+            //bfsSearch(origin);
 
             updateVisibleChunks = false;
-            queueUpdateCount++;
+
         }
     }
 
     public Queue<BlockPos> getVisibleChunks() {
-        if(visibleChunks.isEmpty()) {
-            Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-            int cameraX = (int)camera.x >> 4;
-            int cameraY = (int)camera.y >> 4;
-            int cameraZ = (int)camera.z >> 4;
-
-            BlockPos origin = new BlockPos(cameraX, cameraY, cameraZ);
-            if (origin.getY() < Minecraft.getInstance().level.getMinSection()) {
-                origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMinSection(), cameraZ);
-            } else if (origin.getY() >= Minecraft.getInstance().level.getMaxSection()) {
-                origin = new BlockPos(cameraX, Minecraft.getInstance().level.getMaxSection() - 1, cameraZ);
-            }
-            visibleChunks.add(origin);
-
-            for (int[] direction : DIRECTIONS) {
-                int newX = origin.getX() + direction[0];
-                int newY = origin.getY() + direction[1];
-                int newZ = origin.getZ() + direction[2];
-
-                BlockPos neighborChunk = new BlockPos(newX, newY, newZ);
-                visibleChunks.add(neighborChunk);
-            }
-        }
+        bfsSearch(getOriginPos());
+        queueUpdateCount++;
         return visibleChunks;
     }
 
@@ -129,10 +116,24 @@ public class ChunkCullingMap extends CullingMap {
 
         visited.add(BlockPos.ZERO);
         queue.offer(BlockPos.ZERO);
+        visible.add(new BlockPos(origin.getX(), origin.getY(), origin.getZ()));
+
+        for (int[] direction : DIRECTIONS) {
+            int newX = direction[0];
+            int newY = direction[1];
+            int newZ = direction[2];
+
+            BlockPos neighborChunk = new BlockPos(newX, newY, newZ);
+
+            queue.offer(neighborChunk);
+            visited.add(neighborChunk);
+        }
 
         while (!queue.isEmpty()) {
             BlockPos chunkPos = queue.poll();
-            BlockPos offsetChunkPos = chunkPos.offset(origin).atY(chunkPos.getY() + origin.getY());
+            BlockPos offsetChunkPos = new BlockPos((chunkPos.getX() + origin.getX())
+                    , (chunkPos.getY() + origin.getY())
+                    , (chunkPos.getZ() + origin.getZ()));
 
             if(!isChunkVisible(offsetChunkPos.getX(), offsetChunkPos.getY(), offsetChunkPos.getZ())) {
                 continue;
@@ -157,6 +158,12 @@ public class ChunkCullingMap extends CullingMap {
                     visited.add(neighborChunk);
                 }
             }
+        }
+
+        if (!isChunkVisible(origin.getX(), origin.getY(), origin.getZ())) {
+            Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+            boolean is = isChunkOffsetCameraVisible((int) camera.x, (int) camera.y, (int) camera.z);
+            boolean abc = is;
         }
 
         visibleChunks = visible;
