@@ -2,10 +2,13 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "mixins": [
+    "InvokerRenderSectionManager",
+    "InvokerRenderSectionManager$AccessorSodiumWorldRenderer",
     "MixinMinecraft",
     "MixinOcclusionCuller",
     "MixinRenderSection",
-    "MixinRenderSectionManager"
+    "MixinRenderSectionManager",
+    "MixinSodiumWorldRender"
   ],
   "minVersion": "0.8.1",
   "compatibilityLevel": "JAVA_17",

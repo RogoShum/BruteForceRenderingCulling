@@ -2,25 +2,42 @@ package rogo.renderingculling.util;
 
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.DepthCuller;
+import rogo.renderingculling.api.VisibleChunkUploader;
+
+import static rogo.renderingculling.api.CullingHandler.hasMod;
 
 public class OcclusionCullerThread extends Thread {
-    private final DepthCuller<?> depthCuller;
+    private final VisibleChunkUploader<?> uploader;
 
-    public OcclusionCullerThread(DepthCuller<?> depthCuller) {
-        this.depthCuller = depthCuller;
+    public OcclusionCullerThread() {
+        this.uploader = getUploader();
     }
 
     @Override
     public void run() {
         while (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
             if (Config.getCullChunk()) {
-                CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks();
+                if(CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks()) {
+
+                }
+                uploader.update();
             }
         }
     }
 
-    public DepthCuller<?> getDepthCuller() {
-        return this.depthCuller;
+    private VisibleChunkUploader<?> getUploader() {
+        VisibleChunkUploader<?> uploader1;
+
+        if (hasMod("embeddium") || hasMod("rubidium")) {
+            try {
+                uploader1 = Class.forName("rogo.renderingculling.util.SodiumChunkUploader").asSubclass(VisibleChunkUploader.class).newInstance();
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            uploader1 = new VanillaChunkUploader();
+        }
+
+        return uploader1;
     }
 }

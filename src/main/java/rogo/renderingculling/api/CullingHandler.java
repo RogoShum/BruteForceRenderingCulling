@@ -129,7 +129,6 @@ public class CullingHandler {
     public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
     private int frame;
-    private OcclusionCullerThread occlusionCullerThread;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -215,10 +214,6 @@ public class CullingHandler {
         }
     }
 
-    public static boolean hasMod(String s) {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
-    }
-
     private void cleanup() {
         this.tick = 0;
         clientTickCount = 0;
@@ -257,18 +252,7 @@ public class CullingHandler {
                     LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
 
-                    DepthCuller<?> culler;
-
-                    if (hasMod("embeddium") || hasMod("rubidium")) {
-                        try {
-                            culler = Class.forName("rogo.renderingculling.util.SodiumDepthCuller").asSubclass(DepthCuller.class).newInstance();
-                        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-                    } else {
-                        culler = new VanillaDepthCuller();
-                    }
-                    occlusionCullerThread = new OcclusionCullerThread(culler);
+                    OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
                     occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
                     occlusionCullerThread.setPriority(MAX_PRIORITY);
                     occlusionCullerThread.start();
@@ -279,6 +263,38 @@ public class CullingHandler {
             }
         }
 
+    }
+
+    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if(count)
+            chunkCount++;
+        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
+            return true;
+        }
+
+        long time = System.nanoTime();
+        boolean render;
+        boolean actualRender = false;
+
+        if (!section.shouldCheckVisibility(frame)) {
+            render = true;
+        } else {
+            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+            render = actualRender;
+        }
+
+
+        if (checkCulling)
+            render = !render;
+
+        if (!render && count) {
+            chunkCulling++;
+        } else if(actualRender) {
+            section.updateVisibleTick(frame);
+        }
+        if(count)
+            preChunkCullingTime += System.nanoTime() - time;
+        return render;
     }
 
     public boolean shouldSkipBlock(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
@@ -706,43 +722,11 @@ public class CullingHandler {
         return gl33 == 1;
     }
 
-    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
-        if(count)
-            chunkCount++;
-        if (!Config.getCullChunk() || CHUNK_CULLING_MAP == null || !CHUNK_CULLING_MAP.isDone()) {
-            return true;
-        }
-
-        long time = System.nanoTime();
-        boolean render;
-        boolean actualRender = false;
-
-        if (!section.shouldCheckVisibility(frame)) {
-            render = true;
-        } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
-            render = actualRender;
-        }
-
-
-        if (checkCulling)
-            render = !render;
-
-        if (!render && count) {
-            chunkCulling++;
-        } else if(actualRender) {
-            section.updateVisibleTick(frame);
-        }
-        if(count)
-            preChunkCullingTime += System.nanoTime() - time;
-        return render;
-    }
-
     public int getFrame() {
         return frame;
     }
 
-    public DepthCuller<?> getDepthCuller() {
-        return occlusionCullerThread.getDepthCuller();
+    public static boolean hasMod(String s) {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
     }
 }
