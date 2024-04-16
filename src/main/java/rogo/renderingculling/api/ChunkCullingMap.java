@@ -25,7 +25,7 @@ public class ChunkCullingMap extends CullingMap {
     }
 
     private boolean updateVisibleChunks = true;
-    private Queue<BlockPos> visibleChunks = new ArrayDeque<>();
+    private Set<BlockPos> visibleChunks = new HashSet<>();
     private final AtomicReference<Object> uploaderResult = new AtomicReference<>();
     private static final int[][] DIRECTIONS = {{0, 1, 0}, {0, -1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, 1}, {0, 0, -1}};
 
@@ -117,7 +117,7 @@ public class ChunkCullingMap extends CullingMap {
         return false;
     }
 
-    public Queue<BlockPos> getVisibleChunks() {
+    public Set<BlockPos> getVisibleChunks() {
         return visibleChunks;
     }
 
@@ -131,7 +131,7 @@ public class ChunkCullingMap extends CullingMap {
 
     private void bfsSearch(BlockPos origin) {
         Queue<BlockPos> queue = new ArrayDeque<>();
-        Queue<BlockPos> visible = new ArrayDeque<>();
+        Set<BlockPos> visible = new HashSet<>();
         Set<BlockPos> visited = new HashSet<>();
 
         visited.add(new BlockPos(0, origin.getY(), 0));

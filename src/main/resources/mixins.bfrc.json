@@ -4,6 +4,7 @@
   "mixins": [
     "InvokerRenderSectionManager",
     "InvokerRenderSectionManager$AccessorSodiumWorldRenderer",
+    "MixinChunkRenderList",
     "MixinMinecraft",
     "MixinOcclusionCuller",
     "MixinRenderSection",
