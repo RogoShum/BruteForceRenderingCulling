@@ -87,7 +87,7 @@ public class CullingHandler {
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
     public static boolean applyFrustum;
-    public boolean DEBUG = false;
+    public int DEBUG = 0;
     public static int[] DEPTH_TEXTURE = new int[depthSize];
     public static ShaderLoader SHADER_LOADER = null;
     public static Class<?> OptiFine = null;
@@ -136,6 +136,7 @@ public class CullingHandler {
                 DEPTH_BUFFER_TARGET[i] = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
                 DEPTH_BUFFER_TARGET[i].setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
             }
+
             CHUNK_CULLING_MAP_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
             CHUNK_CULLING_MAP_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
             MONOCHROME_DEPTH_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
@@ -237,7 +238,9 @@ public class CullingHandler {
                 Minecraft.getInstance().setScreen(new ConfigScreen(Component.translatable(MOD_ID + ".config")));
             }
             if (DEBUG_KEY.isDown()) {
-                DEBUG = !DEBUG;
+                DEBUG++;
+                if(DEBUG >= 3)
+                    DEBUG = 0;
             }
         }
     }
@@ -251,11 +254,6 @@ public class CullingHandler {
                     CHUNK_CULLING_MAP.setDone();
                     LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
-
-                    OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
-                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
-                    occlusionCullerThread.setPriority(MAX_PRIORITY);
-                    occlusionCullerThread.start();
                 }
                 Config.setLoaded();
             } else {
@@ -279,9 +277,11 @@ public class CullingHandler {
         if (!section.shouldCheckVisibility(frame)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
-            render = actualRender;
+
         }
+
+        actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+        render = actualRender;
 
 
         if (checkCulling)
@@ -720,10 +720,6 @@ public class CullingHandler {
                 gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
         }
         return gl33 == 1;
-    }
-
-    public int getFrame() {
-        return frame;
     }
 
     public static boolean hasMod(String s) {

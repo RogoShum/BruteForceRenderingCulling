@@ -35,7 +35,7 @@ public class CullingRenderEvent {
             return;
         }
 
-        if (CullingHandler.INSTANCE.DEBUG && event.getOverlay().id().equals(VanillaGuiOverlay.HELMET.id())) {
+        if (CullingHandler.INSTANCE.DEBUG > 0 && event.getOverlay().id().equals(VanillaGuiOverlay.HELMET.id())) {
             GuiGraphics guiGraphics = event.getGuiGraphics();
             Minecraft minecraft = Minecraft.getInstance();
             int width = minecraft.getWindow().getGuiScaledWidth() / 2;
@@ -56,41 +56,43 @@ public class CullingRenderEvent {
                 CullingHandler.INSTANCE.chunkCount++;
             }
 
-            if (Config.getCullChunk()) {
-                String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
-                drawString(guiGraphics, cullingInitTime, width, height - heightScale);
+            if (CullingHandler.INSTANCE.DEBUG > 1) {
+                if (Config.getCullChunk()) {
+                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    drawString(guiGraphics, cullingInitTime, width, height - heightScale);
 
-                String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
-                drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
+                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
+                    drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
 
-                if(CullingHandler.CHUNK_CULLING_MAP != null) {
-                    String chunkCullingCount = Component.translatable("brute_force_rendering_culling.chunk_update_count").getString() + ": " + CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount;
-                    drawString(guiGraphics, chunkCullingCount, width, height - heightScale);
+                    if(CullingHandler.CHUNK_CULLING_MAP != null) {
+                        String chunkCullingCount = Component.translatable("brute_force_rendering_culling.chunk_update_count").getString() + ": " + CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount;
+                        drawString(guiGraphics, chunkCullingCount, width, height - heightScale);
+                    }
                 }
+
+                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
+                drawString(guiGraphics, chunkCulling, width, height - heightScale);
+
+                if (Config.getCullEntity()) {
+                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    drawString(guiGraphics, initTime, width, height - heightScale);
+
+                    String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.INSTANCE.blockCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    drawString(guiGraphics, blockCullingTime, width, height - heightScale);
+
+                    String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.INSTANCE.blockCulling + " / " + CullingHandler.INSTANCE.blockCount;
+                    drawString(guiGraphics, blockCulling, width, height - heightScale);
+
+                    String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.INSTANCE.entityCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    drawString(guiGraphics, entityCullingTime, width, height - heightScale);
+
+                    String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.INSTANCE.entityCulling + " / " + CullingHandler.INSTANCE.entityCount;
+                    drawString(guiGraphics, entityCulling, width, height - heightScale);
+                }
+
+                String Sampler = Component.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
+                drawString(guiGraphics, Sampler, width, height - heightScale);
             }
-
-            String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
-            drawString(guiGraphics, chunkCulling, width, height - heightScale);
-
-            if (Config.getCullEntity()) {
-                String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
-                drawString(guiGraphics, initTime, width, height - heightScale);
-
-                String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.INSTANCE.blockCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
-                drawString(guiGraphics, blockCullingTime, width, height - heightScale);
-
-                String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.INSTANCE.blockCulling + " / " + CullingHandler.INSTANCE.blockCount;
-                drawString(guiGraphics, blockCulling, width, height - heightScale);
-
-                String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.INSTANCE.entityCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
-                drawString(guiGraphics, entityCullingTime, width, height - heightScale);
-
-                String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.INSTANCE.entityCulling + " / " + CullingHandler.INSTANCE.entityCount;
-                drawString(guiGraphics, entityCulling, width, height - heightScale);
-            }
-
-            String Sampler = Component.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
-            drawString(guiGraphics, Sampler, width, height - heightScale);
 
             String cull_chunk = Component.translatable("brute_force_rendering_culling.cull_chunk").getString() + ": "
                     + (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
@@ -136,59 +138,47 @@ public class CullingRenderEvent {
             Tesselator tessellator = Tesselator.getInstance();
             float screenScale = 1.0f;
             double windowScale = 0.4;
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+            RenderSystem.defaultBlendFunc();
             for(int i = 0; i < CullingHandler.DEPTH_BUFFER_TARGET.length; ++i) {
                 int scaledHeight = (int) (minecraft.getWindow().getGuiScaledHeight() * windowScale * screenScale);
                 int scaledWidth = (int) (minecraft.getWindow().getGuiScaledWidth() * windowScale * screenScale);
                 int offsetHeight = (int) ((1-screenScale)* 2 * minecraft.getWindow().getGuiScaledHeight() * windowScale);
-                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-offsetHeight, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight()-offsetHeight, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex(scaledWidth, minecraft.getWindow().getGuiScaledHeight()-scaledHeight-offsetHeight, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex(0.0D, minecraft.getWindow().getGuiScaledHeight()-scaledHeight-offsetHeight, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
                 RenderSystem.setShaderTexture(0, CullingHandler.DEPTH_TEXTURE[i]);
-                RenderSystem.enableBlend();
-                RenderSystem.depthMask(false);
-                RenderSystem.defaultBlendFunc();
                 tessellator.end();
-                RenderSystem.depthMask(true);
-                RenderSystem.disableBlend();
                 screenScale *= 0.5f;
             }
 
             if(Config.getCullEntity()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
-                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), 0, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, 0, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
                 RenderSystem.setShaderTexture(0, CullingHandler.ENTITY_CULLING_MAP_TARGET.getColorTextureId());
-                RenderSystem.enableBlend();
-                RenderSystem.depthMask(false);
-                RenderSystem.defaultBlendFunc();
                 tessellator.end();
-                RenderSystem.depthMask(true);
-                RenderSystem.disableBlend();
             }
 
             if(Config.getCullChunk()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
-                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height*2, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*2, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-height, height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
                 RenderSystem.setShaderTexture(0, CullingHandler.CHUNK_CULLING_MAP_TARGET.getColorTextureId());
-                RenderSystem.enableBlend();
-                RenderSystem.depthMask(false);
-                RenderSystem.defaultBlendFunc();
                 tessellator.end();
-                RenderSystem.depthMask(true);
-                RenderSystem.disableBlend();
             }
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
         }
     }
 

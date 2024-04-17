@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.IRenderSectionVisibility;
-import rogo.renderingculling.util.SodiumChunkUploader;
 
 import java.util.ArrayDeque;
 import java.util.Map;
@@ -34,19 +33,7 @@ public abstract class MixinRenderSectionManager {
 
     @Inject(method = "isSectionVisible", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/RenderSection;getLastVisibleFrame()I"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
-        cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
-    }
-
-    @Inject(method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller;findVisible(Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller$Visitor;Lme/jellysquid/mods/sodium/client/render/viewport/Viewport;FZI)V"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
-    private void onCreateTerrainRenderList(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci, float searchDistance, boolean useOcclusionCulling, VisibleChunkCollector visitor) {
-        if(Config.getCullChunk() && CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
-            ci.cancel();
-            SodiumChunkUploader.AsynchronousChunkCollector visitor1 = SodiumChunkUploader.hot(frame, (pos) -> getRenderSection(pos.getX(), pos.getY(), pos.getZ()));
-            Object o = visitor1 == null ? CullingHandler.CHUNK_CULLING_MAP.getUploadResult() : visitor1;
-            if(o instanceof SodiumChunkUploader.AsynchronousChunkCollector) {
-                this.renderLists = ((SodiumChunkUploader.AsynchronousChunkCollector) o).createRenderLists(frame);
-                this.rebuildLists = ((SodiumChunkUploader.AsynchronousChunkCollector) o).getRebuildLists();
-            }
-        }
+        if(Config.getCullChunk())
+            cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
 }

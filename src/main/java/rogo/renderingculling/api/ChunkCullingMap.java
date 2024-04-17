@@ -16,19 +16,6 @@ public class ChunkCullingMap extends CullingMap {
     private int renderDistance = 0;
     private int spacePartitionSize = 0;
 
-    public boolean isUpdateVisibleChunks() {
-        return updateVisibleChunks;
-    }
-
-    public void setUpdateVisibleChunks(boolean updateVisibleChunks) {
-        this.updateVisibleChunks = updateVisibleChunks;
-    }
-
-    private boolean updateVisibleChunks = true;
-    private Set<BlockPos> visibleChunks = new HashSet<>();
-    private final AtomicReference<Object> uploaderResult = new AtomicReference<>();
-    private static final int[][] DIRECTIONS = {{0, 1, 0}, {0, -1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, 1}, {0, 0, -1}};
-
     public int queueUpdateCount = 0;
     public int lastQueueUpdateCount = 0;
 
@@ -69,33 +56,6 @@ public class ChunkCullingMap extends CullingMap {
         return isChunkVisible(posX, chunkY, posZ);
     }
 
-    @NotNull
-    private static BlockPos getOriginPos() {
-        Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        int cameraX = (int) camera.x >> 4;
-        int cameraZ = (int) camera.z >> 4;
-        int cameraY = (int) camera.y;
-
-        if(cameraY < 0)
-            cameraY -= 9;
-
-        cameraY = (int) (cameraY * 0.0625) + CullingHandler.LEVEL_MIN_SECTION_ABS;
-
-        BlockPos origin = new BlockPos(cameraX, cameraY, cameraZ);
-        if (origin.getY() < 0) {
-            origin = new BlockPos(cameraX, 0, cameraZ);
-        } else if (origin.getY() >= CullingHandler.LEVEL_HEIGHT_OFFSET) {
-            origin = new BlockPos(cameraX, CullingHandler.LEVEL_HEIGHT_OFFSET - 1, cameraZ);
-        }
-        return origin;
-    }
-
-    @Override
-    public void readData() {
-        super.readData();
-        updateVisibleChunks = true;
-    }
-
     public boolean isChunkVisible(int posX, int posY, int posZ) {
         int index = 1 + ((((posX + renderDistance) * spacePartitionSize * CullingHandler.LEVEL_HEIGHT_OFFSET + (posZ + renderDistance) * CullingHandler.LEVEL_HEIGHT_OFFSET + posY) << 2));
 
@@ -104,72 +64,5 @@ public class ChunkCullingMap extends CullingMap {
         }
 
         return false;
-    }
-
-    public boolean updateVisibleChunks() {
-        if(updateVisibleChunks) {
-            bfsSearch(getOriginPos());
-            queueUpdateCount++;
-            updateVisibleChunks = false;
-            return true;
-        }
-
-        return false;
-    }
-
-    public Set<BlockPos> getVisibleChunks() {
-        return visibleChunks;
-    }
-
-    public Object getUploadResult() {
-        return uploaderResult.get();
-    }
-
-    public void setUploaderResult(Object uploaderResult) {
-        this.uploaderResult.set(uploaderResult);
-    }
-
-    private void bfsSearch(BlockPos origin) {
-        Queue<BlockPos> queue = new ArrayDeque<>();
-        Set<BlockPos> visible = new HashSet<>();
-        Set<BlockPos> visited = new HashSet<>();
-
-        visited.add(new BlockPos(0, origin.getY(), 0));
-        queue.offer(new BlockPos(0, origin.getY(), 0));
-        visible.add(new BlockPos(origin.getX(), origin.getY()-CullingHandler.LEVEL_MIN_SECTION_ABS, origin.getZ()));
-
-        while (!queue.isEmpty()) {
-            BlockPos chunkPos = queue.poll();
-            BlockPos offsetChunkPos = new BlockPos((chunkPos.getX() + origin.getX())
-                    , (chunkPos.getY()-CullingHandler.LEVEL_MIN_SECTION_ABS)
-                    , (chunkPos.getZ() + origin.getZ()));
-
-            if(!isChunkVisible(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ())) {
-                continue;
-            } else {
-                visible.add(offsetChunkPos);
-            }
-
-            for (int[] direction : DIRECTIONS) {
-                int newX = chunkPos.getX() + direction[0];
-                int newY = chunkPos.getY() + direction[1];
-                int newZ = chunkPos.getZ() + direction[2];
-
-                if(renderDistance < Mth.abs(newX) ||
-                   renderDistance < Mth.abs(newZ) ||
-                        newY < 0 ||
-                        newY >= CullingHandler.LEVEL_HEIGHT_OFFSET)
-                    continue;
-
-                BlockPos neighborChunk = new BlockPos(newX, newY, newZ);
-
-                if (!visited.contains(neighborChunk)) {
-                    queue.offer(neighborChunk);
-                    visited.add(neighborChunk);
-                }
-            }
-        }
-
-        visibleChunks = visible;
     }
 }
