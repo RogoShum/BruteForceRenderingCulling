@@ -39,7 +39,6 @@ import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
 import rogo.renderingculling.util.LifeTimer;
-import rogo.renderingculling.util.OcclusionCullerThread;
 import rogo.renderingculling.util.ShaderLoader;
 
 import java.io.IOException;
@@ -82,14 +81,13 @@ public class CullingHandler implements ModInitializer {
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
     public static boolean applyFrustum;
-    public boolean DEBUG = false;
+    public int DEBUG = 0;
     public static int[] DEPTH_TEXTURE = new int[depthSize];
     public static ShaderLoader SHADER_LOADER = null;
     public static Class<?> OptiFine = null;
 
     public LifeTimer<Entity> visibleEntity = new LifeTimer<>();
     public LifeTimer<BlockPos> visibleBlock = new LifeTimer<>();
-    public LifeTimer<BlockPos> visibleChunk = new LifeTimer<>();
     public HashSet<Entity> culledEntity = new HashSet<>();
     public HashSet<BlockPos> culledBlock = new HashSet<>();
     private boolean[] nextTick = new boolean[20];
@@ -229,11 +227,6 @@ public class CullingHandler implements ModInitializer {
                 CHUNK_CULLING_MAP.setDone();
                 LEVEL_HEIGHT_OFFSET = client.level.getMaxSection() - client.level.getMinSection();
                 LEVEL_MIN_SECTION_ABS = Math.abs(client.level.getMinSection());
-
-                OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
-                occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
-                occlusionCullerThread.setPriority(MAX_PRIORITY);
-                occlusionCullerThread.start();
             }
         } else {
             cleanup();
@@ -245,7 +238,9 @@ public class CullingHandler implements ModInitializer {
             Minecraft.getInstance().setScreen(new ConfigScreen(Component.translatable(MOD_ID + ".config")));
         }
         if (DEBUG_KEY.isDown()) {
-            DEBUG = !DEBUG;
+            DEBUG++;
+            if(DEBUG >= 3)
+                DEBUG = 0;
         }
     }
 
@@ -444,11 +439,6 @@ public class CullingHandler implements ModInitializer {
 
                     entityCullingInitTime = preEntityCullingInitTime;
                     preEntityCullingInitTime = 0;
-
-                    if(CullingHandler.CHUNK_CULLING_MAP != null) {
-                        CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount = CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount;
-                        CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount = 0;
-                    }
 
                     if (preChunkCullingTime != 0) {
                         chunkCullingTime = preChunkCullingTime;

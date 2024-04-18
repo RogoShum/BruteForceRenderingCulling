@@ -35,22 +35,7 @@ public abstract class MixinRenderSectionManager {
 
     @Inject(method = "isSectionVisible", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/RenderSection;getLastVisibleFrame()I"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
-        cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
-    }
-
-    @Inject(method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller;findVisible(Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller$Visitor;Lme/jellysquid/mods/sodium/client/render/viewport/Viewport;FZI)V"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
-    private void onCreateTerrainRenderList(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci, float searchDistance, boolean useOcclusionCulling, VisibleChunkCollector visitor) {
-        if(Config.getCullChunk() && CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
-            ci.cancel();
-            Queue<BlockPos> visibleChunks = CullingHandler.CHUNK_CULLING_MAP.getVisibleChunks();
-            visibleChunks.forEach(chunkPos -> {
-                RenderSection section = this.getRenderSection(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ());
-                if(section != null) {
-                    visitor.visit(section, true);
-                }
-            });
-            this.renderLists = visitor.createRenderLists();
-            this.rebuildLists = visitor.getRebuildLists();
-        }
+        if(Config.getCullChunk())
+            cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
 }

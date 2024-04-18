@@ -25,7 +25,7 @@ public abstract class CullingMap {
         cullingBuffer = BufferUtils.createByteBuffer(width * height * 4);
         pboId = GL15.glGenBuffers();
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
-        GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * Float.BYTES * 4, GL15.GL_DYNAMIC_COPY);
+        GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * Float.BYTES * 4, GL15.GL_STREAM_READ);
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
     }
 

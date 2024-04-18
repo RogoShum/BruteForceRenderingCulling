@@ -36,7 +36,7 @@ public class CullingRenderEvent {
             return;
         }
 
-        if (CullingHandler.INSTANCE.DEBUG) {
+        if (CullingHandler.INSTANCE.DEBUG > 0) {
             Minecraft minecraft = Minecraft.getInstance();
             int width = minecraft.getWindow().getGuiScaledWidth() / 2;
             int height = 12;
@@ -56,41 +56,38 @@ public class CullingRenderEvent {
                 CullingHandler.INSTANCE.chunkCount++;
             }
 
-            if (Config.getCullChunk()) {
-                String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
-                drawString(guiGraphics, cullingInitTime, width, height - heightScale);
+            if(CullingHandler.INSTANCE.DEBUG > 1) {
+                if (Config.getCullChunk()) {
+                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    drawString(guiGraphics, cullingInitTime, width, height - heightScale);
 
-                String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
-                drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
-
-                if(CullingHandler.CHUNK_CULLING_MAP != null) {
-                    String chunkCullingCount = Component.translatable("brute_force_rendering_culling.chunk_update_count").getString() + ": " + CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount;
-                    drawString(guiGraphics, chunkCullingCount, width, height - heightScale);
+                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
+                    drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
                 }
+
+                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
+                drawString(guiGraphics, chunkCulling, width, height - heightScale);
+
+                if (Config.getCullEntity()) {
+                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    drawString(guiGraphics, initTime, width, height - heightScale);
+
+                    String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.INSTANCE.blockCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    drawString(guiGraphics, blockCullingTime, width, height - heightScale);
+
+                    String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.INSTANCE.blockCulling + " / " + CullingHandler.INSTANCE.blockCount;
+                    drawString(guiGraphics, blockCulling, width, height - heightScale);
+
+                    String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.INSTANCE.entityCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    drawString(guiGraphics, entityCullingTime, width, height - heightScale);
+
+                    String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.INSTANCE.entityCulling + " / " + CullingHandler.INSTANCE.entityCount;
+                    drawString(guiGraphics, entityCulling, width, height - heightScale);
+                }
+
+                String Sampler = Component.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
+                drawString(guiGraphics, Sampler, width, height - heightScale);
             }
-
-            String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
-            drawString(guiGraphics, chunkCulling, width, height - heightScale);
-
-            if (Config.getCullEntity()) {
-                String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
-                drawString(guiGraphics, initTime, width, height - heightScale);
-
-                String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.INSTANCE.blockCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
-                drawString(guiGraphics, blockCullingTime, width, height - heightScale);
-
-                String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.INSTANCE.blockCulling + " / " + CullingHandler.INSTANCE.blockCount;
-                drawString(guiGraphics, blockCulling, width, height - heightScale);
-
-                String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.INSTANCE.entityCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
-                drawString(guiGraphics, entityCullingTime, width, height - heightScale);
-
-                String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.INSTANCE.entityCulling + " / " + CullingHandler.INSTANCE.entityCount;
-                drawString(guiGraphics, entityCulling, width, height - heightScale);
-            }
-
-            String Sampler = Component.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
-            drawString(guiGraphics, Sampler, width, height - heightScale);
 
             String cull_chunk = Component.translatable("brute_force_rendering_culling.cull_chunk").getString() + ": "
                     + (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());

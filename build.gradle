@@ -39,6 +39,9 @@ dependencies {
 
 	modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.8"
 	modImplementation 'maven.modrinth:iris:1.6.17+1.20.1'
+
+	implementation("org.anarres:jcpp:1.4.14")
+	modImplementation("io.github.douira:glsl-transformer:2.0.0-pre13")
 }
 
 processResources {

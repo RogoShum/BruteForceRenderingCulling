@@ -6,6 +6,7 @@ import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.IRenderSectionVisibility;
 
@@ -14,6 +15,7 @@ public abstract class MixinOcclusionCuller {
 
     @Inject(method = "isSectionVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
     private static void onIsSectionVisible(RenderSection section, Viewport viewport, float maxDistance, CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, true));
+        if(Config.getCullChunk())
+            cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, true));
     }
 }
