@@ -11,9 +11,14 @@ import rogo.renderingculling.api.IRenderSectionVisibility;
 @Mixin(ChunkRenderDispatcher.RenderChunk.class)
 public abstract class MixinRenderChunk implements IRenderSectionVisibility {
 
-    @Shadow @Final private BlockPos.MutableBlockPos origin;
+    @Shadow
+    @Final
+    private BlockPos.MutableBlockPos origin;
     @Unique
     private int cullingLastVisibleFrame;
+
+    private volatile boolean asyncSearched = false;
+    private volatile boolean asyncSubmitted = false;
 
     @Override
     public boolean shouldCheckVisibility(int frame) {
@@ -38,5 +43,21 @@ public abstract class MixinRenderChunk implements IRenderSectionVisibility {
     @Override
     public int getPositionZ() {
         return origin.getZ();
+    }
+
+    public boolean isSubmittedRebuild() {
+        return asyncSubmitted;
+    }
+
+    public void setSubmittedRebuild(boolean submited) {
+        asyncSubmitted = submited;
+    }
+
+    public boolean isSearched() {
+        return asyncSearched;
+    }
+
+    public void setSearch(boolean search) {
+        asyncSearched = search;
     }
 }

@@ -11,6 +11,7 @@ public class Config {
     private static ForgeConfigSpec.DoubleValue SAMPLING;
     private static ForgeConfigSpec.BooleanValue CULL_ENTITY;
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
+    private static ForgeConfigSpec.BooleanValue CULL_BLOCK;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
     private static ForgeConfigSpec.IntValue CULLING_ENTITY_RATE;
 
@@ -18,7 +19,7 @@ public class Config {
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCK_ENTITY_SKIP;
 
     public static double getSampling() {
-        if(unload())
+        if (unload())
             return 0.2;
 
         return SAMPLING.get();
@@ -30,7 +31,7 @@ public class Config {
     }
 
     public static boolean getCullEntity() {
-        if(unload() || !CullingHandler.gl33())
+        if (unload() || !CullingHandler.gl33())
             return false;
         return CULL_ENTITY.get();
     }
@@ -41,9 +42,20 @@ public class Config {
     }
 
     public static boolean getCullChunk() {
-        if(unload())
+        if (unload())
             return false;
+
         return CULL_CHUNK.get();
+    }
+
+    public static boolean shouldCullChunk() {
+        if (unload())
+            return false;
+
+        if(CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+            return false;
+
+        return getCullChunk();
     }
 
     public static void setCullChunk(boolean value) {
@@ -51,11 +63,25 @@ public class Config {
         CULL_CHUNK.save();
     }
 
+    public static boolean getCullBlock() {
+        if (unload())
+            return false;
+        return CULL_BLOCK.get();
+    }
+
+    public static void setCullBlock(boolean value) {
+        CULL_BLOCK.set(value);
+        CULL_BLOCK.save();
+    }
+
+    public static int getShaderDynamicDelay() {
+        return CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
+    }
+
     public static int getDepthUpdateDelay() {
-        if(unload())
+        if (unload())
             return 1;
-        int dynamicWithShader = CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
-        return UPDATE_DELAY.get() + dynamicWithShader;
+        return UPDATE_DELAY.get() <= 9 ? UPDATE_DELAY.get() + getShaderDynamicDelay() : UPDATE_DELAY.get();
     }
 
     public static void setDepthUpdateDelay(int value) {
@@ -64,7 +90,7 @@ public class Config {
     }
 
     public static int getCullingEntityRate() {
-        if(unload())
+        if (unload())
             return 20;
         return CULLING_ENTITY_RATE.get();
     }
@@ -75,13 +101,13 @@ public class Config {
     }
 
     public static List<? extends String> getEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return ENTITY_SKIP.get();
     }
 
     public static List<? extends String> getBlockEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return BLOCK_ENTITY_SKIP.get();
     }
@@ -91,6 +117,7 @@ public class Config {
     public static void setLoaded() {
         loaded = true;
     }
+
     private static boolean unload() {
         return !loaded;
     }
@@ -111,6 +138,10 @@ public class Config {
 
         CLIENT_BUILDER.push("Cull chunk");
         CULL_CHUNK = CLIENT_BUILDER.define("enabled", true);
+        CLIENT_BUILDER.pop();
+
+        CLIENT_BUILDER.push("Cull block");
+        CULL_BLOCK = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Culling entity update frequency");

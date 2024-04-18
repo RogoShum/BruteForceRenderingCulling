@@ -9,19 +9,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractOptionSliderButton;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class NeatSliderButton extends AbstractOptionSliderButton {
-    private final Function<NeatSliderButton, Component> updateMessage;
+    private final Function<NeatSliderButton, Component> name;
     private final Consumer<Double> applyValue;
-    protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, double p_93384_, Function<NeatSliderButton, Component> updateMessage, Consumer<Double> applyValue) {
-        super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, p_93384_);
-        this.updateMessage = updateMessage;
+
+    protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
+        super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, getter.get());
+        this.name = (sliderButton) -> name.get().append(": ").append(Component.literal(display.apply(this.value)));
         updateMessage();
-        this.applyValue = applyValue;
+        this.applyValue = (value) -> this.value = setter.apply(value);
     }
 
     public double getValue() {
@@ -30,7 +33,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
 
     @Override
     public void updateMessage() {
-        this.setMessage(updateMessage.apply(this));
+        this.setMessage(name.apply(this));
     }
 
     @Override

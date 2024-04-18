@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import rogo.renderingculling.api.Config;
+import rogo.renderingculling.api.CullingHandler;
 
 @Mixin(ChunkBuilderMeshingTask.class)
 public abstract class MixinChunkBuilderMeshingTask {
@@ -46,9 +46,6 @@ public abstract class MixinChunkBuilderMeshingTask {
     }
 
     public boolean isBlockVisible() {
-        if (!Config.getCullChunk())
-            return true;
-
-        return blockPosX % 16 <= 7 || blockPosY % 16 <= 7 || blockPosZ % 16 <= 7;
+        return CullingHandler.INSTANCE.shouldRenderBlock(blockPosX, blockPosY, blockPosZ);
     }
 }

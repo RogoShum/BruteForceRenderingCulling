@@ -44,13 +44,12 @@ public class EntityCullingMap extends CullingMap {
         }
 
         int idx = entityMap.getIndex(o);
-        //idx = 1+idx*3;
+        idx = 1+idx*4;
         if(entityMap.tempObjectTimer.contains(o))
             entityMap.addTemp(o, CullingHandler.INSTANCE.clientTickCount);
 
         if(idx > -1 && idx < cullingBuffer.limit()) {
-            float cullingValue = (float) (cullingBuffer.get(idx) & 0xFF) / 255.0f;
-            return cullingValue > 0.5;
+            return (cullingBuffer.get(idx) & 0xFF) > 0;
         } else {
             entityMap.addTemp(o, CullingHandler.INSTANCE.clientTickCount);
         }

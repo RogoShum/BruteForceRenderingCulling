@@ -9,14 +9,20 @@ import rogo.renderingculling.api.IRenderSectionVisibility;
 @Mixin(RenderSection.class)
 public abstract class MixinRenderSection implements IRenderSectionVisibility {
 
-    @Shadow(remap = false) public abstract int getOriginX();
+    @Shadow(remap = false)
+    public abstract int getOriginX();
 
-    @Shadow(remap = false) public abstract int getOriginY();
+    @Shadow(remap = false)
+    public abstract int getOriginY();
 
-    @Shadow(remap = false) public abstract int getOriginZ();
+    @Shadow(remap = false)
+    public abstract int getOriginZ();
 
     @Unique
     private int cullingLastVisibleFrame;
+
+    private volatile boolean asyncSearched = false;
+    private volatile boolean asyncSubmitted = false;
 
     @Override
     public boolean shouldCheckVisibility(int frame) {
@@ -41,5 +47,21 @@ public abstract class MixinRenderSection implements IRenderSectionVisibility {
     @Override
     public int getPositionZ() {
         return getOriginZ();
+    }
+
+    public boolean isSubmittedRebuild() {
+        return asyncSubmitted;
+    }
+
+    public void setSubmittedRebuild(boolean submitted) {
+        asyncSubmitted = submitted;
+    }
+
+    public boolean isSearched() {
+        return asyncSearched;
+    }
+
+    public void setSearch(boolean search) {
+        asyncSearched = search;
     }
 }

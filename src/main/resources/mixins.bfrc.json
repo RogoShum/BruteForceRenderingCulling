@@ -6,7 +6,8 @@
     "MixinMinecraft",
     "MixinOcclusionCuller",
     "MixinRenderSection",
-    "MixinRenderSectionManager"
+    "MixinRenderSectionManager",
+    "MixinSodiumWorldRenderer"
   ],
   "minVersion": "0.8.1",
   "compatibilityLevel": "JAVA_17",
@@ -18,6 +19,7 @@
     "AccessorFrustum",
     "AccessorLevelRender",
     "AccessorMinecraft",
+    "AccessorRenderSectionManager",
     "MixinBlockEntityRender",
     "MixinEntityRender",
     "MixinInactiveProfiler",

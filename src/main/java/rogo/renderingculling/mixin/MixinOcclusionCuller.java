@@ -13,9 +13,9 @@ import rogo.renderingculling.api.IRenderSectionVisibility;
 @Mixin(OcclusionCuller.class)
 public abstract class MixinOcclusionCuller {
 
-    @Inject(method = "isSectionVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
+    @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, cancellable = true)
     private static void onIsSectionVisible(RenderSection section, Viewport viewport, float maxDistance, CallbackInfoReturnable<Boolean> cir) {
-        if(Config.getCullChunk())
+        if(Config.shouldCullChunk() && cir.getReturnValue())
             cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, true));
     }
 }

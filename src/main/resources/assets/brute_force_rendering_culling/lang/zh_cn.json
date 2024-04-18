@@ -5,6 +5,7 @@
 
   "brute_force_rendering_culling.cull_entity": "剔除实体",
   "brute_force_rendering_culling.cull_chunk": "剔除区块",
+  "brute_force_rendering_culling.cull_block": "剔除方块",
   "brute_force_rendering_culling.sampler": "深度采样率",
   "brute_force_rendering_culling.culling_map_update_delay": "剔除图更新推迟",
   "brute_force_rendering_culling.entity_culling": "实体剔除",
@@ -16,6 +17,7 @@
 
   "brute_force_rendering_culling.chunk_culling": "区块剔除",
   "brute_force_rendering_culling.chunk_culling_time": "区块剔除耗时",
+  "brute_force_rendering_culling.chunk_update_count": "异步区块更新次数",
 
   "brute_force_rendering_culling.culling_entity_update_rate": "被剔除实体更新频率",
 
