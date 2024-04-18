@@ -8,9 +8,7 @@ import org.lwjgl.opengl.GL31;
 
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.opengl.GL11.GL_GREEN;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL12.GL_BGR;
 import static org.lwjgl.opengl.GL12.GL_BGRA;
 
 public abstract class CullingMap {

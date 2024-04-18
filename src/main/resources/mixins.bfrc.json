@@ -2,6 +2,7 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "mixins": [
+    "MixinChunkBuilderMeshingTask",
     "MixinMinecraft",
     "MixinOcclusionCuller",
     "MixinRenderSection",

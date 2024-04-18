@@ -46,7 +46,10 @@ import org.slf4j.Logger;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
-import rogo.renderingculling.util.*;
+import rogo.renderingculling.util.DepthContext;
+import rogo.renderingculling.util.LifeTimer;
+import rogo.renderingculling.util.OcclusionCullerThread;
+import rogo.renderingculling.util.ShaderLoader;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -190,7 +193,7 @@ public class CullingHandler {
         LOGGER.debug("try init shader chunk_culling");
         try {
             CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "chunk_culling"), DefaultVertexFormat.POSITION);
-             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
+            INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -254,6 +257,11 @@ public class CullingHandler {
                     CHUNK_CULLING_MAP.setDone();
                     LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
+
+                    OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
+                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
+                    occlusionCullerThread.setPriority(MAX_PRIORITY);
+                    occlusionCullerThread.start();
                 }
                 Config.setLoaded();
             } else {
