@@ -12,13 +12,13 @@ import me.jellysquid.mods.sodium.client.render.chunk.lists.VisibleChunkCollector
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -57,10 +57,20 @@ public abstract class MixinRenderSectionManager {
             cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
 
-    @Inject(method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/lists/VisibleChunkCollector;createRenderLists()Lme/jellysquid/mods/sodium/client/render/chunk/lists/SortedRenderLists;", shift = At.Shift.AFTER), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+    public RenderSection getSectionFromObject(Object pos) {
+        return getSectionFromPos((BlockPos) pos);
+    }
+
+    public RenderSection getSectionFromPos(BlockPos pos) {
+        return this.getRenderSection(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Inject(method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller;findVisible(Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller$Visitor;Lme/jellysquid/mods/sodium/client/render/viewport/Viewport;FZI)V"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onCreateTerrainRenderList(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci, float searchDistance, boolean useOcclusionCulling, VisibleChunkCollector visitor) {
-        if (Config.shouldCullChunk())
+        if (Config.shouldCullChunk()) {
             ci.cancel();
+            renderLists = SodiumAsyncSectionUtil.handleRenderSearch(viewport, visitor, this::getSectionFromObject);
+        }
     }
 
     @Inject(method = "submitRebuildTasks", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/RenderSection;setPendingUpdate(Lme/jellysquid/mods/sodium/client/render/chunk/ChunkUpdateType;)V"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD)

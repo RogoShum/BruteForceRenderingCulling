@@ -156,6 +156,9 @@ dependencies {
 
     compileOnly fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
     implementation fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
+
+    compileOnly fg.deobf('maven.modrinth:nvidium:0.2.6-beta')
+    implementation fg.deobf('maven.modrinth:nvidium:0.2.6-beta')
 }
 
 mixin {

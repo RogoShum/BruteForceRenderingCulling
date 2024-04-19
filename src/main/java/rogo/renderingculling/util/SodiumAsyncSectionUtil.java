@@ -1,13 +1,16 @@
 package rogo.renderingculling.util;
 
+import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkUpdateType;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
-import me.jellysquid.mods.sodium.client.render.chunk.RenderSectionFlags;
+import me.jellysquid.mods.sodium.client.render.chunk.lists.SortedRenderLists;
+import me.jellysquid.mods.sodium.client.render.chunk.lists.VisibleChunkCollector;
 import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
-import net.minecraft.client.Camera;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.IRenderSectionVisibility;
 
 import java.util.ArrayDeque;
@@ -86,5 +89,16 @@ public class SodiumAsyncSectionUtil {
                 ((IRenderSectionVisibility) section).setSearch(false);
             }
         }
+    }
+
+    public static SortedRenderLists handleRenderSearch(Viewport viewport, VisibleChunkCollector visitor, Function<BlockPos, RenderSection> getRenderSection) {
+        for (BlockPos pos : CullingHandler.CHUNK_CULLING_MAP.getVisibleChunks()) {
+            RenderSection section = getRenderSection.apply(pos);
+            if (section != null)
+                visitor.visit(section, viewport.isBoxVisible(pos.getX() << 4, pos.getY() << 4, pos.getZ() << 4, 16));
+        }
+        SortedRenderLists sortedRenderLists = visitor.createRenderLists();
+
+        return sortedRenderLists;
     }
 }
