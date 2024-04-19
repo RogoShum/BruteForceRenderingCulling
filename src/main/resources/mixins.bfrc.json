@@ -2,9 +2,11 @@
   "required": true,
   "package": "rogo.renderingculling.mixin",
   "mixins": [
-    "MixinChunkBuilderMeshingTask",
+    "MixinChunkRenderList",
+    "MixinDefaultChunkRenderer",
     "MixinMinecraft",
     "MixinOcclusionCuller",
+    "MixinRenderRegion",
     "MixinRenderSection",
     "MixinRenderSectionManager",
     "MixinSodiumWorldRenderer"

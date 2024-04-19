@@ -29,12 +29,11 @@ public abstract class MixinSodiumWorldRenderer {
     @Shadow(remap = false)
     private RenderSectionManager renderSectionManager;
 
-    @Inject(method = "setupTerrain", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/RenderSectionManager;needsUpdate()Z", shift = At.Shift.BEFORE), remap = false)
+    @Inject(method = "setupTerrain", at = @At(value = "HEAD"), remap = false)
     public void injectTerrainSetup(Camera camera, Viewport viewport, int frame, boolean spectator, boolean updateChunksImmediately, CallbackInfo ci) {
         if (Config.shouldCullChunk()) {
             SodiumAsyncSectionUtil.update(viewport, ((AccessorRenderSectionManager) this.renderSectionManager).invokeSearchDistance()
-                    , ((AccessorRenderSectionManager) this.renderSectionManager).invokeShouldUseOcclusionCulling(camera, spectator)
-                    , ((AccessorRenderSectionManager) this.renderSectionManager).accessorOutputRebuildQueue());
+                    , ((AccessorRenderSectionManager) this.renderSectionManager).invokeShouldUseOcclusionCulling(camera, spectator));
         }
     }
 }

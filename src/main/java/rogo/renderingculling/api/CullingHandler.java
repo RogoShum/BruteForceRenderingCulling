@@ -273,6 +273,9 @@ public class CullingHandler {
     }
 
     public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if(section == null)
+            return false;
+
         if (count)
             chunkCount++;
         if (!Config.shouldCullChunk()) {
@@ -739,5 +742,9 @@ public class CullingHandler {
 
     public static boolean hasMod(String s) {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
+    }
+
+    public int getFrame() {
+        return frame;
     }
 }

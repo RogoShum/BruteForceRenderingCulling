@@ -23,7 +23,7 @@ public class NeatButton extends Button {
                 : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(name.get()), (b) -> {
             setter.accept(!getter.get());
             ((NeatButton) b).enable = getter.get();
-            Component component = !getter.get() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(name.get())
+            Component component = getter.get() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(name.get())
                     : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(name.get());
             b.setMessage(component);
         }, DEFAULT_NARRATION);

@@ -48,20 +48,4 @@ public abstract class MixinRenderSection implements IRenderSectionVisibility {
     public int getPositionZ() {
         return getOriginZ();
     }
-
-    public boolean isSubmittedRebuild() {
-        return asyncSubmitted;
-    }
-
-    public void setSubmittedRebuild(boolean submitted) {
-        asyncSubmitted = submitted;
-    }
-
-    public boolean isSearched() {
-        return asyncSearched;
-    }
-
-    public void setSearch(boolean search) {
-        asyncSearched = search;
-    }
 }

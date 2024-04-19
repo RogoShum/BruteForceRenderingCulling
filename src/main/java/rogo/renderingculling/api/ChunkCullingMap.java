@@ -3,6 +3,7 @@ package rogo.renderingculling.api;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,10 +71,10 @@ public class ChunkCullingMap extends CullingMap {
 
     public boolean isChunkOffsetCameraVisible(int x, int y, int z) {
         Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        int cameraX = (int)camera.x >> 4;
-        int cameraZ = (int)camera.z >> 4;
+        int cameraX = (int) camera.x >> 4;
+        int cameraZ = (int) camera.z >> 4;
 
-        if(y < 0)
+        if (y < 0)
             y -= 9;
 
         int chunkX = x >> 4;
@@ -143,11 +144,17 @@ public class ChunkCullingMap extends CullingMap {
             BlockPos offsetChunkPos = new BlockPos((chunkPos.getX() + origin.getX())
                     , (chunkPos.getY() - CullingHandler.LEVEL_MIN_SECTION_ABS)
                     , (chunkPos.getZ() + origin.getZ()));
+            BlockPos absolutePos = new BlockPos(offsetChunkPos.getX() << 4, offsetChunkPos.getY() << 4, offsetChunkPos.getZ() << 4);
 
-            if (!isChunkVisible(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ())) {
+            if (!CullingHandler.FRUSTUM.isVisible(new AABB(absolutePos.getX(), absolutePos.getY(), absolutePos.getZ(), absolutePos.getX() + 16, absolutePos.getY() + 16, absolutePos.getZ() + 16))) {
                 continue;
             } else {
-                visible.add(offsetChunkPos);
+                boolean isChunkVisible = isChunkVisible(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ());
+                if (CullingHandler.INSTANCE.checkCulling)
+                    isChunkVisible = !isChunkVisible;
+
+                if (isChunkVisible)
+                    visible.add(offsetChunkPos);
             }
 
             for (int[] direction : DIRECTIONS) {

@@ -10,12 +10,4 @@ public interface IRenderSectionVisibility {
     int getPositionY();
 
     int getPositionZ();
-
-    boolean isSubmittedRebuild();
-
-    void setSubmittedRebuild(boolean submited);
-
-    boolean isSearched();
-
-    void setSearch(boolean search);
 }

@@ -8,6 +8,7 @@ public class OcclusionCullerThread extends Thread {
     public void run() {
         while (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
             if (Config.getCullChunk()) {
+
                 if (CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks()) {
 
                 }
