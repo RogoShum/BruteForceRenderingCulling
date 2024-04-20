@@ -5,8 +5,6 @@ import me.jellysquid.mods.sodium.client.gl.device.CommandList;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkUpdateType;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSectionManager;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.executor.ChunkJobCollector;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.SortedRenderLists;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.VisibleChunkCollector;
 import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
@@ -54,13 +52,11 @@ public abstract class MixinRenderSectionManager {
         SodiumAsyncSectionUtil.fromSectionManager(this.sectionByPosition, world);
     }
 
-    /*
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
         if (Config.shouldCullChunk())
             cir.setReturnValue(CullingHandler.INSTANCE.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
-     */
 
     public RenderSection getSectionFromObject(Object pos) {
         return getSectionFromPos((BlockPos) pos);

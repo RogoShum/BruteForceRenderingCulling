@@ -50,6 +50,13 @@ vec3 worldToScreenSpace(vec3 pos) {
     return (ndc + vec3(1.0)) * 0.5;
 }
 
+vec3 moveTowardsCamera(vec3 pos, float distance) {
+    vec3 direction = normalize(pos - CullingCameraPos);
+    vec3 newPos = pos - direction * distance;
+
+    return newPos;
+}
+
 vec3 blockToChunk(vec3 blockPos) {
     vec3 chunkPos;
     chunkPos.x = floor(blockPos.x / 16.0);
@@ -121,9 +128,9 @@ void main() {
     chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
     vec3 chunkPosOffset = chunkPos;
 
-    float chunkCenterDepth = worldToScreenSpace(chunkPos).z;
+    float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
 
-    if(calculateDistance(chunkPos, CullingCameraPos) < 1024) {
+    if (calculateDistance(chunkPos, CullingCameraPos) < 256) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
@@ -161,7 +168,7 @@ void main() {
         minY = screenPos.y;
     }
 
-    float chunkDepth = LinearizeDepth(chunkCenterDepth)-24;
+    float chunkDepth = LinearizeDepth(chunkCenterDepth);
     if(chunkDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;

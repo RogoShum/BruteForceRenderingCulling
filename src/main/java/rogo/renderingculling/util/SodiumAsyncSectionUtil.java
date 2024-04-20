@@ -14,8 +14,6 @@ import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.IChunkRenderList;
-import rogo.renderingculling.api.IRenderSectionVisibility;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -32,7 +30,7 @@ public class SodiumAsyncSectionUtil {
     private static final AtomicReference<Set<RenderSection>> atomicBfsResult = new AtomicReference<>();
     private static volatile boolean shouldSearch = true;
     private static Function<BlockPos, RenderSection> getRenderSection;
-    private static AsynchronousChunkCollector chunkContext;
+    private static ChunkContext chunkContext;
 
     public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, Level world) {
         SodiumAsyncSectionUtil.occlusionCuller = new OcclusionCuller(sections, world);
@@ -41,13 +39,52 @@ public class SodiumAsyncSectionUtil {
     public static void asyncSearchRebuildSection() {
         if(shouldSearch) {
             shouldSearch = false;
-
-            frame++;
-            AsynchronousChunkCollector chunkCollector = new AsynchronousChunkCollector(frame);
-            occlusionCuller.findVisible(chunkCollector, viewport, searchDistance, useOcclusionCulling, frame);
-            chunkContext = chunkCollector;
         }
+        frame++;
+        /*
+        Set<BlockPos> culledChunk = CullingHandler.CHUNK_CULLING_MAP.getVisibleChunks();
+        ObjectArrayList<ChunkRenderList> sortedRenderLists = new ObjectArrayList<>();
+        SortedRenderLists sortedRenderLists1 = null;
+        if(getRenderSection != null) {
+            HashMap<RenderRegion, ChunkRenderList> renderListMap = new HashMap<>();
 
+            for(BlockPos pos : culledChunk) {
+                RenderSection section = getRenderSection.apply(pos);
+                if(section != null) {
+                    RenderRegion region = section.getRegion();
+                    ChunkRenderList renderList;
+                    if(!renderListMap.containsKey(region)) {
+                        renderList = new ChunkRenderList(region);
+                        renderList.reset(frame);
+                        sortedRenderLists.add(renderList);
+                        renderListMap.put(region, renderList);
+                    } else {
+                        renderList = renderListMap.get(region);
+                    }
+
+                    if (section.getFlags() != 0) {
+                        renderList.add(section);
+                    }
+                }
+            }
+
+            try {
+                Constructor<?> constructor = SortedRenderLists.class.getDeclaredConstructor(ObjectArrayList.class);
+                constructor.setAccessible(true);
+                sortedRenderLists1 = (SortedRenderLists) constructor.newInstance(sortedRenderLists);
+            } catch (InvocationTargetException | NoSuchMethodException | InstantiationException |
+                     IllegalAccessException ignored) {
+
+            }
+        }
+         */
+
+        AsynchronousChunkCollector chunkCollector = new AsynchronousChunkCollector(frame);
+        occlusionCuller.findVisible(chunkCollector, viewport, searchDistance, useOcclusionCulling, frame);
+
+        //if(sortedRenderLists1 == null)
+        //sortedRenderLists1 = chunkCollector.createRenderLists();
+        chunkContext = new ChunkContext(chunkCollector.createRenderLists(), chunkCollector.getRebuildLists());
         /*
         Set<RenderSection> chunkUpdates = atomicBfsResult.get() == null ? new HashSet<>() : atomicBfsResult.get();
 
@@ -88,7 +125,7 @@ public class SodiumAsyncSectionUtil {
         SodiumAsyncSectionUtil.sodiumLastChunkUpdateFrame = frame;
 
         if(chunkContext != null)
-            return new ChunkContext(chunkContext.createRenderLists(frame), chunkContext.getRebuildLists());
+            return chunkContext;
 
         long time = System.nanoTime();
         //occlusionCuller.findVisible(visitor, viewport, searchDistance, useOcclusionCulling, frame ++);
@@ -230,7 +267,8 @@ public class SodiumAsyncSectionUtil {
             }
         }
 
-        public SortedRenderLists createRenderLists(int frame) {
+        public SortedRenderLists createRenderLists() {
+            /*
             for (RenderSection section : renderSections) {
                 section.setLastVisibleFrame(frame);
             }
@@ -238,6 +276,7 @@ public class SodiumAsyncSectionUtil {
             for (ChunkRenderList list : sortedRenderLists) {
                 ((IChunkRenderList)list).setLastVisibleFrame(frame);
             }
+             */
 
             try {
                 Constructor<?> constructor = SortedRenderLists.class.getDeclaredConstructor(ObjectArrayList.class);

@@ -2,6 +2,7 @@
 
 uniform vec2 EntityCullingSize;
 uniform mat4 CullingViewMat;
+uniform vec3 CullingCameraPos;
 uniform mat4 CullingProjMat;
 uniform float DepthOffset;
 uniform vec3 FrustumPos;
@@ -46,6 +47,13 @@ vec3 worldToScreenSpace(vec3 pos) {
     vec4 cameraSpace = CullingProjMat * CullingViewMat * vec4(pos, 1);
     vec3 ndc = cameraSpace.xyz/cameraSpace.w;
     return (ndc + vec3(1.0)) * 0.5;
+}
+
+vec3 moveTowardsCamera(vec3 pos, float distance) {
+    vec3 direction = normalize(pos - CullingCameraPos);
+    vec3 newPos = pos - direction * distance;
+
+    return newPos;
 }
 
 bool cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
@@ -102,7 +110,7 @@ void main() {
     float halfWidth = Size.x*0.5;
     float halfHeight = Size.y*0.5;
 
-    float entityDepth = worldToScreenSpace(Pos).z;
+    float entityDepth = worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z;
 
     if(!isVisible(Pos, halfWidth, halfHeight)) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
@@ -121,11 +129,17 @@ void main() {
     float minX = 1;
     float minY = 1;
 
+    bool inside = false;
+
     for (int i = 0; i < 8; ++i) {
         vec3 screenPos = worldToScreenSpace(aabb[i]);
         bool xIn = screenPos.x >= 0.0 && screenPos.x <= 1.0;
         bool yIn = screenPos.y >= 0.0 && screenPos.y <= 1.0;
         bool zIn = screenPos.z >= 0.0 && screenPos.z <= 1.0;
+
+        if (xIn && yIn && zIn) {
+            inside = true;
+        }
 
         if(screenPos.x > maxX)
         maxX = screenPos.x;
@@ -137,7 +151,12 @@ void main() {
         minY = screenPos.y;
     }
 
-    entityDepth = LinearizeDepth(entityDepth)-sqrt(halfWidth*halfWidth+halfWidth*halfWidth)*1.2 - 4.0;
+    if (!inside) {
+        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        return;
+    }
+
+    entityDepth = LinearizeDepth(entityDepth);
 
     if(entityDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);

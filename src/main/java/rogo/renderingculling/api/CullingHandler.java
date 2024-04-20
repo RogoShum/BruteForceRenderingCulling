@@ -306,14 +306,6 @@ public class CullingHandler {
         return render;
     }
 
-    public boolean shouldRenderBlock(int posX, int posY, int posZ) {
-        if (!Config.getCullBlock())
-            return true;
-
-        boolean visible = Math.abs(posX) % 16 <= 7 || Math.abs(posY) % 16 <= 7 || Math.abs(posZ) % 16 <= 7;
-        return !visible;
-    }
-
     public boolean shouldSkipBlockEntity(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
 
