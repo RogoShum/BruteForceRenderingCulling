@@ -158,16 +158,6 @@ public class CullingRenderEvent {
                 screenScale *= 0.5f;
             }
 
-            height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
-            width = (int) (minecraft.getWindow().getGuiScaledWidth()*0.25f);
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-width, height*3, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*3, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*2, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-width, height*2, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
-            RenderSystem.setShaderTexture(0, CullingHandler.AABB_TARGET.getColorTextureId());
-            tessellator.end();
-
             if(Config.getCullEntity()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -230,17 +220,6 @@ public class CullingRenderEvent {
             CullingHandler.callDepthTexture();
             tessellator.end();
         }
-
-        CullingHandler.useShader(CullingHandler.AABB_SHADER);
-        CullingHandler.AABB_TARGET.clear(Minecraft.ON_OSX);
-        CullingHandler.AABB_TARGET.bindWrite(false);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
-        CullingHandler.callDepthTexture();
-        tessellator.end();
 
         CullingHandler.bindMainFrameTarget();
     }
@@ -320,9 +299,6 @@ public class CullingRenderEvent {
         }
         if(shaderInstance.getCullingSize() != null) {
             shaderInstance.getCullingSize().set((float) CullingHandler.CHUNK_CULLING_MAP_TARGET.width, (float) CullingHandler.CHUNK_CULLING_MAP_TARGET.height);
-        }
-        if(shader == CullingHandler.AABB_SHADER && shaderInstance.getCullingSize() != null) {
-            shaderInstance.getCullingSize().set((float) CullingHandler.AABB_TARGET.width, (float) CullingHandler.AABB_TARGET.height);
         }
         if(shaderInstance.getEntityCullingSize() != null) {
             shaderInstance.getEntityCullingSize().set((float) CullingHandler.ENTITY_CULLING_MAP_TARGET.width, (float) CullingHandler.ENTITY_CULLING_MAP_TARGET.height);
