@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import rogo.renderingculling.api.IRenderSectionVisibility;
+import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 
 @Mixin(ChunkRenderDispatcher.RenderChunk.class)
 public abstract class MixinRenderChunk implements IRenderSectionVisibility {
@@ -16,9 +16,6 @@ public abstract class MixinRenderChunk implements IRenderSectionVisibility {
     private BlockPos.MutableBlockPos origin;
     @Unique
     private int cullingLastVisibleFrame;
-
-    private volatile boolean asyncSearched = false;
-    private volatile boolean asyncSubmitted = false;
 
     @Override
     public boolean shouldCheckVisibility(int frame) {
@@ -43,21 +40,5 @@ public abstract class MixinRenderChunk implements IRenderSectionVisibility {
     @Override
     public int getPositionZ() {
         return origin.getZ();
-    }
-
-    public boolean isSubmittedRebuild() {
-        return asyncSubmitted;
-    }
-
-    public void setSubmittedRebuild(boolean submited) {
-        asyncSubmitted = submited;
-    }
-
-    public boolean isSearched() {
-        return asyncSearched;
-    }
-
-    public void setSearch(boolean search) {
-        asyncSearched = search;
     }
 }

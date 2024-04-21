@@ -19,7 +19,7 @@ public class MixinBlockEntityRender {
     public <E extends BlockEntity> void onShouldRender(E p_112268_, float p_112269_, PoseStack p_112270_, MultiBufferSource p_112271_, CallbackInfo ci) {
         AABB aabb = new AABB(p_112268_.getBlockPos());
         aabb.inflate(Vec3.atCenterOf(p_112268_.getBlockPos()).distanceTo(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()) * 0.03125);
-        if(CullingHandler.INSTANCE.shouldSkipBlockEntity(p_112268_, aabb, p_112268_.getBlockPos()))
+        if(CullingHandler.shouldSkipBlockEntity(p_112268_, aabb, p_112268_.getBlockPos()))
             ci.cancel();
     }
 }

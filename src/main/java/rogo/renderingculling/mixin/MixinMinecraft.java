@@ -10,14 +10,18 @@ import rogo.renderingculling.api.CullingHandler;
 
 @Mixin(Minecraft.class)
 public class MixinMinecraft {
-    @Inject(method = "runTick", at = @At(value = "RETURN"))
-    public void onPopPush(boolean p_91384_, CallbackInfo ci) {
-        if(CullingHandler.INSTANCE != null)
-            CullingHandler.INSTANCE.onProfilerPopPush("afterRunTick");
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(FJZ)V", shift = At.Shift.AFTER))
+    public void afterRunTick(boolean p_91384_, CallbackInfo ci) {
+        CullingHandler.onProfilerPopPush("afterRunTick");
+    }
+
+    @Inject(method = "runTick", at = @At(value = "HEAD"))
+    public void beforeRunTick(boolean p_91384_, CallbackInfo ci) {
+        CullingHandler.onProfilerPopPush("beforeRunTick");
     }
 
     @Inject(method = "setLevel", at = @At(value = "HEAD"))
     public void onJoinWorld(ClientLevel world, CallbackInfo ci) {
-        CullingHandler.INSTANCE.onWorldUnload(world);
+        CullingHandler.onWorldUnload(world);
     }
 }

@@ -5,7 +5,7 @@
 
   "brute_force_rendering_culling.cull_entity": "Cull Entity",
   "brute_force_rendering_culling.cull_chunk": "Cull Chunk",
-  "brute_force_rendering_culling.cull_block": "Cull Block",
+  "brute_force_rendering_culling.async": "Async Rebuild Chunk",
   "brute_force_rendering_culling.sampler": "Depth Sampler Rate",
   "brute_force_rendering_culling.culling_map_update_delay": "Culling Map update delay",
   "brute_force_rendering_culling.entity_culling": "Culled entity",

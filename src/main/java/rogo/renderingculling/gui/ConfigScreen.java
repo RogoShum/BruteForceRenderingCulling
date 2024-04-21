@@ -4,12 +4,9 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -103,8 +100,8 @@ public class ConfigScreen extends Screen {
             return;
         }
 
-        addConfigButton(() -> CullingHandler.INSTANCE.checkCulling, (b) -> CullingHandler.INSTANCE.checkCulling = b, () -> Component.literal("Debug"));
-        addConfigButton(() -> CullingHandler.INSTANCE.checkTexture, (b) -> CullingHandler.INSTANCE.checkTexture = b, () -> Component.literal("Check Texture"));
+        addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"));
+        addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"));
 
         addConfigButton(() -> Config.getCullingEntityRate()/20d, (value) -> {
             int format = Mth.floor(value * 20);
@@ -132,7 +129,7 @@ public class ConfigScreen extends Screen {
             return String.valueOf(format);
         }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"));
 
-        Config.setCullBlock(false);
+        addConfigButton(Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"));
         addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"));
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"));
 

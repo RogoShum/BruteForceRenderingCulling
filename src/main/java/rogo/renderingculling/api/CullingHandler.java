@@ -15,8 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -24,26 +22,18 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.registries.DataPackRegistryEvent;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
-import rogo.renderingculling.gui.ConfigScreen;
+import rogo.renderingculling.api.data.ChunkCullingMap;
+import rogo.renderingculling.api.data.EntityCullingMap;
+import rogo.renderingculling.api.impl.IEntitiesForRender;
+import rogo.renderingculling.api.impl.IRenderChunkInfo;
+import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
@@ -51,7 +41,6 @@ import rogo.renderingculling.util.LifeTimer;
 import rogo.renderingculling.util.OcclusionCullerThread;
 import rogo.renderingculling.util.ShaderLoader;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,80 +48,82 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static java.lang.Thread.MAX_PRIORITY;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
 
-@Mod("brute_force_rendering_culling")
 public class CullingHandler {
-    public static CullingHandler INSTANCE;
     public static final String MOD_ID = "brute_force_rendering_culling";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static EntityCullingMap ENTITY_CULLING_MAP = null;
-    public static final Object lock = 0;
-    public static ChunkCullingMap CHUNK_CULLING_MAP = null;
+    public static volatile ChunkCullingMap CHUNK_CULLING_MAP = null;
     public static Matrix4f VIEW_MATRIX = new Matrix4f();
     public static Matrix4f PROJECTION_MATRIX = new Matrix4f();
+    public static double FOV = 90;
 
     static {
         PROJECTION_MATRIX.identity();
     }
 
-    public static final int depthSize = 4;
+    public static final int DEPTH_SIZE = 4;
     public static int DEPTH_INDEX;
     public static int MAIN_DEPTH_TEXTURE = 0;
-    public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[depthSize];
-    public static RenderTarget MONOCHROME_DEPTH_TARGET;
+    public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[DEPTH_SIZE];
+    public static RenderTarget AABB_TARGET;
     public static RenderTarget CHUNK_CULLING_MAP_TARGET;
     public static RenderTarget ENTITY_CULLING_MAP_TARGET;
     public static ShaderInstance CHUNK_CULLING_SHADER;
     public static ShaderInstance COPY_DEPTH_SHADER;
+    public static ShaderInstance AABB_SHADER;
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
     public static boolean applyFrustum;
-    public int DEBUG = 0;
-    public static int[] DEPTH_TEXTURE = new int[depthSize];
+    public static int DEBUG = 0;
+    public static int[] DEPTH_TEXTURE = new int[DEPTH_SIZE];
     public static ShaderLoader SHADER_LOADER = null;
     public static Class<?> OptiFine = null;
 
-    public LifeTimer<Entity> visibleEntity = new LifeTimer<>();
-    public LifeTimer<BlockPos> visibleBlock = new LifeTimer<>();
-    public HashSet<Entity> culledEntity = new HashSet<>();
-    public HashSet<BlockPos> culledBlock = new HashSet<>();
-    private boolean[] nextTick = new boolean[20];
-    public int fps = 0;
-    private int tick = 0;
-    public int clientTickCount = 0;
-    public int entityCulling = 0;
-    public int entityCount = 0;
-    public int blockCulling = 0;
-    public int blockCount = 0;
-    public long entityCullingTime = 0;
-    public long blockCullingTime = 0;
-    public long chunkCullingTime = 0;
-    private long preEntityCullingTime = 0;
-    private long preBlockCullingTime = 0;
-    private long preChunkCullingTime = 0;
-    public long preApplyFrustumTime = 0;
-    public long applyFrustumTime = 0;
-    public int chunkCulling = 0;
-    public int chunkCount = 0;
-    public long chunkCullingInitTime = 0;
-    public long preChunkCullingInitTime = 0;
-    public long entityCullingInitTime = 0;
-    public long preEntityCullingInitTime = 0;
-    public int cullingInitCount = 0;
-    public int preCullingInitCount = 0;
-    public boolean checkCulling = false;
-    public boolean checkTexture = false;
-    private boolean usingShader = false;
-    private String shaderName = "";
-    protected static int LEVEL_HEIGHT_OFFSET;
-    protected static int LEVEL_MIN_SECTION_ABS;
+    public static final LifeTimer<Entity> visibleEntity = new LifeTimer<>();
+    public static final LifeTimer<BlockPos> visibleBlock = new LifeTimer<>();
+    public static final HashSet<Entity> culledEntity = new HashSet<>();
+    public static final HashSet<BlockPos> culledBlock = new HashSet<>();
+    private static boolean[] nextTick = new boolean[20];
+    public static int fps = 0;
+    private static int tick = 0;
+    public static int clientTickCount = 0;
+    public static int entityCulling = 0;
+    public static int entityCount = 0;
+    public static int blockCulling = 0;
+    public static int blockCount = 0;
+    public static long entityCullingTime = 0;
+    public static long blockCullingTime = 0;
+    public static long chunkCullingTime = 0;
+    private static long preEntityCullingTime = 0;
+    private static long preBlockCullingTime = 0;
+    private static long preChunkCullingTime = 0;
+    public static long preApplyFrustumTime = 0;
+    public static long applyFrustumTime = 0;
+    public static int chunkCulling = 0;
+    public static int chunkCount = 0;
+    public static long chunkCullingInitTime = 0;
+    public static long preChunkCullingInitTime = 0;
+    public static long entityCullingInitTime = 0;
+    public static long preEntityCullingInitTime = 0;
+    public static int cullingInitCount = 0;
+    public static int preCullingInitCount = 0;
+    public static boolean checkCulling = false;
+    public static boolean checkTexture = false;
+    private static boolean usingShader = false;
+    private static int shaderCleanupCooldown = 0;
+    private static String shaderName = "";
+    public static int LEVEL_SECTION_RANGE;
+    public static int LEVEL_POS_RANGE;
+    public static int LEVEL_MIN_SECTION_ABS;
+    public static int LEVEL_MIN_POS;
     public static Camera CAMERA;
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
-    private int frame;
+    private static int frame;
+    private static int lastVisibleUpdatedFrame;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -143,62 +134,11 @@ public class CullingHandler {
 
             CHUNK_CULLING_MAP_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
             CHUNK_CULLING_MAP_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-            MONOCHROME_DEPTH_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
-            MONOCHROME_DEPTH_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            AABB_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
+            AABB_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
             ENTITY_CULLING_MAP_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
             ENTITY_CULLING_MAP_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         });
-    }
-
-    public CullingHandler() {
-        INSTANCE = this;
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            MinecraftForge.EVENT_BUS.register(INSTANCE);
-            MinecraftForge.EVENT_BUS.register(new CullingRenderEvent());
-            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(INSTANCE::registerKeyBinding);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(INSTANCE::registerShader);
-            try {
-                OptiFine = Class.forName("net.optifine.shaders.Shaders");
-            } catch (ClassNotFoundException e) {
-                LOGGER.debug("OptiFine Not Found");
-            }
-
-            if (OptiFine != null) {
-                try {
-                    SHADER_LOADER = Class.forName("rogo.renderingculling.util.OptiFineLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
-                }
-            }
-
-            if (hasMod("oculus")) {
-                try {
-                    SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
-                } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-    }
-
-    public void registerKeyBinding(RegisterKeyMappingsEvent event) {
-        event.register(CONFIG_KEY);
-        event.register(DEBUG_KEY);
-    }
-
-    private void registerShader(final DataPackRegistryEvent event) {
-        RenderSystem.recordRenderCall(this::initShader);
-    }
-
-    private void initShader() {
-        LOGGER.debug("try init shader chunk_culling");
-        try {
-            CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "chunk_culling"), DefaultVertexFormat.POSITION);
-            INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
-            COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static final KeyMapping CONFIG_KEY = new KeyMapping(MOD_ID + ".key.config",
@@ -213,14 +153,37 @@ public class CullingHandler {
             GLFW.GLFW_KEY_X,
             "key.category." + MOD_ID);
 
-    public void onWorldUnload(Level world) {
+    public static void init() {
+        try {
+            OptiFine = Class.forName("net.optifine.shaders.Shaders");
+        } catch (ClassNotFoundException e) {
+            LOGGER.debug("OptiFine Not Found");
+        }
+
+        if (OptiFine != null) {
+            try {
+                SHADER_LOADER = Class.forName("rogo.renderingculling.util.OptiFineLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
+            }
+        }
+
+        if (hasMod("oculus")) {
+            try {
+                SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static void onWorldUnload(Level world) {
         if (world == Minecraft.getInstance().level) {
             cleanup();
         }
     }
 
-    private void cleanup() {
-        this.tick = 0;
+    protected static void cleanup() {
+        tick = 0;
         clientTickCount = 0;
         visibleEntity.clear();
         visibleBlock.clear();
@@ -235,58 +198,22 @@ public class CullingHandler {
         SHADER_DEPTH_BUFFER_ID.clear();
     }
 
-    @SubscribeEvent
-    public void onKeyboardInput(InputEvent.Key event) {
-        if (Minecraft.getInstance().player != null) {
-            if (CONFIG_KEY.isDown()) {
-                Minecraft.getInstance().setScreen(new ConfigScreen(Component.translatable(MOD_ID + ".config")));
-            }
-            if (DEBUG_KEY.isDown()) {
-                DEBUG++;
-                if (DEBUG >= 3)
-                    DEBUG = 0;
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
-                clientTickCount++;
-                if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
-                    CHUNK_CULLING_MAP.setDone();
-                    LEVEL_HEIGHT_OFFSET = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
-                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
-
-                    OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
-                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
-                    occlusionCullerThread.setPriority(MAX_PRIORITY);
-                    occlusionCullerThread.start();
-                }
-                Config.setLoaded();
-            } else {
-                cleanup();
-            }
-        }
-
-    }
-
-    public boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
-        if(section == null)
+    public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+        if (section == null) {
             return false;
+        }
+        if (Config.getCullChunk() && Config.getAsyncChunkRebuild())
+            count = false;
+
+        long time = System.nanoTime();
 
         if (count)
             chunkCount++;
-        if (!Config.shouldCullChunk()) {
-            return true;
-        }
 
-        long time = System.nanoTime();
         boolean render;
         boolean actualRender = false;
 
-        if (!section.shouldCheckVisibility(frame)) {
+        if (!section.shouldCheckVisibility(lastVisibleUpdatedFrame)) {
             render = true;
         } else {
             actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
@@ -299,14 +226,16 @@ public class CullingHandler {
         if (!render && count) {
             chunkCulling++;
         } else if (actualRender) {
-            section.updateVisibleTick(frame);
+            section.updateVisibleTick(lastVisibleUpdatedFrame);
         }
+
         if (count)
             preChunkCullingTime += System.nanoTime() - time;
+
         return render;
     }
 
-    public boolean shouldSkipBlockEntity(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
+    public static boolean shouldSkipBlockEntity(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
 
         //for valkyrien skies
@@ -347,7 +276,7 @@ public class CullingHandler {
         return !visible;
     }
 
-    public boolean shouldSkipEntity(Entity entity) {
+    public static boolean shouldSkipEntity(Entity entity) {
         entityCount++;
         if (entity instanceof Player || entity.isCurrentlyGlowing()) return false;
         if (entity.distanceToSqr(CAMERA.getPosition()) < 4) return false;
@@ -381,35 +310,44 @@ public class CullingHandler {
         return !visible;
     }
 
-    public void onProfilerPopPush(String s) {
-        if (s.equals("afterRunTick")) {
-            afterGameRender();
-        } else if (s.equals("captureFrustum")) {
-            AccessorLevelRender levelFrustum = (AccessorLevelRender) Minecraft.getInstance().levelRenderer;
-            Frustum frustum;
-            if (levelFrustum.getCapturedFrustum() != null) {
-                frustum = levelFrustum.getCapturedFrustum();
-            } else {
-                frustum = levelFrustum.getCullingFrustum();
+    public static void onProfilerPopPush(String s) {
+        switch (s) {
+            case "afterRunTick" -> {
+                ++frame;
+                CullingRenderEvent.updateCullingMap();
+                updateMapData();
+                readMapData();
+                OcclusionCullerThread.shouldUpdate();
             }
-            CullingHandler.FRUSTUM = new Frustum(frustum).offsetToFullyIncludeCameraCube(32);
-            this.beforeRenderingWorld();
-        } else if (s.equals("terrain_setup")) {
-            applyFrustum = true;
-        } else if (s.equals("compilechunks")) {
-            applyFrustum = false;
-        } else if (s.equals("destroyProgress")) {
-            updatingDepth = true;
-            this.afterRenderingWorld();
-            CullingRenderEvent.onUpdateCullingMap();
-            updatingDepth = false;
-        } else if (s.equals("chunk_render_lists")) {
-            chunkCount = 0;
-            chunkCulling = 0;
+            case "captureFrustum" -> {
+                AccessorLevelRender levelFrustum = (AccessorLevelRender) Minecraft.getInstance().levelRenderer;
+                Frustum frustum;
+                if (levelFrustum.getCapturedFrustum() != null) {
+                    frustum = levelFrustum.getCapturedFrustum();
+                } else {
+                    frustum = levelFrustum.getCullingFrustum();
+                }
+                CullingHandler.FRUSTUM = new Frustum(frustum).offsetToFullyIncludeCameraCube(32);
+                if (CullingHandler.CHUNK_CULLING_MAP != null) {
+                    CullingHandler.CHUNK_CULLING_MAP.updateCamera();
+                }
+                checkShader();
+            }
+            case "terrain_setup" -> applyFrustum = true;
+            case "compilechunks" -> applyFrustum = false;
+            case "destroyProgress" -> {
+                updatingDepth = true;
+                afterRenderingWorld();
+                updatingDepth = false;
+            }
+            case "chunk_render_lists" -> {
+                chunkCount = 0;
+                chunkCulling = 0;
+            }
         }
     }
 
-    public void onProfilerPush(String s) {
+    public static void onProfilerPush(String s) {
         if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
@@ -417,12 +355,12 @@ public class CullingHandler {
             }
         } else if (s.equals("center")) {
             CAMERA = Minecraft.getInstance().gameRenderer.getMainCamera();
-            int tick = clientTickCount % 20;
+            int thisTick = clientTickCount % 20;
             nextTick = new boolean[20];
 
-            if (this.tick != tick) {
-                this.tick = tick;
-                nextTick[tick] = true;
+            if (tick != thisTick) {
+                tick = thisTick;
+                nextTick[thisTick] = true;
             }
 
             entityCulling = 0;
@@ -430,57 +368,81 @@ public class CullingHandler {
             blockCulling = 0;
             blockCount = 0;
 
+            if (anyNextTick() && shaderCleanupCooldown > 0) {
+                shaderCleanupCooldown--;
+            }
+
             if (isNextLoop()) {
                 visibleBlock.tick(clientTickCount, 1);
                 visibleEntity.tick(clientTickCount, 1);
-                if (tick == 0) {
-                    applyFrustumTime = preApplyFrustumTime;
-                    preApplyFrustumTime = 0;
 
-                    entityCullingTime = preEntityCullingTime;
-                    preEntityCullingTime = 0;
+                applyFrustumTime = preApplyFrustumTime;
+                preApplyFrustumTime = 0;
 
-                    blockCullingTime = preBlockCullingTime;
-                    preBlockCullingTime = 0;
+                entityCullingTime = preEntityCullingTime;
+                preEntityCullingTime = 0;
 
-                    chunkCullingInitTime = preChunkCullingInitTime;
-                    preChunkCullingInitTime = 0;
+                blockCullingTime = preBlockCullingTime;
+                preBlockCullingTime = 0;
 
-                    cullingInitCount = preCullingInitCount;
-                    preCullingInitCount = 0;
+                chunkCullingInitTime = preChunkCullingInitTime;
+                preChunkCullingInitTime = 0;
 
-                    entityCullingInitTime = preEntityCullingInitTime;
-                    preEntityCullingInitTime = 0;
+                cullingInitCount = preCullingInitCount;
+                preCullingInitCount = 0;
 
-                    if (CullingHandler.CHUNK_CULLING_MAP != null) {
-                        CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount = CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount;
-                        CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount = 0;
-                    }
+                entityCullingInitTime = preEntityCullingInitTime;
+                preEntityCullingInitTime = 0;
 
-                    if (preChunkCullingTime != 0) {
-                        chunkCullingTime = preChunkCullingTime;
-                        preChunkCullingTime = 0;
-                    }
+                if (CullingHandler.CHUNK_CULLING_MAP != null) {
+                    CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount = CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount;
+                    CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount = 0;
+                }
+
+                if (preChunkCullingTime != 0) {
+                    chunkCullingTime = preChunkCullingTime;
+                    preChunkCullingTime = 0;
                 }
             }
         }
     }
 
-    public void beforeRenderingWorld() {
-        ++frame;
+    public static void readMapData() {
+        if (!checkCulling) {
+            if (Config.getCullChunk()) {
+                long time = System.nanoTime();
+                if (CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
+                    CHUNK_CULLING_MAP.readData();
+                    lastVisibleUpdatedFrame = frame;
+                }
+                preChunkCullingInitTime += System.nanoTime() - time;
+            }
+
+            if (Config.getCullEntity()) {
+                long time = System.nanoTime();
+                if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
+                    ENTITY_CULLING_MAP.readData();
+                    lastVisibleUpdatedFrame = frame;
+                }
+                preEntityCullingInitTime += System.nanoTime() - time;
+            }
+        }
+    }
+
+    public static void checkShader() {
         if (SHADER_LOADER != null) {
             boolean clear = false;
-            if (SHADER_LOADER.renderingShader() && !usingShader) {
+            if (SHADER_LOADER.enabledShader() && !usingShader) {
                 clear = true;
                 usingShader = true;
             }
 
-            if (!SHADER_LOADER.renderingShader() && usingShader) {
+            if (!SHADER_LOADER.enabledShader() && usingShader) {
                 clear = true;
                 usingShader = false;
             }
 
-            if (SHADER_LOADER.renderingShader() && OptiFine != null) {
+            if (SHADER_LOADER.enabledShader() && OptiFine != null) {
                 String shaderPack = "";
                 try {
                     Field field = CullingHandler.OptiFine.getDeclaredField("currentShaderName");
@@ -495,32 +457,15 @@ public class CullingHandler {
                 }
             }
 
-            if (clear)
+            if (clear) {
+                shaderCleanupCooldown = 20;
                 cleanup();
-        }
-
-        if (anyCulling()) {
-            if (!checkCulling) {
-                if (Config.getCullChunk()) {
-                    long time = System.nanoTime();
-                    if (CHUNK_CULLING_MAP != null && CHUNK_CULLING_MAP.isTransferred()) {
-                        CHUNK_CULLING_MAP.readData();
-                    }
-                    preChunkCullingInitTime += System.nanoTime() - time;
-                }
-
-                if (Config.getCullEntity()) {
-                    long time = System.nanoTime();
-                    if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
-                        ENTITY_CULLING_MAP.readData();
-                    }
-                    preEntityCullingInitTime += System.nanoTime() - time;
-                }
             }
         }
     }
 
-    public void afterRenderingWorld() {
+    public static void afterRenderingWorld() {
+        CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
         if (anyCulling() && !checkCulling && anyNeedTransfer()) {
             float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();
@@ -536,7 +481,7 @@ public class CullingHandler {
             });
 
             int depthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTextureId();
-            if (SHADER_LOADER != null && SHADER_LOADER.renderingShader()) {
+            if (SHADER_LOADER != null && SHADER_LOADER.enabledShader()) {
                 if (!SHADER_DEPTH_BUFFER_ID.containsKey(SHADER_LOADER.getFrameBufferID())) {
                     RenderSystem.assertOnRenderThreadOrInit();
                     GlStateManager._glBindFramebuffer(GL_FRAMEBUFFER, SHADER_LOADER.getFrameBufferID());
@@ -574,25 +519,26 @@ public class CullingHandler {
                 DEPTH_TEXTURE[depthContext.index()] = depthContext.frame().getColorTextureId();
             });
 
+            bindMainFrameTarget();
             net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
                     , CAMERA, Minecraft.getInstance().getFrameTime());
             PoseStack viewMatrix = new PoseStack();
+            Vec3 cameraPos = CAMERA.getPosition();
             viewMatrix.mulPose(Axis.ZP.rotationDegrees(cameraSetup.getRoll()));
             viewMatrix.mulPose(Axis.XP.rotationDegrees(CAMERA.getXRot()));
             viewMatrix.mulPose(Axis.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
-            Vec3 cameraPos = CAMERA.getPosition();
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
             VIEW_MATRIX = new Matrix4f(viewMatrix.last().pose());
         }
     }
 
-    public void afterGameRender() {
+    public static void updateMapData() {
         if (anyCulling()) {
             preCullingInitCount++;
 
             if (Config.getCullChunk()) {
                 int renderingDiameter = Minecraft.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
-                int maxSize = renderingDiameter * LEVEL_HEIGHT_OFFSET * renderingDiameter;
+                int maxSize = renderingDiameter * LEVEL_SECTION_RANGE * renderingDiameter;
                 int cullingSize = (int) Math.sqrt(maxSize) + 1;
 
                 if (CHUNK_CULLING_MAP_TARGET.width != cullingSize || CHUNK_CULLING_MAP_TARGET.height != cullingSize) {
@@ -606,6 +552,9 @@ public class CullingHandler {
 
                 if (CHUNK_CULLING_MAP == null) {
                     CHUNK_CULLING_MAP = new ChunkCullingMap(CHUNK_CULLING_MAP_TARGET.width, CHUNK_CULLING_MAP_TARGET.height);
+                    if (ENTITY_CULLING_MAP != null) {
+                        ENTITY_CULLING_MAP.syncDelay(CHUNK_CULLING_MAP);
+                    }
                     CHUNK_CULLING_MAP.generateIndex(Minecraft.getInstance().options.getEffectiveRenderDistance());
                 }
 
@@ -617,6 +566,9 @@ public class CullingHandler {
             if (Config.getCullEntity()) {
                 if (ENTITY_CULLING_MAP == null) {
                     ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
+                    if (CHUNK_CULLING_MAP != null) {
+                        CHUNK_CULLING_MAP.syncDelay(ENTITY_CULLING_MAP);
+                    }
                 }
 
                 int tableCapacity = CullingHandler.ENTITY_CULLING_MAP.getEntityTable().size() / 64;
@@ -667,7 +619,7 @@ public class CullingHandler {
     }
 
     public static void bindMainFrameTarget() {
-        if (SHADER_LOADER != null && SHADER_LOADER.renderingShader()) {
+        if (SHADER_LOADER != null && SHADER_LOADER.renderingShaderPass()) {
             SHADER_LOADER.bindDefaultFrameBuffer();
         } else {
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
@@ -689,19 +641,19 @@ public class CullingHandler {
         });
     }
 
-    public boolean renderingOculus() {
+    public static boolean renderingIris() {
         return renderingShader() && OptiFine == null;
     }
 
-    public boolean renderingShader() {
-        return SHADER_LOADER != null && SHADER_LOADER.renderingShader();
+    public static boolean renderingShader() {
+        return SHADER_LOADER != null && SHADER_LOADER.renderingShaderPass();
     }
 
-    public boolean isNextTick(int tick) {
-        return nextTick[this.tick];
+    public static boolean enabledShader() {
+        return SHADER_LOADER != null && SHADER_LOADER.enabledShader();
     }
 
-    public boolean anyNextTick() {
+    public static boolean anyNextTick() {
         for (int i = 0; i < 20; ++i) {
             if (nextTick[i])
                 return true;
@@ -709,7 +661,7 @@ public class CullingHandler {
         return false;
     }
 
-    public boolean isNextLoop() {
+    public static boolean isNextLoop() {
         return nextTick[0];
     }
 
@@ -736,7 +688,18 @@ public class CullingHandler {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
     }
 
-    public int getFrame() {
-        return frame;
+    public static boolean hasSodium() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium") || modInfo.getModId().equals("rubidium"));
+    }
+
+    public static boolean needPauseRebuild() {
+        return shaderCleanupCooldown > 0;
+    }
+
+    public static int mapChunkY(double posY) {
+        double offset = posY - LEVEL_MIN_POS;
+        double mappingRatio = offset / LEVEL_POS_RANGE;
+
+        return (int) Math.floor(mappingRatio * LEVEL_SECTION_RANGE);
     }
 }

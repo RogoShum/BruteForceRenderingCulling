@@ -1,4 +1,4 @@
-package rogo.renderingculling.api;
+package rogo.renderingculling.api.impl;
 
 public interface IRenderSectionVisibility {
     boolean shouldCheckVisibility(int clientTick);

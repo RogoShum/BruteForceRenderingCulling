@@ -9,6 +9,8 @@ uniform vec2 CullingSize;
 uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
+uniform vec3 CullingCameraDir;
+uniform float CullingFov;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
 uniform int LevelHeightOffset;
@@ -126,7 +128,6 @@ void main() {
     vec3 chunkBasePos = vec3(chunkX, chunkY, chunkZ);
     vec3 chunkPos = vec3(chunkBasePos+blockToChunk(CullingCameraPos))*16;
     chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
-    vec3 chunkPosOffset = chunkPos;
 
     float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
 
@@ -152,11 +153,17 @@ void main() {
     float minX = 1;
     float minY = 1;
 
+    bool inside = false;
+    float fovRadians = radians(CullingFov);
+    float halfFovRadians = fovRadians / 2.0;
+    float cosHalfFov = cos(halfFovRadians);
     for (int i = 0; i < 8; ++i) {
+        if(dot(normalize(aabb[i] - CullingCameraPos), normalize(CullingCameraDir)) < cosHalfFov) {
+            continue;
+        } else {
+            inside = true;
+        }
         vec3 screenPos = worldToScreenSpace(aabb[i]);
-        bool xIn = screenPos.x >= 0.0 && screenPos.x <= 1.0;
-        bool yIn = screenPos.y >= 0.0 && screenPos.y <= 1.0;
-        bool zIn = screenPos.z >= 0.0 && screenPos.z <= 1.0;
 
         if(screenPos.x > maxX)
         maxX = screenPos.x;
@@ -171,6 +178,11 @@ void main() {
     float chunkDepth = LinearizeDepth(chunkCenterDepth);
     if(chunkDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        return;
+    }
+
+    if (!inside) {
+        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
 

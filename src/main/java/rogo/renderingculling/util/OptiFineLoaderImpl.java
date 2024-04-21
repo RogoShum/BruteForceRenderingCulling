@@ -26,7 +26,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
     }
 
     @Override
-    public boolean renderingShader() {
+    public boolean renderingShaderPass() {
         try {
             Field field = CullingHandler.OptiFine.getDeclaredField("shaderPackLoaded");
             field.setAccessible(true);
@@ -35,6 +35,11 @@ public class OptiFineLoaderImpl implements ShaderLoader {
             e.fillInStackTrace();
         }
         return false;
+    }
+
+    @Override
+    public boolean enabledShader() {
+        return renderingShaderPass();
     }
 
     @Override

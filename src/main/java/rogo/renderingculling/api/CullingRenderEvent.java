@@ -14,7 +14,9 @@ import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.joml.FrustumIntersection;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
+import rogo.renderingculling.api.impl.ICullingShader;
 import rogo.renderingculling.instanced.EntityCullingInstanceRenderer;
 import rogo.renderingculling.mixin.AccessorFrustum;
 
@@ -35,7 +37,7 @@ public class CullingRenderEvent {
             return;
         }
 
-        if (CullingHandler.INSTANCE.DEBUG > 0 && event.getOverlay().id().equals(VanillaGuiOverlay.HELMET.id())) {
+        if (CullingHandler.DEBUG > 0 && event.getOverlay().id().equals(VanillaGuiOverlay.HELMET.id())) {
             GuiGraphics guiGraphics = event.getGuiGraphics();
             Minecraft minecraft = Minecraft.getInstance();
             int width = minecraft.getWindow().getGuiScaledWidth() / 2;
@@ -44,24 +46,24 @@ public class CullingRenderEvent {
 
             int heightScale = -minecraft.font.lineHeight * fontCount;
             fontCount = 0;
-            if(CullingHandler.INSTANCE.fps == 0 ) {
-                CullingHandler.INSTANCE.fps++;
+            if(CullingHandler.fps == 0 ) {
+                CullingHandler.fps++;
             }
 
-            if(CullingHandler.INSTANCE.cullingInitCount == 0 ) {
-                CullingHandler.INSTANCE.cullingInitCount++;
+            if(CullingHandler.cullingInitCount == 0 ) {
+                CullingHandler.cullingInitCount++;
             }
 
-            if(CullingHandler.INSTANCE.chunkCount == 0 ) {
-                CullingHandler.INSTANCE.chunkCount++;
+            if(CullingHandler.chunkCount == 0 ) {
+                CullingHandler.chunkCount++;
             }
 
-            if (CullingHandler.INSTANCE.DEBUG > 1) {
+            if (CullingHandler.DEBUG > 1) {
                 if (Config.getCullChunk()) {
-                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.chunkCullingInitTime /1000/CullingHandler.cullingInitCount) + " μs";
                     drawString(guiGraphics, cullingInitTime, width, height - heightScale);
 
-                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.INSTANCE.chunkCullingTime / 1000 / CullingHandler.INSTANCE.chunkCount) + " μs";
+                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.chunkCullingTime / 1000 / CullingHandler.fps) + " μs";
                     drawString(guiGraphics, chunkCullingTime, width, height - heightScale);
 
                     if(CullingHandler.CHUNK_CULLING_MAP != null) {
@@ -70,23 +72,23 @@ public class CullingRenderEvent {
                     }
                 }
 
-                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.INSTANCE.chunkCulling + " / " + CullingHandler.INSTANCE.chunkCount;
+                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.chunkCulling + " / " + CullingHandler.chunkCount;
                 drawString(guiGraphics, chunkCulling, width, height - heightScale);
 
                 if (Config.getCullEntity()) {
-                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.INSTANCE.entityCullingInitTime /1000/CullingHandler.INSTANCE.cullingInitCount) + " μs";
+                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.entityCullingInitTime /1000/CullingHandler.cullingInitCount) + " μs";
                     drawString(guiGraphics, initTime, width, height - heightScale);
 
-                    String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.INSTANCE.blockCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingHandler.blockCullingTime/1000/CullingHandler.fps) + " μs";
                     drawString(guiGraphics, blockCullingTime, width, height - heightScale);
 
-                    String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.INSTANCE.blockCulling + " / " + CullingHandler.INSTANCE.blockCount;
+                    String blockCulling = Component.translatable("brute_force_rendering_culling.block_culling").getString() + ": " + CullingHandler.blockCulling + " / " + CullingHandler.blockCount;
                     drawString(guiGraphics, blockCulling, width, height - heightScale);
 
-                    String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.INSTANCE.entityCullingTime/1000/CullingHandler.INSTANCE.fps) + " μs";
+                    String entityCullingTime = Component.translatable("brute_force_rendering_culling.entity_culling_time").getString() + ": " + (CullingHandler.entityCullingTime/1000/CullingHandler.fps) + " μs";
                     drawString(guiGraphics, entityCullingTime, width, height - heightScale);
 
-                    String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.INSTANCE.entityCulling + " / " + CullingHandler.INSTANCE.entityCount;
+                    String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.entityCulling + " / " + CullingHandler.entityCount;
                     drawString(guiGraphics, entityCulling, width, height - heightScale);
                 }
 
@@ -132,7 +134,7 @@ public class CullingRenderEvent {
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
 
-            if(!CullingHandler.INSTANCE.checkTexture)
+            if(!CullingHandler.checkTexture)
                 return;
 
             Tesselator tessellator = Tesselator.getInstance();
@@ -155,6 +157,16 @@ public class CullingRenderEvent {
                 tessellator.end();
                 screenScale *= 0.5f;
             }
+
+            height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
+            width = (int) (minecraft.getWindow().getGuiScaledWidth()*0.25f);
+            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-width, height*3, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*3, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex((double)minecraft.getWindow().getGuiScaledWidth(), height*2, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth()-width, height*2, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+            RenderSystem.setShaderTexture(0, CullingHandler.AABB_TARGET.getColorTextureId());
+            tessellator.end();
 
             if(Config.getCullEntity()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight()*0.25f);
@@ -188,14 +200,14 @@ public class CullingRenderEvent {
         fontCount++;
     }
 
-    protected static void onUpdateCullingMap() {
+    protected static void updateCullingMap() {
         if(!CullingHandler.anyCulling())
             return;
 
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
 
-        if(CullingHandler.INSTANCE.checkCulling)
+        if(CullingHandler.checkCulling)
             return;
 
         if(Config.getCullEntity() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
@@ -219,6 +231,17 @@ public class CullingRenderEvent {
             tessellator.end();
         }
 
+        CullingHandler.useShader(CullingHandler.AABB_SHADER);
+        CullingHandler.AABB_TARGET.clear(Minecraft.ON_OSX);
+        CullingHandler.AABB_TARGET.bindWrite(false);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(1.0f,  1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(-1.0f,  1.0f, 0.0f).endVertex();
+        CullingHandler.callDepthTexture();
+        tessellator.end();
+
         CullingHandler.bindMainFrameTarget();
     }
 
@@ -229,7 +252,15 @@ public class CullingRenderEvent {
             float[] array = new float[]{(float) pos.x, (float) pos.y, (float) pos.z};
             shaderInstance.getCullingCameraPos().set(array);
         }
-        if(shaderInstance.getFrustumPos() != null) {
+        if(shaderInstance.getCullingCameraDir() != null) {
+            Vector3f pos = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
+            float[] array = new float[]{pos.x, pos.y, pos.z};
+            shaderInstance.getCullingCameraDir().set(array);
+        }
+        if(shaderInstance.getCullingFov() != null) {
+            shaderInstance.getCullingFov().set((float) CullingHandler.FOV + (float)(170 - CullingHandler.FOV));
+        }
+        if(shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(
                     ((AccessorFrustum)CullingHandler.FRUSTUM).camX(),
                     ((AccessorFrustum)CullingHandler.FRUSTUM).camY(),
@@ -244,7 +275,7 @@ public class CullingRenderEvent {
         if(shaderInstance.getCullingProjMat() != null) {
             shaderInstance.getCullingProjMat().set(CullingHandler.PROJECTION_MATRIX);
         }
-        if(shaderInstance.getCullingFrustum() != null) {
+        if(shaderInstance.getCullingFrustum() != null && CullingHandler.FRUSTUM != null) {
             Vector4f[] frustumData = getFrustumPlanes((((AccessorFrustum)CullingHandler.FRUSTUM).frustumIntersection()));
             List<Float> data = new ArrayList<>();
             for (Vector4f frustumDatum : frustumData) {
@@ -271,12 +302,12 @@ public class CullingRenderEvent {
             shaderInstance.getRenderDistance().set(distance);
         }
         if(shaderInstance.getDepthSize() != null) {
-            float[] array = new float[CullingHandler.depthSize*2];
+            float[] array = new float[CullingHandler.DEPTH_SIZE *2];
             if(shader == CullingHandler.COPY_DEPTH_SHADER) {
                 array[0] = (float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX].width;
                 array[1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[CullingHandler.DEPTH_INDEX].height;
             } else {
-                for(int i = 0; i < CullingHandler.depthSize; ++i) {
+                for(int i = 0; i < CullingHandler.DEPTH_SIZE; ++i) {
                     int arrayIdx = i*2;
                     array[arrayIdx] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].width;
                     array[arrayIdx+1] = (float) CullingHandler.DEPTH_BUFFER_TARGET[i].height;
@@ -290,14 +321,18 @@ public class CullingRenderEvent {
         if(shaderInstance.getCullingSize() != null) {
             shaderInstance.getCullingSize().set((float) CullingHandler.CHUNK_CULLING_MAP_TARGET.width, (float) CullingHandler.CHUNK_CULLING_MAP_TARGET.height);
         }
+        if(shader == CullingHandler.AABB_SHADER && shaderInstance.getCullingSize() != null) {
+            shaderInstance.getCullingSize().set((float) CullingHandler.AABB_TARGET.width, (float) CullingHandler.AABB_TARGET.height);
+        }
         if(shaderInstance.getEntityCullingSize() != null) {
             shaderInstance.getEntityCullingSize().set((float) CullingHandler.ENTITY_CULLING_MAP_TARGET.width, (float) CullingHandler.ENTITY_CULLING_MAP_TARGET.height);
         }
         if(shaderInstance.getLevelHeightOffset() != null) {
-            shaderInstance.getLevelHeightOffset().set(CullingHandler.LEVEL_HEIGHT_OFFSET);
+            shaderInstance.getLevelHeightOffset().set(CullingHandler.LEVEL_SECTION_RANGE);
         }
         if(shaderInstance.getLevelMinSection() != null && Minecraft.getInstance().level != null) {
-            shaderInstance.getLevelMinSection().set(Minecraft.getInstance().level.getMinSection());
+            int min = Minecraft.getInstance().level.getMinSection();
+            shaderInstance.getLevelMinSection().set(min);
         }
     }
 

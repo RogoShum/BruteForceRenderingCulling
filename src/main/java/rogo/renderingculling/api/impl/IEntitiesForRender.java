@@ -1,4 +1,4 @@
-package rogo.renderingculling.api;
+package rogo.renderingculling.api.impl;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

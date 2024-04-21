@@ -11,7 +11,7 @@ public class Config {
     private static ForgeConfigSpec.DoubleValue SAMPLING;
     private static ForgeConfigSpec.BooleanValue CULL_ENTITY;
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
-    private static ForgeConfigSpec.BooleanValue CULL_BLOCK;
+    private static ForgeConfigSpec.BooleanValue ASYNC;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
     private static ForgeConfigSpec.IntValue CULLING_ENTITY_RATE;
 
@@ -52,7 +52,7 @@ public class Config {
         if (unload())
             return false;
 
-        if(CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
             return false;
 
         return getCullChunk();
@@ -63,19 +63,26 @@ public class Config {
         CULL_CHUNK.save();
     }
 
-    public static boolean getCullBlock() {
+    public static boolean getAsyncChunkRebuild() {
         if (unload())
             return false;
-        return CULL_BLOCK.get();
+
+        if(!shouldCullChunk())
+            return false;
+
+        return ASYNC.get();
     }
 
-    public static void setCullBlock(boolean value) {
-        CULL_BLOCK.set(value);
-        CULL_BLOCK.save();
+    public static void setAsyncChunkRebuild(boolean value) {
+        if(!shouldCullChunk())
+            return;
+
+        ASYNC.set(value);
+        ASYNC.save();
     }
 
     public static int getShaderDynamicDelay() {
-        return CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
+        return CullingHandler.enabledShader() ? 1 : 0;
     }
 
     public static int getDepthUpdateDelay() {
@@ -140,8 +147,8 @@ public class Config {
         CULL_CHUNK = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
-        CLIENT_BUILDER.push("Cull block");
-        CULL_BLOCK = CLIENT_BUILDER.define("enabled", true);
+        CLIENT_BUILDER.push("Async chunk rebuild");
+        ASYNC = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Culling entity update frequency");
