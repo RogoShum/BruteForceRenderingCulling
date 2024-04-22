@@ -20,7 +20,7 @@ public class OcclusionCullerThread extends Thread {
         while (!finished) {
             try {
                 if(CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
-                    if (Config.getCullChunk() && Config.getAsyncChunkRebuild()) {
+                    if (Config.getAsyncChunkRebuild()) {
                         CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks();
                         if(CullingHandler.hasSodium()) {
                             SodiumSectionAsyncUtil.asyncSearchRebuildSection();

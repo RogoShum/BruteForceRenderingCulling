@@ -13,8 +13,6 @@ public class Config {
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
     private static ForgeConfigSpec.BooleanValue ASYNC;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
-    private static ForgeConfigSpec.IntValue CULLING_ENTITY_RATE;
-
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_SKIP;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCK_ENTITY_SKIP;
 
@@ -96,17 +94,6 @@ public class Config {
         UPDATE_DELAY.save();
     }
 
-    public static int getCullingEntityRate() {
-        if (unload())
-            return 20;
-        return CULLING_ENTITY_RATE.get();
-    }
-
-    public static void setCullingEntityRate(int value) {
-        CULLING_ENTITY_RATE.set(value);
-        CULLING_ENTITY_RATE.save();
-    }
-
     public static List<? extends String> getEntitiesSkip() {
         if (unload())
             return ImmutableList.of();
@@ -149,10 +136,6 @@ public class Config {
 
         CLIENT_BUILDER.push("Async chunk rebuild");
         ASYNC = CLIENT_BUILDER.define("enabled", true);
-        CLIENT_BUILDER.pop();
-
-        CLIENT_BUILDER.push("Culling entity update frequency");
-        CULLING_ENTITY_RATE = CLIENT_BUILDER.defineInRange("frequency", 20, 0, 20);
         CLIENT_BUILDER.pop();
 
         List<String> list = new ArrayList<>();

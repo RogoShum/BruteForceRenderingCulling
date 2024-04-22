@@ -19,8 +19,14 @@
   "brute_force_rendering_culling.chunk_culling_time": "Chunk culling cost",
   "brute_force_rendering_culling.chunk_update_count": "Async Chunk Update Count",
 
-  "brute_force_rendering_culling.culling_entity_update_rate": "Culled entity update frequency",
-
   "brute_force_rendering_culling.enable": "Enable",
-  "brute_force_rendering_culling.disable": "Disable"
+  "brute_force_rendering_culling.disable": "Disable",
+  "brute_force_rendering_culling.detail.cull_entity": "Cull entities visually invisible",
+  "brute_force_rendering_culling.detail.cull_chunk": "Cull chunks visually invisible",
+  "brute_force_rendering_culling.detail.async": "Requires Sodium support, asynchronously updates visible chunks in a separate thread and synchronizes with the main rendering thread. This can accelerate chunk loading speed during movement and improve frame rates.\n\nCurrently in testing phase, game crashes may occur during chunk loading.",
+  "brute_force_rendering_culling.detail.sampler": "Scaling ratio of the depth texture used for culling. Higher ratios result in more precise culling and better effects. Devices with better graphics card performance or lower game resolutions can increase this value. Not recommended to be below 20%.",
+  "brute_force_rendering_culling.detail.culling_map_update_delay": "Frames delayed before culling texture updates to the CPU, preventing main thread stutter caused by incomplete data transmission. Debug by observing culling map update times.\n\nEnabling shaders will slow down data transmission, resulting in at least 1 frame delay.",
+  "brute_force_rendering_culling.detail.culling_entity_update_delay": "Even if entities in the client world are not being rendered, rendering data updates may still occur. This option delays updates for invisible entities in the client world, slightly increasing frame rates.",
+  "brute_force_rendering_culling.detail.check_texture": "For testing purposes, enables checking of depth and culling texture functionality when the data monitoring panel is open.",
+  "brute_force_rendering_culling.detail.debug": "For testing purposes, effective only in vanilla Minecraft, used to view culled chunks."
 }

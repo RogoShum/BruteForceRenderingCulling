@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -71,6 +72,25 @@ public class ModLoader {
                 if (DEBUG >= 3)
                     DEBUG = 0;
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onTooltip(RenderTooltipEvent.Color event) {
+        if (reColorToolTip) {
+            int BG = ((50 & 0xFF) << 24) |
+                    ((0) << 16) |
+                    ((0) << 8) |
+                    ((0));
+
+            int B = ((100 & 0xFF) << 24) |
+                    ((0xFF) << 16) |
+                    ((0xFF) << 8) |
+                    ((0xFF));
+            event.setBackgroundStart(BG);
+            event.setBackgroundEnd(BG);
+            event.setBorderStart(B);
+            event.setBorderEnd(B);
         }
     }
 

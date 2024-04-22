@@ -24,6 +24,10 @@ import java.util.function.Supplier;
 public class ConfigScreen extends Screen {
     private boolean release = false;
     int heightScale;
+    public static int backgroundStart = Mth.hsvToRgb(0, 0, 0.1F);
+    public static int backgroundEnd = Mth.hsvToRgb(0, 0, 0.1F);
+    public static int borderStart = Mth.hsvToRgb(0, 0, 0.05F);
+    public static int borderEnd = Mth.hsvToRgb(0, 0, 0.05F);
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
@@ -100,21 +104,18 @@ public class ConfigScreen extends Screen {
             return;
         }
 
-        addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"));
-        addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"));
-
-        addConfigButton(() -> Config.getCullingEntityRate()/20d, (value) -> {
-            int format = Mth.floor(value * 20);
-            Config.setCullingEntityRate(format);
-            return format*0.05;
-        }, (value) -> String.valueOf(Mth.floor(value * 20)), () -> Component.translatable("brute_force_rendering_culling.culling_entity_update_rate"));
+        addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
+        addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
 
         addConfigButton(Config::getSampling, (value) -> {
-            double format = Mth.floor(value * 100)*0.01;
+            double format = Mth.floor(value * 20) * 0.05;
             format = Double.parseDouble(String.format("%.2f",format));
             Config.setSampling(format);
             return format;
-        }, (value) -> String.valueOf(Mth.floor(value * 100)), () -> Component.translatable("brute_force_rendering_culling.sampler"));
+        }, (value) -> String.valueOf(Mth.floor(value * 100) + "%"), () -> Component.translatable("brute_force_rendering_culling.sampler"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.sampler"));
 
         addConfigButton(() -> Config.getDepthUpdateDelay()/10d, (value) -> {
             int format = Mth.floor(value * 10);
@@ -127,23 +128,38 @@ public class ConfigScreen extends Screen {
         }, (value) -> {
             int format = Mth.floor(value * 10);
             return String.valueOf(format);
-        }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"));
+        }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
 
-        addConfigButton(Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"));
-        addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"));
-        addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"));
+        addConfigButton(Config::getCullChunk, Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.async"));
+        addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_chunk"));
+        addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_entity"));
 
         super.init();
     }
 
-    public void addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
-        this.addWidget(new NeatButton(width/2-50, (int) ((height*0.8)-heightScale*children().size()), 100, 14
-                , getter, setter, updateMessage));
+    public NeatButton addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , getter, setter, updateMessage);
+        this.addWidget(button);
+        return button;
     }
 
-    public void addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
-        this.addWidget(new NeatSliderButton(width/2-50, (int) ((height*0.8)-heightScale*children().size()), 100, 14
-                , getter, setter, display, name));
+    public NeatButton addConfigButton(Supplier<Boolean> enable, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , enable, getter, setter, updateMessage);
+        this.addWidget(button);
+        return button;
+    }
+
+    public NeatSliderButton addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
+        NeatSliderButton button = new NeatSliderButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , getter, setter, display, name);
+        this.addWidget(button);
+        return button;
     }
 
     @Override
@@ -153,13 +169,19 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(guiGraphics);
 
         List<? extends GuiEventListener> children = children();
         for (GuiEventListener button : children) {
-            if(button instanceof AbstractWidget b)
-                b.render(guiGraphics, mouseX, mouseY, partialTicks);
+            if (button instanceof NeatButton b)
+                b.shouDetail(guiGraphics, minecraft.font);
+            if (button instanceof NeatSliderButton b)
+                b.shouDetail(guiGraphics, minecraft.font);
         }
 
-        this.renderBackground(guiGraphics);
+        for (GuiEventListener button : children) {
+            if (button instanceof AbstractWidget b)
+                b.render(guiGraphics, mouseX, mouseY, partialTicks);
+        }
     }
 }

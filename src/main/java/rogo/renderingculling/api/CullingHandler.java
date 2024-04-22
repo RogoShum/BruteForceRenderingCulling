@@ -124,6 +124,8 @@ public class CullingHandler {
     private static final HashMap<Integer, Integer> SHADER_DEPTH_BUFFER_ID = new HashMap<>();
     private static int frame;
     private static int lastVisibleUpdatedFrame;
+    public static volatile boolean useOcclusionCulling = true;
+    public static boolean reColorToolTip = false;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -200,8 +202,14 @@ public class CullingHandler {
         if (section == null) {
             return false;
         }
-        if (Config.getCullChunk() && Config.getAsyncChunkRebuild())
+
+        if (Config.getAsyncChunkRebuild()) {
+            if (!useOcclusionCulling) {
+                return true;
+            }
+
             count = false;
+        }
 
         long time = System.nanoTime();
 
@@ -312,9 +320,7 @@ public class CullingHandler {
         switch (s) {
             case "afterRunTick" -> {
                 ++frame;
-                CullingRenderEvent.updateCullingMap();
                 updateMapData();
-                readMapData();
                 OcclusionCullerThread.shouldUpdate();
             }
             case "captureFrustum" -> {
@@ -331,11 +337,17 @@ public class CullingHandler {
                 }
                 checkShader();
             }
-            case "terrain_setup" -> applyFrustum = true;
-            case "compilechunks" -> applyFrustum = false;
+            case "terrain_setup" -> {
+                applyFrustum = true;
+            }
+            case "compilechunks" -> {
+                applyFrustum = false;
+            }
             case "destroyProgress" -> {
                 updatingDepth = true;
-                afterRenderingWorld();
+                updateDepthMap();
+                readMapData();
+                CullingRenderEvent.updateCullingMap();
                 updatingDepth = false;
             }
             case "chunk_render_lists" -> {
@@ -462,7 +474,7 @@ public class CullingHandler {
         }
     }
 
-    public static void afterRenderingWorld() {
+    public static void updateDepthMap() {
         CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
         if (anyCulling() && !checkCulling && anyNeedTransfer()) {
             float sampling = (float) (double) Config.getSampling();
