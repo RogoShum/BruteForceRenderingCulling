@@ -62,11 +62,11 @@ public class NeatButton extends Button {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        float color = this.isHovered() ? 0.7f : 0.5f;
+        float color = this.isHovered() ? 0.9f : 0.7f;
         if (!enable.get()) {
             color = 0.2f;
         }
@@ -74,9 +74,8 @@ public class NeatButton extends Button {
         bufferbuilder.vertex(this.getX() + width, this.getY() + height, 0.0D).color(color, color, color, 0.5f).endVertex();
         bufferbuilder.vertex(this.getX() + width, this.getY(), 0.0D).color(color, color, color, 0.5f).endVertex();
         bufferbuilder.vertex(this.getX(), this.getY(), 0.0D).color(color, color, color, 0.5f).endVertex();
-        BufferUploader.drawWithShader(bufferbuilder.end());
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        RenderSystem.defaultBlendFunc();
+        //BufferUploader.drawWithShader(bufferbuilder.end());
+        //bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         bufferbuilder.vertex(this.getX() - 1, this.getY() + height + 1, 0.0D).color(color, color, color, 0.5f).endVertex();
         bufferbuilder.vertex(this.getX() + width + 1, this.getY() + height + 1, 0.0D).color(color, color, color, 0.5f).endVertex();
         bufferbuilder.vertex(this.getX() + width + 1, this.getY() - 1, 0.0D).color(color, color, color, 0.5f).endVertex();
@@ -89,7 +88,7 @@ public class NeatButton extends Button {
     }
 
     public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered() && !isFocused()) {
+        if (detailMessage != null && isHovered()) {
             CullingHandler.reColorToolTip = true;
             List<Component> components = new ArrayList<>();
             String[] parts = detailMessage.get().getString().split("\\n");

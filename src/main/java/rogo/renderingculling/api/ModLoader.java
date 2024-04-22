@@ -56,6 +56,7 @@ public class ModLoader {
             CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "chunk_culling"), DefaultVertexFormat.POSITION);
             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
+            REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "remove_color"), DefaultVertexFormat.POSITION);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -78,7 +79,7 @@ public class ModLoader {
     @SubscribeEvent
     public void onTooltip(RenderTooltipEvent.Color event) {
         if (reColorToolTip) {
-            int BG = ((50 & 0xFF) << 24) |
+            int BG = ((100 & 0xFF) << 24) |
                     ((0) << 16) |
                     ((0) << 8) |
                     ((0));

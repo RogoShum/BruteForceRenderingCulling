@@ -68,12 +68,11 @@ public class CullingHandler {
     public static int DEPTH_INDEX;
     public static int MAIN_DEPTH_TEXTURE = 0;
     public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[DEPTH_SIZE];
-    public static RenderTarget AABB_TARGET;
     public static RenderTarget CHUNK_CULLING_MAP_TARGET;
     public static RenderTarget ENTITY_CULLING_MAP_TARGET;
     public static ShaderInstance CHUNK_CULLING_SHADER;
     public static ShaderInstance COPY_DEPTH_SHADER;
-    public static ShaderInstance AABB_SHADER;
+    public static ShaderInstance REMOVE_COLOR_SHADER;
     public static ShaderInstance INSTANCED_ENTITY_CULLING_SHADER;
     public static Frustum FRUSTUM;
     public static boolean updatingDepth;
@@ -114,7 +113,7 @@ public class CullingHandler {
     public static boolean checkCulling = false;
     public static boolean checkTexture = false;
     private static boolean usingShader = false;
-    private static int shaderCleanupCooldown = 0;
+    private static int fullChunkUpdateCooldown = 0;
     private static String shaderName = "";
     public static int LEVEL_SECTION_RANGE;
     public static int LEVEL_POS_RANGE;
@@ -318,6 +317,11 @@ public class CullingHandler {
 
     public static void onProfilerPopPush(String s) {
         switch (s) {
+            case "beforeRunTick" -> {
+                if(((AccessorLevelRender)Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate()) {
+                    fullChunkUpdateCooldown = 20;
+                }
+            }
             case "afterRunTick" -> {
                 ++frame;
                 updateMapData();
@@ -378,8 +382,8 @@ public class CullingHandler {
             blockCulling = 0;
             blockCount = 0;
 
-            if (anyNextTick() && shaderCleanupCooldown > 0) {
-                shaderCleanupCooldown--;
+            if (anyNextTick() && fullChunkUpdateCooldown > 0) {
+                fullChunkUpdateCooldown--;
             }
 
             if (isNextLoop()) {
@@ -468,7 +472,6 @@ public class CullingHandler {
             }
 
             if (clear) {
-                shaderCleanupCooldown = 20;
                 cleanup();
             }
         }
@@ -703,7 +706,7 @@ public class CullingHandler {
     }
 
     public static boolean needPauseRebuild() {
-        return shaderCleanupCooldown > 0;
+        return fullChunkUpdateCooldown > 0;
     }
 
     public static int mapChunkY(double posY) {

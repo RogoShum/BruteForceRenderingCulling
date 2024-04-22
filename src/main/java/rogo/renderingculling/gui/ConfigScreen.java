@@ -21,6 +21,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static org.lwjgl.opengl.GL14.*;
+
 public class ConfigScreen extends Screen {
     private boolean release = false;
     int heightScale;
@@ -46,26 +48,39 @@ public class ConfigScreen extends Screen {
         int widthScale = width/4;
         int bottom = (int) (minecraft.getWindow().getGuiScaledHeight()*0.8)+20;
         int top = bottom-heightScale*children().size()-10;
-
+        float bgColor = 1.0f;
+        float bgAlpha = 1.0f;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale, bottom, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, bottom, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, top, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width-widthScale, top, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        glBlendColor(0.5f, 0.5f, 0.5f, 1.0f);
         BufferUploader.drawWithShader(bufferbuilder.end());
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+        /*
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, bottom+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, bottom+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, top-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, top-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bgColor = 0.8f;
+        bufferbuilder.vertex(width-widthScale, bottom, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale, bottom, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale, top, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width-widthScale, top, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ZERO);
         BufferUploader.drawWithShader(bufferbuilder.end());
+        bgColor = 1.0f;
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferbuilder.vertex(width-widthScale-2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width+widthScale+2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(width-widthScale-2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
+        BufferUploader.drawWithShader(bufferbuilder.end());
+         */
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
@@ -104,10 +119,13 @@ public class ConfigScreen extends Screen {
             return;
         }
 
-        addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
-                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
-        addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
+        if(player.getName().getString().equals("Dev")) {
+            addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
+                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
+
+            addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
+        }
 
         addConfigButton(Config::getSampling, (value) -> {
             double format = Mth.floor(value * 20) * 0.05;
@@ -172,16 +190,17 @@ public class ConfigScreen extends Screen {
         this.renderBackground(guiGraphics);
 
         List<? extends GuiEventListener> children = children();
+
+        for (GuiEventListener button : children) {
+            if (button instanceof AbstractWidget b)
+                b.render(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+
         for (GuiEventListener button : children) {
             if (button instanceof NeatButton b)
                 b.shouDetail(guiGraphics, minecraft.font);
             if (button instanceof NeatSliderButton b)
                 b.shouDetail(guiGraphics, minecraft.font);
-        }
-
-        for (GuiEventListener button : children) {
-            if (button instanceof AbstractWidget b)
-                b.render(guiGraphics, mouseX, mouseY, partialTicks);
         }
     }
 }
