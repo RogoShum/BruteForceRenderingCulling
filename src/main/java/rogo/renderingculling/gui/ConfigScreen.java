@@ -21,8 +21,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.lwjgl.opengl.GL14.*;
-
 public class ConfigScreen extends Screen {
     private boolean release = false;
     int heightScale;
@@ -41,48 +39,61 @@ public class ConfigScreen extends Screen {
         return false;
     }
 
+    public static float u(int width) {
+        return (float) width / Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    }
+
+    public static float v(int height) {
+        return 1.0f - ((float) height / (Minecraft.getInstance().getWindow().getGuiScaledHeight()));
+    }
+
     @Override
     public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth()/2;
         int widthScale = width/4;
+        int right = width - widthScale;
+        int left = width + widthScale;
         int bottom = (int) (minecraft.getWindow().getGuiScaledHeight()*0.8)+20;
         int top = bottom-heightScale*children().size()-10;
+
         float bgColor = 1.0f;
-        float bgAlpha = 1.0f;
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        float bgAlpha = 0.0f;
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.0f);
+        CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        glBlendColor(0.5f, 0.5f, 0.5f, 1.0f);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+        bufferbuilder.vertex(right - 2, bottom + 2, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(right - 2), v(bottom + 2)).endVertex();
+        bufferbuilder.vertex(left + 2, bottom + 2, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(left + 2), v(bottom + 2)).endVertex();
+        bufferbuilder.vertex(left + 2, top - 2, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(left + 2), v(top - 2)).endVertex();
+        bufferbuilder.vertex(right - 2, top - 2, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(right - 2), v(top - 2)).endVertex();
+        RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
         BufferUploader.drawWithShader(bufferbuilder.end());
-        /*
+        bgAlpha = 1.0f;
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bgColor = 0.8f;
-        bufferbuilder.vertex(width-widthScale, bottom, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale, bottom, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale, top, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width-widthScale, top, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ZERO);
-        BufferUploader.drawWithShader(bufferbuilder.end());
-        bgColor = 1.0f;
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, bottom+2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, top-2, 0.0D).color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(right, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(right, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         BufferUploader.drawWithShader(bufferbuilder.end());
-         */
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
     }
 
     @Override
@@ -188,7 +199,6 @@ public class ConfigScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics);
-
         List<? extends GuiEventListener> children = children();
 
         for (GuiEventListener button : children) {
