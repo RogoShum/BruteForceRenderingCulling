@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.CullingRenderEvent;
-import rogo.renderingculling.api.ICullingShader;
+import rogo.renderingculling.api.impl.ICullingShader;
 
 
 @Mixin(ShaderInstance.class)
@@ -31,6 +31,10 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @Shadow
     private static String SHADER_CORE_PATH;
 
+    @Nullable
+    public Uniform CULLING_CAMERA_DIR;
+    @Nullable
+    public Uniform CULLING_FOV;
     @Nullable
     public Uniform CULLING_CAMERA_POS;
     @Nullable
@@ -61,6 +65,8 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @Inject(at = @At("TAIL"), method = "<init>")
     public void construct(CallbackInfo ci) {
         this.CULLING_CAMERA_POS = this.getUniform("CullingCameraPos");
+        this.CULLING_CAMERA_DIR = this.getUniform("CullingCameraDir");
+        this.CULLING_FOV = this.getUniform("CullingFov");
         this.RENDER_DISTANCE = this.getUniform("RenderDistance");
         this.DEPTH_SIZE = this.getUniform("DepthSize");
         this.CULLING_SIZE = this.getUniform("CullingSize");
@@ -75,7 +81,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
 
     @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
     public String onInit(String string) {
-        if(CullingHandler.SHADER_ENABLED) {
+        if (CullingHandler.SHADER_ENABLED) {
             string = string.replace(SHADER_CORE_PATH, "");
             string = string.replace(".json", "");
             ResourceLocation rl = ResourceLocation.tryParse(string);
@@ -86,12 +92,12 @@ public abstract class MixinShaderInstance implements ICullingShader {
 
     @ModifyArg(method = "getOrCreate", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
     private static String onGetOrCreate(String string) {
-        if(CullingHandler.SHADER_ENABLED) {
+        if (CullingHandler.SHADER_ENABLED) {
             string = string.replace(SHADER_CORE_PATH, "");
             Program.Type type = Program.Type.FRAGMENT;
-            if(string.contains(".fsh"))
+            if (string.contains(".fsh"))
                 string = string.replace(".fsh", "");
-            else if(string.contains(".vsh")) {
+            else if (string.contains(".vsh")) {
                 string = string.replace(".vsh", "");
                 type = Program.Type.VERTEX;
             }
@@ -102,7 +108,10 @@ public abstract class MixinShaderInstance implements ICullingShader {
     }
 
     @Override
-    public Uniform getCullingFrustum() {return CULLING_FRUSTUM;}
+    public Uniform getCullingFrustum() {
+        return CULLING_FRUSTUM;
+    }
+
     @Override
     public Uniform getCullingCameraPos() {
         return CULLING_CAMERA_POS;
@@ -117,38 +126,55 @@ public abstract class MixinShaderInstance implements ICullingShader {
     public Uniform getDepthSize() {
         return DEPTH_SIZE;
     }
+
     @Override
     public Uniform getCullingSize() {
         return CULLING_SIZE;
     }
+
     @Override
     public Uniform getLevelHeightOffset() {
         return LEVEL_HEIGHT_OFFSET;
     }
+
     @Override
     public Uniform getLevelMinSection() {
         return LEVEL_MIN_SECTION;
     }
+
     @Override
     public Uniform getEntityCullingSize() {
         return ENTITY_CULLING_SIZE;
     }
+
     @Override
     public Uniform getFrustumPos() {
         return FRUSTUM_POS;
     }
+
     @Override
     public Uniform getCullingViewMat() {
         return CULLING_VIEW_MAT;
     }
+
     @Override
     public Uniform getCullingProjMat() {
         return CULLING_PROJ_MAT;
     }
 
+    @Override
+    public Uniform getCullingCameraDir() {
+        return CULLING_CAMERA_DIR;
+    }
+
+    @Override
+    public Uniform getCullingFov() {
+        return CULLING_FOV;
+    }
+
     @Inject(at = @At("TAIL"), method = "apply")
     public void onApply(CallbackInfo ci) {
-        if(CullingHandler.updatingDepth)
+        if (CullingHandler.updatingDepth)
             ProgramManager.glUseProgram(this.programId);
     }
 

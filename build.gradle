@@ -25,6 +25,10 @@ repositories {
 	}
 }
 
+loom {
+	accessWidenerPath = file("src/main/resources/brute_force_rendering_culling.accesswidener")
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -42,6 +46,8 @@ dependencies {
 
 	implementation("org.anarres:jcpp:1.4.14")
 	modImplementation("io.github.douira:glsl-transformer:2.0.0-pre13")
+
+	modImplementation('maven.modrinth:nvidium:0.2.6-beta')
 }
 
 processResources {

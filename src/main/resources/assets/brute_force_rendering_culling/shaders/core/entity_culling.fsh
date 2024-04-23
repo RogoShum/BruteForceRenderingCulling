@@ -2,6 +2,9 @@
 
 uniform vec2 EntityCullingSize;
 uniform mat4 CullingViewMat;
+uniform vec3 CullingCameraPos;
+uniform vec3 CullingCameraDir;
+uniform float CullingFov;
 uniform mat4 CullingProjMat;
 uniform float DepthOffset;
 uniform vec3 FrustumPos;
@@ -22,10 +25,10 @@ float near = 0.1;
 float far  = 1000.0;
 
 int getSampler(float xLength, float yLength) {
-    for(int i = 0; i < DepthScreenSize.length(); ++i) {
+    for (int i = 0; i < DepthScreenSize.length(); ++i) {
         float xStep = 3.0 / DepthScreenSize[i].x;
         float yStep = 3.0 / DepthScreenSize[i].y;
-        if(xStep > xLength && yStep > yLength) {
+        if (xStep > xLength && yStep > yLength) {
             return i;
         }
     }
@@ -48,8 +51,15 @@ vec3 worldToScreenSpace(vec3 pos) {
     return (ndc + vec3(1.0)) * 0.5;
 }
 
+vec3 moveTowardsCamera(vec3 pos, float distance) {
+    vec3 direction = normalize(pos - CullingCameraPos);
+    vec3 newPos = pos - direction * distance;
+
+    return newPos;
+}
+
 bool cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         vec4 plane = frustum[i];
         if (!(dot(plane, vec4(minX, minY, minZ, 1.0)) > 0.0) &&
         !(dot(plane, vec4(maxX, minY, minZ, 1.0)) > 0.0) &&
@@ -88,12 +98,12 @@ bool isVisible(vec3 vec, float width, float height) {
 }
 
 float getUVDepth(int idx, vec2 uv) {
-    if(idx == 0)
-        return texture(Sampler0, uv).r * 500;
-    else if(idx == 1)
-        return texture(Sampler1, uv).r * 500;
-    else if(idx == 2)
-        return texture(Sampler2, uv).r * 500;
+    if (idx == 0)
+    return texture(Sampler0, uv).r * 500;
+    else if (idx == 1)
+    return texture(Sampler1, uv).r * 500;
+    else if (idx == 2)
+    return texture(Sampler2, uv).r * 500;
 
     return texture(Sampler3, uv).r * 500;
 }
@@ -102,18 +112,16 @@ void main() {
     float halfWidth = Size.x*0.5;
     float halfHeight = Size.y*0.5;
 
-    float entityDepth = worldToScreenSpace(Pos).z;
-
-    if(!isVisible(Pos, halfWidth, halfHeight)) {
+    if (!isVisible(Pos, halfWidth, halfHeight)) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
 
     vec3 aabb[8] = vec3[](
-        Pos+vec3(-halfWidth, -halfHeight, -halfWidth), Pos+vec3(halfWidth, -halfHeight, -halfWidth),
-        Pos+vec3(-halfWidth, halfHeight, -halfWidth), Pos+vec3(halfWidth, halfHeight, -halfWidth),
-        Pos+vec3(-halfWidth, -halfHeight, halfWidth), Pos+vec3(halfWidth, -halfHeight, halfWidth),
-        Pos+vec3(-halfWidth, halfHeight, halfWidth), Pos+vec3(halfWidth, halfHeight, halfWidth)
+    Pos+vec3(-halfWidth, -halfHeight, -halfWidth), Pos+vec3(halfWidth, -halfHeight, -halfWidth),
+    Pos+vec3(-halfWidth, halfHeight, -halfWidth), Pos+vec3(halfWidth, halfHeight, -halfWidth),
+    Pos+vec3(-halfWidth, -halfHeight, halfWidth), Pos+vec3(halfWidth, -halfHeight, halfWidth),
+    Pos+vec3(-halfWidth, halfHeight, halfWidth), Pos+vec3(halfWidth, halfHeight, halfWidth)
     );
 
     float maxX = -1;
@@ -121,26 +129,30 @@ void main() {
     float minX = 1;
     float minY = 1;
 
+    bool inside = false;
+    float fovRadians = radians(CullingFov);
+    float halfFovRadians = fovRadians / 2.0;
+    float cosHalfFov = cos(halfFovRadians);
     for (int i = 0; i < 8; ++i) {
+        if (dot(normalize(aabb[i] - CullingCameraPos), normalize(CullingCameraDir)) < cosHalfFov) {
+            continue;
+        } else {
+            inside = true;
+        }
         vec3 screenPos = worldToScreenSpace(aabb[i]);
-        bool xIn = screenPos.x >= 0.0 && screenPos.x <= 1.0;
-        bool yIn = screenPos.y >= 0.0 && screenPos.y <= 1.0;
-        bool zIn = screenPos.z >= 0.0 && screenPos.z <= 1.0;
 
-        if(screenPos.x > maxX)
+        if (screenPos.x > maxX)
         maxX = screenPos.x;
-        if(screenPos.y > maxY)
+        if (screenPos.y > maxY)
         maxY = screenPos.y;
-        if(screenPos.x < minX)
+        if (screenPos.x < minX)
         minX = screenPos.x;
-        if(screenPos.y < minY)
+        if (screenPos.y < minY)
         minY = screenPos.y;
     }
 
-    entityDepth = LinearizeDepth(entityDepth)-sqrt(halfWidth*halfWidth+halfWidth*halfWidth)*1.2 - 4.0;
-
-    if(entityDepth < 0) {
-        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    if (!inside) {
+        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
 
@@ -156,10 +168,12 @@ void main() {
     maxY = min(1.0, max(0.0, maxY+yStep));
     minY = min(1.0, max(0.0, minY-yStep));
 
-    for(float x = minX; x <= maxX; x += xStep) {
-        for(float y = minY; y <= maxY; y += yStep) {
+    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z);
+    for (float x = minX; x <= maxX; x += xStep) {
+        for (float y = minY; y <= maxY; y += yStep) {
             float pixelDepth = getUVDepth(idx, vec2(x, y));
-            if(entityDepth < pixelDepth) {
+
+            if (entityDepth < pixelDepth) {
                 fragColor = vec4(0.0, 1.0, 0.0, 1.0);
                 return;
             }

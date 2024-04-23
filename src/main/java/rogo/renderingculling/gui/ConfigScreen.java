@@ -4,24 +4,30 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ConfigScreen extends Screen {
     private boolean release = false;
+    int heightScale;
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
+        heightScale = (int) (Minecraft.getInstance().font.lineHeight * 2f + 1);
     }
 
     @Override
@@ -29,36 +35,61 @@ public class ConfigScreen extends Screen {
         return false;
     }
 
+    public static float u(int width) {
+        return (float) width / Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    }
+
+    public static float v(int height) {
+        return 1.0f - ((float) height / (Minecraft.getInstance().getWindow().getGuiScaledHeight()));
+    }
+
     @Override
     public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
-        int width = minecraft.getWindow().getGuiScaledWidth()/2;
-        int widthScale = width/4;
-        Font font = minecraft.font;
-        int heightScale = font.lineHeight*8;
-        int height = minecraft.getWindow().getGuiScaledHeight()/2+heightScale/2;
+        int width = minecraft.getWindow().getGuiScaledWidth() / 2;
+        int widthScale = width / 4;
+        int right = width - widthScale;
+        int left = width + widthScale;
+        int bottom = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.8) + 20;
+        int top = bottom - heightScale * children().size() - 10;
 
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        float bgColor = 1.0f;
+        float bgAlpha = 0.3f;
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
+        CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height+heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width+widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
-        bufferbuilder.vertex(width-widthScale, height-heightScale, -2.0D).color(0.3F, 0.3F, 0.3F, 0.2f).endVertex();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+        bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(right - 1), v(bottom + 1)).endVertex();
+        bufferbuilder.vertex(left + 1, bottom + 1, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(left + 1), v(bottom + 1)).endVertex();
+        bufferbuilder.vertex(left + 1, top - 1, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(left + 1), v(top - 1)).endVertex();
+        bufferbuilder.vertex(right - 1, top - 1, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha)
+                .uv(u(right - 1), v(top - 1)).endVertex();
+        RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
         BufferUploader.drawWithShader(bufferbuilder.end());
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+        bgAlpha = 1.0f;
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(width-widthScale-2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height+heightScale+2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width+widthScale+2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
-        bufferbuilder.vertex(width-widthScale-2, height-heightScale-2, -1.0D).color(1.0F, 1.0F, 1.0F, 0.1f).endVertex();
+        bufferbuilder.vertex(right, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(right, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
     }
 
     @Override
@@ -76,8 +107,8 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
-        if(CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
-            if(release) {
+        if (CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
+            if (release) {
                 this.onClose();
                 return true;
             } else {
@@ -90,62 +121,70 @@ public class ConfigScreen extends Screen {
     @Override
     protected void init() {
         Player player = Minecraft.getInstance().player;
-        if(player == null) {
+        if (player == null) {
             onClose();
             return;
         }
 
-        int heightScale = (int) (minecraft.font.lineHeight*2f)+1;
-        NeatSliderButton sampler = new NeatSliderButton(width/2-50, height/2+heightScale+12, 100, 14, Config.getSampling(),
-                (sliderButton) -> {
-                    Component component = Component.literal((int)(sliderButton.getValue() * 100.0D) + "%");
-                    return (Component.translatable("brute_force_rendering_culling.sampler")).append(": ").append(component);
-                }, (value) -> {
-            double v = Float.parseFloat(String.format("%.2f",value));
-            Config.setSampling(v);
-        });
-        NeatSliderButton entityUpdateRate = new NeatSliderButton(width/2-50, height/2+heightScale*2+12, 100, 14, Config.getCullingEntityRate()/20f,
-                (sliderButton) -> {
-                    Component component = Component.literal( String.valueOf((int)(sliderButton.getValue() * 20.0D)));
-                    return (Component.translatable("brute_force_rendering_culling.culling_entity_update_rate")).append(": ").append(component);
-                }, (value) -> {
-            int i = (int) (value*20);
-            Config.setCullingEntityRate(i);
-        });
-        NeatButton debug = new NeatButton(width/2-50, height/2+heightScale*4+12, 100, 14
-                , (button) -> {
-            CullingHandler.INSTANCE.checkCulling = !CullingHandler.INSTANCE.checkCulling;
-        }, () -> (CullingHandler.INSTANCE.checkCulling ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.literal("Debug"))
-                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.literal("Debug"))));
-        NeatButton checkTexture = new NeatButton(width/2-50, height/2+heightScale*3+12, 100, 14
-                , (button) -> {
-            CullingHandler.INSTANCE.checkTexture = !CullingHandler.INSTANCE.checkTexture;
-        }, () -> (CullingHandler.INSTANCE.checkTexture ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.literal("Check Texture"))
-                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.literal("Check Texture"))));
-        NeatSliderButton delay = new NeatSliderButton(width/2-50, height/2+12, 100, 14, Config.getDepthUpdateDelay()/10f,
-                (sliderButton) -> {
-                    Component component = Component.literal(String.valueOf((int)(sliderButton.getValue() * 10.0D)));
-                    return (Component.translatable("brute_force_rendering_culling.culling_map_update_delay")).append(": ").append(component);
-                }, (value) -> {
-            int i = (int) (value*10);
-            Config.setDepthUpdateDelay(i);
-        });
-        NeatButton close = new NeatButton(width/2-50, height/2-heightScale*2+12, 100, 14 , (button) -> {
-            Config.setCullEntity(!Config.getCullEntity());
-        }, () -> (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))
-                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_entity"))));
-        NeatButton chunk = new NeatButton(width/2-50, height/2-heightScale+12, 100, 14 , (button) -> {
-            Config.setCullChunk(!Config.getCullChunk());
-        }, () -> (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.disable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))
-                : Component.translatable("brute_force_rendering_culling.enable").append(" ").append(Component.translatable("brute_force_rendering_culling.cull_chunk"))));
-        this.addWidget(sampler);
-        this.addWidget(delay);
-        this.addWidget(entityUpdateRate);
-        this.addWidget(close);
-        this.addWidget(chunk);
-        this.addWidget(debug);
-        this.addWidget(checkTexture);
+        //if (player.getName().getString().equals("Dev")) {
+            addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
+                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
+
+            addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
+                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
+        //}
+
+        addConfigButton(Config::getSampling, (value) -> {
+            double format = Mth.floor(value * 20) * 0.05;
+            format = Double.parseDouble(String.format("%.2f", format));
+            Config.setSampling(format);
+            return format;
+        }, (value) -> String.valueOf(Mth.floor(value * 100) + "%"), () -> Component.translatable("brute_force_rendering_culling.sampler"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.sampler"));
+
+        addConfigButton(() -> Config.getDepthUpdateDelay() / 10d, (value) -> {
+            int format = Mth.floor(value * 10);
+            if (format > 0) {
+                format -= Config.getShaderDynamicDelay();
+            }
+            Config.setDepthUpdateDelay(format);
+            format += Config.getShaderDynamicDelay();
+            return format * 0.1;
+        }, (value) -> {
+            int format = Mth.floor(value * 10);
+            return String.valueOf(format);
+        }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
+
+        addConfigButton(Config::getCullChunk, Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.async"));
+        addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_chunk"));
+        addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_entity"));
+
         super.init();
+    }
+
+    public NeatButton addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , getter, setter, updateMessage);
+        this.addWidget(button);
+        return button;
+    }
+
+    public NeatButton addConfigButton(Supplier<Boolean> enable, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , enable, getter, setter, updateMessage);
+        this.addWidget(button);
+        return button;
+    }
+
+    public NeatSliderButton addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
+        NeatSliderButton button = new NeatSliderButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+                , getter, setter, display, name);
+        this.addWidget(button);
+        return button;
     }
 
     @Override
@@ -155,13 +194,19 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-
+        this.renderBackground(guiGraphics);
         List<? extends GuiEventListener> children = children();
+
         for (GuiEventListener button : children) {
-            if(button instanceof AbstractWidget b)
+            if (button instanceof AbstractWidget b)
                 b.render(guiGraphics, mouseX, mouseY, partialTicks);
         }
 
-        this.renderBackground(guiGraphics);
+        for (GuiEventListener button : children) {
+            if (button instanceof NeatButton b)
+                b.shouDetail(guiGraphics, minecraft.font);
+            if (button instanceof NeatSliderButton b)
+                b.shouDetail(guiGraphics, minecraft.font);
+        }
     }
 }

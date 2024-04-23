@@ -1,19 +1,19 @@
 package rogo.renderingculling.mixin;
 
-import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import rogo.renderingculling.api.IRenderSectionVisibility;
+import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 
 @Mixin(ChunkRenderDispatcher.RenderChunk.class)
 public abstract class MixinRenderChunk implements IRenderSectionVisibility {
 
-    @Shadow @Final private BlockPos.MutableBlockPos origin;
+    @Shadow
+    @Final
+    private BlockPos.MutableBlockPos origin;
     @Unique
     private int cullingLastVisibleFrame;
 

@@ -17,6 +17,9 @@
         { "name": "CullingViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "CullingProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "EntityCullingSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
+        { "name": "CullingCameraDir", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
+        { "name": "CullingCameraPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
+        { "name": "CullingFov", "type": "float", "count": 1, "values": [ 90.0] },
         { "name": "DepthSize", "type": "float", "count": 8, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
         { "name": "FrustumPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingFrustum", "type": "float", "count": 24, "values": [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ] }

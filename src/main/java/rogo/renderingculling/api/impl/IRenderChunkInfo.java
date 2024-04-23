@@ -1,4 +1,4 @@
-package rogo.renderingculling.api;
+package rogo.renderingculling.api.impl;
 
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 

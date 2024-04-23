@@ -4,7 +4,8 @@
   "brute_force_rendering_culling.key.debug": "Debug UI",
 
   "brute_force_rendering_culling.cull_entity": "Cull Entity",
-  "brute_force_rendering_culling.cull_chunk": "Cull chunk",
+  "brute_force_rendering_culling.cull_chunk": "Cull Chunk",
+  "brute_force_rendering_culling.async": "Async Rebuild Chunk",
   "brute_force_rendering_culling.sampler": "Depth Sampler Rate",
   "brute_force_rendering_culling.culling_map_update_delay": "Culling Map update delay",
   "brute_force_rendering_culling.entity_culling": "Culled entity",
@@ -16,13 +17,15 @@
 
   "brute_force_rendering_culling.chunk_culling": "Culled chunk",
   "brute_force_rendering_culling.chunk_culling_time": "Chunk culling cost",
-  "brute_force_rendering_culling.chunk_update_count": "Chunk Update Count",
-
-  "brute_force_rendering_culling.culling_entity_update_rate": "Culled entity update frequency",
+  "brute_force_rendering_culling.chunk_update_count": "Async Chunk Update Count",
 
   "brute_force_rendering_culling.enable": "Enable",
   "brute_force_rendering_culling.disable": "Disable",
-
-  "brute_force_rendering_culling.skip_culling_entities": "Entities that skip culling",
-  "brute_force_rendering_culling.skip_culling_block_entities": "Block Entities that skip culling"
+  "brute_force_rendering_culling.detail.cull_entity": "Cull entities visually invisible",
+  "brute_force_rendering_culling.detail.cull_chunk": "Cull chunks visually invisible",
+  "brute_force_rendering_culling.detail.async": "Requires Sodium support, asynchronously updates visible chunks in a separate thread and synchronizes with the main rendering thread. \n\nYou can increase the number of threads for loading blocks in the game settings to assist with this functionality.\n\nThis can accelerate chunk loading speed during movement and improve frame rates.\n\nIn the testing phase, if the game crashes during chunk loading, please try turning off this setting.",
+  "brute_force_rendering_culling.detail.sampler": "Scaling ratio of the depth texture used for culling. Higher ratios result in more precise culling and better effects. \n\nDevices with better graphics card performance or lower game resolutions can increase this value. Not recommended to be below 20%.",
+  "brute_force_rendering_culling.detail.culling_map_update_delay": "Frames delayed before culling texture updates to the CPU, preventing main thread stutter caused by incomplete data transmission. \n\nDebug by observing culling map update times.\n\nEnabling shaders will slow down data transmission, resulting in at least 1 frame delay.",
+  "brute_force_rendering_culling.detail.check_texture": "For testing purposes, enables checking of depth and culling texture functionality when the data monitoring panel is open.",
+  "brute_force_rendering_culling.detail.debug": "For testing purposes, effective only in vanilla Minecraft, used to view culled chunks."
 }

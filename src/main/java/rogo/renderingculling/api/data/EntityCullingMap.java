@@ -1,9 +1,12 @@
-package rogo.renderingculling.api;
+package rogo.renderingculling.api.data;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import rogo.renderingculling.api.Config;
+import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.impl.IAABBObject;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
@@ -31,13 +34,13 @@ public class EntityCullingMap extends CullingMap {
         int idx = entityMap.getIndex(o);
         idx = 1+idx*4;
         if(entityMap.tempObjectTimer.contains(o))
-            entityMap.addTemp(o, CullingHandler.INSTANCE.clientTickCount);
+            entityMap.addTemp(o, CullingHandler.clientTickCount);
 
         if(idx > -1 && idx < cullingBuffer.limit()) {
             float cullingValue = (float) (cullingBuffer.get(idx) & 0xFF) / 255.0f;
             return cullingValue > 0.5;
         } else {
-            entityMap.addTemp(o, CullingHandler.INSTANCE.clientTickCount);
+            entityMap.addTemp(o, CullingHandler.clientTickCount);
         }
         return true;
     }

@@ -11,9 +11,9 @@ import rogo.renderingculling.api.CullingHandler;
 
 @Mixin(EntityRenderDispatcher.class)
 public class MixinEntityRender {
-    @Inject(method = "shouldRender", at=@At("RETURN"), cancellable = true)
+    @Inject(method = "shouldRender", at = @At("RETURN"), cancellable = true)
     public <E extends Entity> void onShouldRender(E p_114398_, Frustum p_114399_, double p_114400_, double p_114401_, double p_114402_, CallbackInfoReturnable<Boolean> cir) {
-        if(cir.getReturnValue() && !p_114398_.noCulling && CullingHandler.INSTANCE.shouldSkipEntity(p_114398_)) {
+        if (cir.getReturnValue() && !p_114398_.noCulling && CullingHandler.shouldSkipEntity(p_114398_)) {
             cir.setReturnValue(false);
         }
     }

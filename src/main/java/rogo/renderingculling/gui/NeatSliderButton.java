@@ -9,28 +9,38 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractOptionSliderButton;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
+import rogo.renderingculling.api.CullingHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class NeatSliderButton extends AbstractOptionSliderButton {
-    private final Function<NeatSliderButton, Component> updateMessage;
+    private final Function<NeatSliderButton, Component> name;
     private final Consumer<Double> applyValue;
-    protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, double p_93384_, Function<NeatSliderButton, Component> updateMessage, Consumer<Double> applyValue) {
-        super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, p_93384_);
-        this.updateMessage = updateMessage;
+    private Supplier<Component> detailMessage;
+
+    protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
+        super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, getter.get());
+        this.name = (sliderButton) -> name.get().append(": ").append(Component.literal(display.apply(this.value)));
         updateMessage();
-        this.applyValue = applyValue;
+        this.applyValue = (value) -> this.value = setter.apply(value);
     }
 
     public double getValue() {
         return this.value;
     }
 
+    public void setDetailMessage(Supplier<Component> detailMessage) {
+        this.detailMessage = detailMessage;
+    }
     @Override
     public void updateMessage() {
-        this.setMessage(updateMessage.apply(this));
+        this.setMessage(name.apply(this));
     }
 
     @Override
@@ -46,38 +56,48 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         guiGraphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
         RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.DST_COLOR);
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        float alpha = this.isHoveredOrFocused() ? 0.7f : 0.5f;
-        bufferbuilder.vertex(this.getX(), this.getY()+height, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX()+width, this.getY()+height, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX()+width, this.getY(), 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX(), this.getY(), 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        BufferUploader.drawWithShader(bufferbuilder.end());
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        RenderSystem.defaultBlendFunc();
-        bufferbuilder.vertex(this.getX()-1, this.getY()+height+1, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX()+width+1, this.getY()+height+1, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX()+width+1, this.getY()-1, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX()-1, this.getY()-1, 0.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        BufferUploader.drawWithShader(bufferbuilder.end());
-        RenderSystem.disableBlend();
+        float color = this.isHovered() ? 1.0f : 0.8f;
+        bufferbuilder.vertex(this.getX(), this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + width, this.getY() + height, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + width, this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX(), this.getY(), 0.0D).color(color, color, color, 1.0f).endVertex();
 
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        alpha = this.isHoveredOrFocused() ? 1.0f : 0.0f;
-        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8))+8, this.getY()+height, 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8))+8, this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY(), 90.0D).color(alpha, alpha, alpha, 0.5f).endVertex();
+        color = 0.7f;
+        bufferbuilder.vertex(this.getX() - 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + width + 1, this.getY() + height + 1, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + width + 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() - 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
+
+        color = 1.0f;
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY() + height, 90.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY() + height, 90.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
+    }
+
+    public void shouDetail(GuiGraphics guiGraphics, Font font) {
+        if (detailMessage != null && isHovered() && !isFocused()) {
+            CullingHandler.reColorToolTip = true;
+            List<Component> components = new ArrayList<>();
+            String[] parts = detailMessage.get().getString().split("\\n");
+            for (String part : parts) {
+                components.add(Component.literal(part));
+            }
+            guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
+            CullingHandler.reColorToolTip = false;
+        }
+    }
+
+    @Override
+    public void onRelease(double p_93609_, double p_93610_) {
+        super.onRelease(p_93609_, p_93610_);
+        this.setFocused(false);
     }
 }
