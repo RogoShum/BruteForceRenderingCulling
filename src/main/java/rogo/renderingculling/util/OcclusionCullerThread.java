@@ -9,7 +9,7 @@ public class OcclusionCullerThread extends Thread {
     private boolean finished = false;
 
     public OcclusionCullerThread() {
-        if(INSTANCE != null) {
+        if (INSTANCE != null) {
             INSTANCE.finished = true;
         }
         INSTANCE = this;
@@ -19,27 +19,23 @@ public class OcclusionCullerThread extends Thread {
     public void run() {
         while (!finished) {
             try {
-                if(CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
+                if (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
                     if (Config.getAsyncChunkRebuild()) {
-                        CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks();
-                        if(CullingHandler.hasSodium()) {
-                            SodiumSectionAsyncUtil.asyncSearchRebuildSection();
+                        //CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks();
+                        if (CullingHandler.hasSodium()) {
+                            //SodiumSectionAsyncUtil.asyncSearchRebuildSection();
+                        } else {
+                            //VanillaAsyncUtil.asyncSearchRebuildSection();
                         }
                     }
                 }
 
-                if(Minecraft.getInstance().level == null) {
+                if (Minecraft.getInstance().level == null) {
                     finished = true;
                 }
             } catch (Exception ignored) {
 
             }
-        }
-    }
-
-    public static void shouldUpdate() {
-        if(CullingHandler.hasSodium()) {
-            SodiumSectionAsyncUtil.shouldUpdate();
         }
     }
 }

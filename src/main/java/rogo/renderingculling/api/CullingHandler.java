@@ -43,7 +43,6 @@ import rogo.renderingculling.util.ShaderLoader;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -84,8 +83,6 @@ public class CullingHandler {
 
     public static final LifeTimer<Entity> visibleEntity = new LifeTimer<>();
     public static final LifeTimer<BlockPos> visibleBlock = new LifeTimer<>();
-    public static final HashSet<Entity> culledEntity = new HashSet<>();
-    public static final HashSet<BlockPos> culledBlock = new HashSet<>();
     private static boolean[] nextTick = new boolean[20];
     public static int fps = 0;
     private static int tick = 0;
@@ -166,7 +163,7 @@ public class CullingHandler {
             }
         }
 
-        if (hasMod("oculus")) {
+        if (hasIris()) {
             try {
                 SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
@@ -176,7 +173,7 @@ public class CullingHandler {
     }
 
     public static void onWorldUnload(Level world) {
-        if (world == Minecraft.getInstance().level) {
+        if (world != Minecraft.getInstance().level) {
             cleanup();
         }
     }
@@ -273,7 +270,6 @@ public class CullingHandler {
             visible = !visible;
 
         if (!visible) {
-            culledBlock.add(pos);
             blockCulling++;
         } else if (actualVisible)
             visibleBlock.updateUsageTick(pos, clientTickCount);
@@ -307,7 +303,6 @@ public class CullingHandler {
             visible = !visible;
 
         if (!visible) {
-            culledEntity.add(entity);
             entityCulling++;
         } else if (actualVisible)
             visibleEntity.updateUsageTick(entity, clientTickCount);
@@ -318,14 +313,18 @@ public class CullingHandler {
     public static void onProfilerPopPush(String s) {
         switch (s) {
             case "beforeRunTick" -> {
-                if(((AccessorLevelRender)Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate()) {
+                if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
                     fullChunkUpdateCooldown = 20;
+
+                    LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
+                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
+                    LEVEL_MIN_POS = Minecraft.getInstance().level.getMinBuildHeight();
+                    LEVEL_POS_RANGE = Minecraft.getInstance().level.getMaxBuildHeight() - Minecraft.getInstance().level.getMinBuildHeight();
                 }
             }
             case "afterRunTick" -> {
                 ++frame;
                 updateMapData();
-                OcclusionCullerThread.shouldUpdate();
             }
             case "captureFrustum" -> {
                 AccessorLevelRender levelFrustum = (AccessorLevelRender) Minecraft.getInstance().levelRenderer;
@@ -362,7 +361,9 @@ public class CullingHandler {
     }
 
     public static void onProfilerPush(String s) {
-        if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
+        if(s.equals("onKeyboardInput")) {
+            ModLoader.onKeyPress();
+        } if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -703,6 +704,10 @@ public class CullingHandler {
 
     public static boolean hasSodium() {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium") || modInfo.getModId().equals("rubidium"));
+    }
+
+    public static boolean hasIris() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("iris") || modInfo.getModId().equals("oculus"));
     }
 
     public static boolean needPauseRebuild() {

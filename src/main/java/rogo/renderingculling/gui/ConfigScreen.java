@@ -24,14 +24,10 @@ import java.util.function.Supplier;
 public class ConfigScreen extends Screen {
     private boolean release = false;
     int heightScale;
-    public static int backgroundStart = Mth.hsvToRgb(0, 0, 0.1F);
-    public static int backgroundEnd = Mth.hsvToRgb(0, 0, 0.1F);
-    public static int borderStart = Mth.hsvToRgb(0, 0, 0.05F);
-    public static int borderEnd = Mth.hsvToRgb(0, 0, 0.05F);
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
-        heightScale = (int) (Minecraft.getInstance().font.lineHeight*2f+1);
+        heightScale = (int) (Minecraft.getInstance().font.lineHeight * 2f + 1);
     }
 
     @Override
@@ -50,31 +46,31 @@ public class ConfigScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
-        int width = minecraft.getWindow().getGuiScaledWidth()/2;
-        int widthScale = width/4;
+        int width = minecraft.getWindow().getGuiScaledWidth() / 2;
+        int widthScale = width / 4;
         int right = width - widthScale;
         int left = width + widthScale;
-        int bottom = (int) (minecraft.getWindow().getGuiScaledHeight()*0.8)+20;
-        int top = bottom-heightScale*children().size()-10;
+        int bottom = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.8) + 20;
+        int top = bottom - heightScale * children().size() - 10;
 
         float bgColor = 1.0f;
-        float bgAlpha = 0.0f;
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.0f);
+        float bgAlpha = 0.3f;
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
         CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        bufferbuilder.vertex(right - 2, bottom + 2, 0.0D)
+        bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
                 .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(right - 2), v(bottom + 2)).endVertex();
-        bufferbuilder.vertex(left + 2, bottom + 2, 0.0D)
+                .uv(u(right - 1), v(bottom + 1)).endVertex();
+        bufferbuilder.vertex(left + 1, bottom + 1, 0.0D)
                 .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(left + 2), v(bottom + 2)).endVertex();
-        bufferbuilder.vertex(left + 2, top - 2, 0.0D)
+                .uv(u(left + 1), v(bottom + 1)).endVertex();
+        bufferbuilder.vertex(left + 1, top - 1, 0.0D)
                 .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(left + 2), v(top - 2)).endVertex();
-        bufferbuilder.vertex(right - 2, top - 2, 0.0D)
+                .uv(u(left + 1), v(top - 1)).endVertex();
+        bufferbuilder.vertex(right - 1, top - 1, 0.0D)
                 .color(bgColor, bgColor, bgColor, bgAlpha)
-                .uv(u(right - 2), v(top - 2)).endVertex();
+                .uv(u(right - 1), v(top - 1)).endVertex();
         RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
         BufferUploader.drawWithShader(bufferbuilder.end());
         bgAlpha = 1.0f;
@@ -111,8 +107,8 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
-        if(CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
-            if(release) {
+        if (CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
+            if (release) {
                 this.onClose();
                 return true;
             } else {
@@ -125,30 +121,30 @@ public class ConfigScreen extends Screen {
     @Override
     protected void init() {
         Player player = Minecraft.getInstance().player;
-        if(player == null) {
+        if (player == null) {
             onClose();
             return;
         }
 
-        if(player.getName().getString().equals("Dev")) {
+        if (player.getName().getString().equals("Dev")) {
             addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
                     .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
 
             addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
-                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
+                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
         }
 
         addConfigButton(Config::getSampling, (value) -> {
             double format = Mth.floor(value * 20) * 0.05;
-            format = Double.parseDouble(String.format("%.2f",format));
+            format = Double.parseDouble(String.format("%.2f", format));
             Config.setSampling(format);
             return format;
         }, (value) -> String.valueOf(Mth.floor(value * 100) + "%"), () -> Component.translatable("brute_force_rendering_culling.sampler"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.sampler"));
 
-        addConfigButton(() -> Config.getDepthUpdateDelay()/10d, (value) -> {
+        addConfigButton(() -> Config.getDepthUpdateDelay() / 10d, (value) -> {
             int format = Mth.floor(value * 10);
-            if(format > 0) {
+            if (format > 0) {
                 format -= Config.getShaderDynamicDelay();
             }
             Config.setDepthUpdateDelay(format);

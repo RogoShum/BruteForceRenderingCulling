@@ -29,6 +29,16 @@ import static rogo.renderingculling.api.CullingHandler.*;
 @Mod("brute_force_rendering_culling")
 public class ModLoader {
 
+    int BG = ((200 & 0xFF) << 24) |
+            ((0) << 16) |
+            ((0) << 8) |
+            ((0));
+
+    int B = ((100 & 0xFF) << 24) |
+            ((0xFF) << 16) |
+            ((0xFF) << 8) |
+            ((0xFF));
+
     public ModLoader() {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             registerShader();
@@ -76,18 +86,12 @@ public class ModLoader {
         }
     }
 
+    public static void onKeyPress() {
+    }
+
     @SubscribeEvent
     public void onTooltip(RenderTooltipEvent.Color event) {
         if (reColorToolTip) {
-            int BG = ((170 & 0xFF) << 24) |
-                    ((0) << 16) |
-                    ((0) << 8) |
-                    ((0));
-
-            int B = ((100 & 0xFF) << 24) |
-                    ((0xFF) << 16) |
-                    ((0xFF) << 8) |
-                    ((0xFF));
             event.setBackgroundStart(BG);
             event.setBackgroundEnd(BG);
             event.setBorderStart(B);
@@ -100,7 +104,7 @@ public class ModLoader {
         if (event.phase == TickEvent.Phase.START) {
             if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
                 clientTickCount++;
-                if (clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
+                if (Minecraft.getInstance().player.tickCount > 200 && clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
                     CHUNK_CULLING_MAP.setDone();
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());

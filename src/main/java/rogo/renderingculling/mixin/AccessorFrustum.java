@@ -2,6 +2,7 @@ package rogo.renderingculling.mixin;
 
 import net.minecraft.client.renderer.culling.Frustum;
 import org.joml.FrustumIntersection;
+import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -18,4 +19,10 @@ public interface AccessorFrustum {
 
     @Accessor("intersection")
     FrustumIntersection frustumIntersection();
+
+    @Mixin(FrustumIntersection.class)
+    interface AccessorFrustumIntersection {
+        @Accessor(value = "planes", remap = false)
+        Vector4f[] planes();
+    }
 }

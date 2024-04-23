@@ -1,3 +1,4 @@
+/*
 package rogo.renderingculling.util;
 
 import net.coderbot.iris.Iris;
@@ -5,7 +6,6 @@ import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.pipeline.SodiumTerrainPipeline;
 import net.coderbot.iris.pipeline.WorldRenderingPipeline;
 import net.coderbot.iris.pipeline.newshader.NewWorldRenderingPipeline;
-import net.coderbot.iris.shadows.ShadowRenderingState;
 import net.irisshaders.iris.api.v0.IrisApi;
 import net.minecraft.client.Minecraft;
 
@@ -51,3 +51,4 @@ public class IrisLoaderImpl implements ShaderLoader {
         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }
+ */

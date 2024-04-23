@@ -1,3 +1,4 @@
+/*
 package rogo.renderingculling.util;
 
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
@@ -36,15 +37,7 @@ public class SodiumSectionAsyncUtil {
         SodiumSectionAsyncUtil.occlusionCuller = new OcclusionCuller(sections, world);
     }
 
-    public static void shouldUpdate() {
-        shouldSearch = true;
-    }
-
     public static void asyncSearchRebuildSection() {
-        if (shouldSearch) {
-
-            shouldSearch = false;
-        }
         if(CullingHandler.enabledShader() && shadowViewport != null) {
             frame++;
             CullingHandler.useOcclusionCulling = false;
@@ -54,7 +47,7 @@ public class SodiumSectionAsyncUtil {
             CullingHandler.useOcclusionCulling = true;
         }
 
-        if(viewport != null) {
+        if (viewport != null) {
             frame++;
             AsynchronousChunkCollector collector = new AsynchronousChunkCollector(frame);
             occlusionCuller.findVisible(collector, viewport, searchDistance, useOcclusionCulling, frame);
@@ -128,3 +121,5 @@ public class SodiumSectionAsyncUtil {
         }
     }
 }
+
+ */

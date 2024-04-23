@@ -75,6 +75,9 @@ public class Config {
         if(!shouldCullChunk())
             return;
 
+        if(!CullingHandler.hasSodium())
+            return;
+
         ASYNC.set(value);
         ASYNC.save();
     }
