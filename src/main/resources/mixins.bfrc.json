@@ -9,6 +9,7 @@
   },
   "client": [
     "AccessorFrustum",
+    "AccessorFrustum$AccessorFrustumIntersection",
     "AccessorLevelRender",
     "AccessorMinecraft",
     "MixinBlockEntityRender",
@@ -21,10 +22,8 @@
     "MixinMinecraft",
     "MixinRenderChunk",
     "MixinRenderChunkInfo",
+    "MixinRenderChunkStorage",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem"
-  ],
-  "mixins": [
-    "AccessorFrustum$AccessorFrustumIntersection"
   ]
 }

@@ -18,10 +18,13 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.joml.FrustumIntersection;
+import org.joml.Vector4f;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.util.OcclusionCullerThread;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import static java.lang.Thread.MAX_PRIORITY;
 import static rogo.renderingculling.api.CullingHandler.*;
@@ -121,5 +124,17 @@ public class ModLoader {
                 cleanup();
             }
         }
+    }
+
+    public static Vector4f[] getFrustumPlanes(FrustumIntersection frustum) {
+        try {
+            Field f = FrustumIntersection.class.getDeclaredField("planes");
+            f.setAccessible(true);
+            return (Vector4f[]) f.get(frustum);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.fillInStackTrace();
+        }
+
+        return new Vector4f[6];
     }
 }

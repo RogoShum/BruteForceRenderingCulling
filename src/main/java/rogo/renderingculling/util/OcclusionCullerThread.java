@@ -25,7 +25,7 @@ public class OcclusionCullerThread extends Thread {
                         if (CullingHandler.hasSodium()) {
                             //SodiumSectionAsyncUtil.asyncSearchRebuildSection();
                         } else {
-                            //VanillaAsyncUtil.asyncSearchRebuildSection();
+                            VanillaAsyncUtil.asyncSearchRebuildSection();
                         }
                     }
                 }

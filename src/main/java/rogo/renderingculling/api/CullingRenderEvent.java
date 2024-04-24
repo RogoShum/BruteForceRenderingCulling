@@ -13,14 +13,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.joml.FrustumIntersection;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import rogo.renderingculling.api.impl.ICullingShader;
 import rogo.renderingculling.instanced.EntityCullingInstanceRenderer;
 import rogo.renderingculling.mixin.AccessorFrustum;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -290,7 +288,7 @@ public class CullingRenderEvent {
             shaderInstance.getCullingProjMat().set(CullingHandler.PROJECTION_MATRIX);
         }
         if(shaderInstance.getCullingFrustum() != null) {
-            Vector4f[] frustumData = ((AccessorFrustum.AccessorFrustumIntersection)((AccessorFrustum)CullingHandler.FRUSTUM).frustumIntersection()).planes();
+            Vector4f[] frustumData = ModLoader.getFrustumPlanes(((AccessorFrustum) CullingHandler.FRUSTUM).frustumIntersection());
             List<Float> data = new ArrayList<>();
             for (Vector4f frustumDatum : frustumData) {
                 data.add(frustumDatum.x());

@@ -71,6 +71,13 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
         }
     }
 
+    @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
+    public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
+        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.getChunkStorage() != null) {
+            this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
+        }
+    }
+
     @Inject(method = "updateRenderChunks", at = @At(value = "INVOKE", target = "Ljava/util/Queue;isEmpty()Z"), cancellable = true)
     public void onUpdateRenderChunks(LinkedHashSet<LevelRenderer.RenderChunkInfo> p_194363_, LevelRenderer.RenderInfoMap p_194364_, Vec3 p_194365_, Queue<LevelRenderer.RenderChunkInfo> p_194366_, boolean p_194367_, CallbackInfo ci) {
         if (Config.getAsyncChunkRebuild()) {
@@ -82,13 +89,6 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
     public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
         if(this.viewArea != null) {
             VanillaAsyncUtil.update((LevelRenderer) (Object)this, this.viewArea.chunks.length);
-        }
-    }
-
-    @Inject(method = "setupRender", at = @At(value = "RETURN"))
-    public void onSetupRenderEnd(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
-        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.getChunkStorage() != null) {
-            this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
         }
     }
 
