@@ -1,4 +1,3 @@
-/*
 package rogo.renderingculling.util;
 
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
@@ -27,11 +26,9 @@ public class SodiumSectionAsyncUtil {
     private static Viewport shadowViewport;
     private static float shadowSearchDistance;
     private static boolean shadowUseOcclusionCulling;
-    private static volatile boolean shouldSearch = true;
     private static VisibleChunkCollector collector;
     private static VisibleChunkCollector shadowCollector;
     public static boolean renderingEntities;
-    public static boolean asyncSearching;
 
     public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, Level world) {
         SodiumSectionAsyncUtil.occlusionCuller = new OcclusionCuller(sections, world);
@@ -121,5 +118,3 @@ public class SodiumSectionAsyncUtil {
         }
     }
 }
-
- */

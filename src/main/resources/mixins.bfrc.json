@@ -17,13 +17,18 @@
     "MixinGameRenderer",
     "MixinInactiveProfiler",
     "MixinLevelRender",
-    "MixinLevelRender$AccessorRenderChunkInfo",
     "MixinLevelRender$AccessorViewArea",
     "MixinMinecraft",
     "MixinRenderChunk",
     "MixinRenderChunkInfo",
-    "MixinRenderChunkStorage",
     "MixinShaderInstance",
-    "MixinShaderInstance$MixinRenderSystem"
+    "MixinShaderInstance$MixinRenderSystem",
+    "sodium.AccessorRenderSectionManager",
+    "sodium.MixinOcclusionCuller",
+    "sodium.MixinRenderRegion",
+    "sodium.MixinRenderSection",
+    "sodium.MixinRenderSectionManager",
+    "sodium.MixinSodiumWorldRenderer",
+    "sodium.MixinVisibleChunkCollector"
   ]
 }

@@ -1,4 +1,3 @@
-/*
 package rogo.renderingculling.util;
 
 import net.coderbot.iris.Iris;
@@ -51,4 +50,3 @@ public class IrisLoaderImpl implements ShaderLoader {
         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
     }
 }
- */

@@ -710,6 +710,10 @@ public class CullingHandler {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("iris") || modInfo.getModId().equals("oculus"));
     }
 
+    public static boolean hasNvidium() {
+        return  FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium"));
+    }
+
     public static boolean needPauseRebuild() {
         return fullChunkUpdateCooldown > 0;
     }

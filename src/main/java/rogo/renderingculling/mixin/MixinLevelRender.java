@@ -13,8 +13,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,26 +28,32 @@ import rogo.renderingculling.util.VanillaAsyncUtil;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
-import java.util.LinkedHashSet;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRender implements IEntitiesForRender {
 
+    @Mutable
     @Final
     @Shadow
-    private ObjectArrayList<?> renderChunksInFrustum;
+    private ObjectArrayList<LevelRenderer.RenderChunkInfo> renderChunksInFrustum;
 
-    @Shadow @Nullable protected abstract ChunkRenderDispatcher.RenderChunk getRelativeFrom(BlockPos p_109729_, ChunkRenderDispatcher.RenderChunk p_109730_, Direction p_109731_);
+    @Shadow
+    @Nullable
+    protected abstract ChunkRenderDispatcher.RenderChunk getRelativeFrom(BlockPos p_109729_, ChunkRenderDispatcher.RenderChunk p_109730_, Direction p_109731_);
 
-    @Shadow @Nullable private ViewArea viewArea;
+    @Shadow
+    @Nullable
+    private ViewArea viewArea;
 
-    @Shadow @Final private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
+    @Shadow
+    @Final
+    private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
+    private LevelRenderer.RenderChunkStorage renderChunkStorageTemp;
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onApplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.shouldCullChunk() && !Config.getAsyncChunkRebuild()) {
+        if (Config.shouldCullChunk() && !VanillaAsyncUtil.shouldReplaceStorage()) {
             if (CullingHandler.OptiFine != null) {
                 try {
                     Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
@@ -71,31 +77,25 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
         }
     }
 
+    @Inject(method = "setupRender", at = @At(value = "HEAD"))
+    public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
+        if (this.viewArea != null) {
+            VanillaAsyncUtil.update((LevelRenderer) (Object) this, this.viewArea.chunks.length);
+        }
+    }
+
     @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
     public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.getChunkStorage() != null) {
+        if (VanillaAsyncUtil.shouldReplaceStorage()) {
+            renderChunkStorageTemp = this.renderChunkStorage.get();
             this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
         }
     }
 
-    @Inject(method = "updateRenderChunks", at = @At(value = "INVOKE", target = "Ljava/util/Queue;isEmpty()Z"), cancellable = true)
-    public void onUpdateRenderChunks(LinkedHashSet<LevelRenderer.RenderChunkInfo> p_194363_, LevelRenderer.RenderInfoMap p_194364_, Vec3 p_194365_, Queue<LevelRenderer.RenderChunkInfo> p_194366_, boolean p_194367_, CallbackInfo ci) {
-        if (Config.getAsyncChunkRebuild()) {
-            ci.cancel();
-        }
-    }
-
-    @Inject(method = "setupRender", at = @At(value = "HEAD"))
-    public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
-        if(this.viewArea != null) {
-            VanillaAsyncUtil.update((LevelRenderer) (Object)this, this.viewArea.chunks.length);
-        }
-    }
-
-    @Inject(method = "initializeQueueForFullUpdate", at = @At(value = "HEAD"), cancellable = true)
-    public void onInitializeQueueForFullUpdate(Camera p_194344_, Queue<LevelRenderer.RenderChunkInfo> p_194345_, CallbackInfo ci) {
-        if (Config.getAsyncChunkRebuild()) {
-            ci.cancel();
+    @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
+    public void onApplyFrustumReturn(Frustum p_194355_, CallbackInfo ci) {
+        if (VanillaAsyncUtil.shouldReplaceStorage()) {
+            this.renderChunkStorage.set(renderChunkStorageTemp);
         }
     }
 
@@ -116,17 +116,7 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
 
     @Override
     public ChunkRenderDispatcher.RenderChunk invokeGetRenderChunkAt(BlockPos pos) {
-        return ((AccessorViewArea)this.viewArea).invokeGetRenderChunkAt(pos);
-    }
-
-    @Mixin(LevelRenderer.RenderChunkInfo.class)
-    public interface AccessorRenderChunkInfo {
-
-        @Accessor("directions")
-        byte getDirections();
-
-        @Accessor("step")
-        int getStep();
+        return ((AccessorViewArea) this.viewArea).invokeGetRenderChunkAt(pos);
     }
 
     @Mixin(ViewArea.class)

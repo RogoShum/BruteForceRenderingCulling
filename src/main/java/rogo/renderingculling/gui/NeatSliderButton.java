@@ -3,6 +3,7 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -83,12 +84,17 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     }
 
     public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered() && !isFocused()) {
+        if (detailMessage != null && isHovered()) {
             CullingHandler.reColorToolTip = true;
             List<Component> components = new ArrayList<>();
             String[] parts = detailMessage.get().getString().split("\\n");
             for (String part : parts) {
-                components.add(Component.literal(part));
+                Component text = Component.literal(part);
+                if(part.contains("warn:")) {
+                    String[] warn = part.split("warn:");
+                    text = Component.literal(warn[1]).withStyle(ChatFormatting.DARK_RED);
+                }
+                components.add(text);
             }
             guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
             CullingHandler.reColorToolTip = false;
