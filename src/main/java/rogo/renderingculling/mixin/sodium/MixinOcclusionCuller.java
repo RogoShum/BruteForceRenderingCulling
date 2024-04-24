@@ -1,5 +1,6 @@
 package rogo.renderingculling.mixin.sodium;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
@@ -25,8 +26,7 @@ public abstract class MixinOcclusionCuller {
 
     @Inject(method = "findVisible", at = @At(value = "HEAD"), remap = false, cancellable = true)
     private void onFindVisible(OcclusionCuller.Visitor visitor, Viewport viewport, float searchDistance, boolean useOcclusionCulling, int frame, CallbackInfo ci) {
-        if (SodiumSectionAsyncUtil.asyncSearching && Thread.currentThread() != OcclusionCullerThread.INSTANCE) {
-            SodiumSectionAsyncUtil.asyncSearching = false;
+        if (Config.getAsyncChunkRebuild() && RenderSystem.isOnRenderThread()) {
             ci.cancel();
         }
     }

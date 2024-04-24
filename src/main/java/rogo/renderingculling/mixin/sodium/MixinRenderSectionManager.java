@@ -41,7 +41,6 @@ public abstract class MixinRenderSectionManager {
     @ModifyVariable(name = "visitor", method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller;findVisible(Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller$Visitor;Lme/jellysquid/mods/sodium/client/render/viewport/Viewport;FZI)V", shift = At.Shift.BEFORE), remap = false)
     private VisibleChunkCollector onCreateTerrainRenderList(VisibleChunkCollector value) {
         if (Config.getAsyncChunkRebuild() && !CullingHandler.needPauseRebuild()) {
-            SodiumSectionAsyncUtil.asyncSearching = true;
             VisibleChunkCollector collector = CullingHandler.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
             return collector == null ? value : collector;
         }

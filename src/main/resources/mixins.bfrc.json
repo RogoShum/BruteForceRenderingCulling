@@ -17,7 +17,6 @@
     "MixinGameRenderer",
     "MixinInactiveProfiler",
     "MixinLevelRender",
-    "MixinLevelRender$AccessorRenderChunkInfo",
     "MixinLevelRender$AccessorViewArea",
     "MixinMinecraft",
     "MixinRenderChunk",

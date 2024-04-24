@@ -75,11 +75,23 @@ public class Config {
         if(!shouldCullChunk())
             return false;
 
+        if(CullingHandler.hasNvidium())
+            return false;
+
+        if(!CullingHandler.hasSodium())
+            return false;
+
         return ASYNC.getValue();
     }
 
     public static void setAsyncChunkRebuild(boolean value) {
         if(!shouldCullChunk())
+            return;
+
+        if(CullingHandler.hasNvidium())
+            return;
+
+        if(!CullingHandler.hasSodium())
             return;
 
         ASYNC.setValue(value);

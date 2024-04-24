@@ -18,4 +18,13 @@ public class MixinRenderChunkInfo implements IRenderChunkInfo {
     public ChunkRenderDispatcher.RenderChunk getRenderChunk() {
         return chunk;
     }
+
+    @Shadow
+    @Final
+    int step;
+
+    @Override
+    public int getStep() {
+        return this.step;
+    }
 }

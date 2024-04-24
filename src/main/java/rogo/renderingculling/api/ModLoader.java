@@ -85,7 +85,7 @@ public class ModLoader implements ModInitializer {
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
             Config.loadConfig();
             clientTickCount++;
-            if (Minecraft.getInstance().player.tickCount > 200 && clientTickCount > 200 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
+            if (Minecraft.getInstance().player.tickCount > 60 && clientTickCount > 60 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
                 CHUNK_CULLING_MAP.setDone();
                 LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                 LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
@@ -122,6 +122,6 @@ public class ModLoader implements ModInitializer {
     }
 
     public static Vector4f[] getFrustumPlanes(FrustumIntersection frustum) {
-        return ((AccessorFrustum.AccessorFrustumIntersection) ((AccessorFrustum) frustum).frustumIntersection()).planes();
+        return ((AccessorFrustum.AccessorFrustumIntersection) frustum).planes();
     }
 }

@@ -21,11 +21,10 @@ public class OcclusionCullerThread extends Thread {
             try {
                 if (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
                     if (Config.getAsyncChunkRebuild()) {
-                        //CullingHandler.CHUNK_CULLING_MAP.updateVisibleChunks();
                         if (CullingHandler.hasSodium()) {
                             SodiumSectionAsyncUtil.asyncSearchRebuildSection();
                         } else {
-                            //VanillaAsyncUtil.asyncSearchRebuildSection();
+                            VanillaAsyncUtil.asyncSearchRebuildSection();
                         }
                     }
                 }

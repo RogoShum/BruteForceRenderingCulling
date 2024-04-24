@@ -316,9 +316,7 @@ public class CullingHandler {
     public static void onProfilerPopPush(String s) {
         switch (s) {
             case "beforeRunTick" -> {
-                if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
-                    fullChunkUpdateCooldown = 20;
-
+                if (Minecraft.getInstance().level != null) {
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
                     LEVEL_MIN_POS = Minecraft.getInstance().level.getMinBuildHeight();
@@ -710,9 +708,12 @@ public class CullingHandler {
         return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("iris") || modInfo.getMetadata().getId().equals("oculus"));
     }
 
+    public static boolean hasNvidium() {
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium"));
+    }
+
     public static boolean needPauseRebuild() {
-        //fullChunkUpdateCooldown > 0
-        return false;
+        return fullChunkUpdateCooldown > 0;
     }
 
     public static int mapChunkY(double posY) {

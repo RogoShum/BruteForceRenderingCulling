@@ -3,6 +3,7 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -127,11 +128,11 @@ public class ConfigScreen extends Screen {
         }
 
         //if (player.getName().getString().equals("Dev")) {
-            addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
-                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
+        addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
 
-            addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
-                    .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
+        addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
+                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
         //}
 
         addConfigButton(Config::getSampling, (value) -> {
@@ -156,8 +157,15 @@ public class ConfigScreen extends Screen {
         }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
 
-        addConfigButton(Config::getCullChunk, Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
-                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.async"));
+        addConfigButton(() -> Config.getCullChunk() && CullingHandler.hasSodium() && !CullingHandler.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
+                .setDetailMessage(() -> {
+                    if (CullingHandler.hasNvidium()) {
+                        return Component.translatable("brute_force_rendering_culling.detail.nvidium");
+                    } else if (!CullingHandler.hasSodium()) {
+                        return Component.translatable("brute_force_rendering_culling.detail.sodium");
+                    } else
+                        return Component.translatable("brute_force_rendering_culling.detail.async");
+                });
         addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_chunk"));
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"))
