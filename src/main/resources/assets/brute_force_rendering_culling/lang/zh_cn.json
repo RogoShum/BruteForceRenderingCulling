@@ -28,8 +28,8 @@
   "brute_force_rendering_culling.detail.culling_map_update_delay": "剔除纹理更新到CPU之前所推迟的帧数，防止数据未完全传输造成主线程卡顿。\n\n可观察剔除图更新耗时进行调试。\n\n开启光影会使数据传输变慢，至少会有1帧延迟。",
   "brute_force_rendering_culling.detail.check_texture": "测试用，开启数据监控面板时可以查看深度纹理与剔除纹理工作是否正常。",
   "brute_force_rendering_culling.detail.debug": "测试用，仅在原版生效，用于查看被剔除区块。",
-  "brute_force_rendering_culling.detail.nvidium": "无法与Nvidium共用",
-  "brute_force_rendering_culling.detail.sodium": "此功能需要Sodium(Embeddium, Rubidium)",
+  "brute_force_rendering_culling.detail.nvidium": "warn:无法与Nvidium共用",
+  "brute_force_rendering_culling.detail.sodium": "warn:此功能需要Sodium(Embeddium, Rubidium)",
 
   "brute_force_rendering_culling.skip_culling_entities": "不被剔除的实体",
   "brute_force_rendering_culling.skip_culling_block_entities": "不被剔除的方块实体"

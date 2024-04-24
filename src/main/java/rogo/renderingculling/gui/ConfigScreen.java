@@ -160,9 +160,9 @@ public class ConfigScreen extends Screen {
         addConfigButton(() -> Config.getCullChunk() && CullingHandler.hasSodium() && !CullingHandler.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
                 .setDetailMessage(() -> {
                     if (CullingHandler.hasNvidium()) {
-                        return Component.translatable("brute_force_rendering_culling.detail.nvidium").withStyle(ChatFormatting.BOLD);
-                    } else if (CullingHandler.hasNvidium()) {
-                        return Component.translatable("brute_force_rendering_culling.detail.sodium").withStyle(ChatFormatting.DARK_RED);
+                        return Component.translatable("brute_force_rendering_culling.detail.nvidium");
+                    } else if (!CullingHandler.hasSodium()) {
+                        return Component.translatable("brute_force_rendering_culling.detail.sodium");
                     } else
                         return Component.translatable("brute_force_rendering_culling.detail.async");
                 });

@@ -28,8 +28,8 @@
   "brute_force_rendering_culling.detail.culling_map_update_delay": "Frames delayed before culling texture updates to the CPU, preventing main thread stutter caused by incomplete data transmission. \n\nDebug by observing culling map update times.\n\nEnabling shaders will slow down data transmission, resulting in at least 1 frame delay.",
   "brute_force_rendering_culling.detail.check_texture": "For testing purposes, enables checking of depth and culling texture functionality when the data monitoring panel is open.",
   "brute_force_rendering_culling.detail.debug": "For testing purposes, effective only in vanilla Minecraft, used to view culled chunks.",
-  "brute_force_rendering_culling.detail.nvidium": "Incompatible with Nvidium",
-  "brute_force_rendering_culling.detail.sodium": "This feature requires of Sodium(Embeddium, Rubidium).",
+  "brute_force_rendering_culling.detail.nvidium": "warn:Incompatible with Nvidium",
+  "brute_force_rendering_culling.detail.sodium": "warn:This feature requires of Sodium(Embeddium, Rubidium).",
 
   "brute_force_rendering_culling.skip_culling_entities": "Entities Excluded from Culling",
   "brute_force_rendering_culling.skip_culling_block_entities": "Block Entities Excluded from Culling"
