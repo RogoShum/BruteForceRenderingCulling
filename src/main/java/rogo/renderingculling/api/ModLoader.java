@@ -9,19 +9,19 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import org.joml.FrustumIntersection;
+import org.joml.Vector4f;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
+import rogo.renderingculling.mixin.AccessorFrustum;
 import rogo.renderingculling.util.OcclusionCullerThread;
-import rogo.renderingculling.util.ShaderLoader;
 
 import java.io.IOException;
 import java.util.function.Supplier;
 
 import static java.lang.Thread.MAX_PRIORITY;
 import static rogo.renderingculling.api.CullingHandler.*;
-import static rogo.renderingculling.api.CullingHandler.fromID;
 
 public class ModLoader implements ModInitializer {
 
@@ -34,6 +34,8 @@ public class ModLoader implements ModInitializer {
             ((0xFF) << 16) |
             ((0xFF) << 8) |
             ((0xFF));
+
+    public static boolean SHADER_ENABLED = false;
 
     @Override
     public void onInitialize() {
@@ -117,5 +119,9 @@ public class ModLoader implements ModInitializer {
 
     public static int getB() {
         return B;
+    }
+
+    public static Vector4f[] getFrustumPlanes(FrustumIntersection frustum) {
+        return ((AccessorFrustum.AccessorFrustumIntersection) ((AccessorFrustum) frustum).frustumIntersection()).planes();
     }
 }

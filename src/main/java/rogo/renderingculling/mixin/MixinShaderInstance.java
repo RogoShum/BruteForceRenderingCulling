@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.CullingRenderEvent;
+import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.api.impl.ICullingShader;
 
 
@@ -79,20 +80,9 @@ public abstract class MixinShaderInstance implements ICullingShader {
         this.CULLING_PROJ_MAT = this.getUniform("CullingProjMat");
     }
 
-    @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
-    public String onInit(String string) {
-        if (CullingHandler.SHADER_ENABLED) {
-            string = string.replace(SHADER_CORE_PATH, "");
-            string = string.replace(".json", "");
-            ResourceLocation rl = ResourceLocation.tryParse(string);
-            string = rl.getNamespace() + ":" + SHADER_CORE_PATH + rl.getPath() + ".json";
-        }
-        return string;
-    }
-
     @ModifyArg(method = "getOrCreate", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
     private static String onGetOrCreate(String string) {
-        if (CullingHandler.SHADER_ENABLED) {
+        if (ModLoader.SHADER_ENABLED) {
             string = string.replace(SHADER_CORE_PATH, "");
             Program.Type type = Program.Type.FRAGMENT;
             if (string.contains(".fsh"))
@@ -103,6 +93,17 @@ public abstract class MixinShaderInstance implements ICullingShader {
             }
             ResourceLocation rl = ResourceLocation.tryParse(string);
             string = rl.getNamespace() + ":" + SHADER_CORE_PATH + rl.getPath() + type.getExtension();
+        }
+        return string;
+    }
+
+    @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"))
+    public String onInit(String string) {
+        if (ModLoader.SHADER_ENABLED) {
+            string = string.replace(SHADER_CORE_PATH, "");
+            string = string.replace(".json", "");
+            ResourceLocation rl = ResourceLocation.tryParse(string);
+            string = rl.getNamespace() + ":" + SHADER_CORE_PATH + rl.getPath() + ".json";
         }
         return string;
     }

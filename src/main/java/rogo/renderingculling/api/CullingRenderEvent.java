@@ -282,7 +282,7 @@ public class CullingRenderEvent {
             shaderInstance.getCullingProjMat().set(CullingHandler.PROJECTION_MATRIX);
         }
         if(shaderInstance.getCullingFrustum() != null) {
-            Vector4f[] frustumData = ((AccessorFrustum.AccessorFrustumIntersection)((AccessorFrustum)CullingHandler.FRUSTUM).frustumIntersection()).planes();
+            Vector4f[] frustumData = ModLoader.getFrustumPlanes(((AccessorFrustum) CullingHandler.FRUSTUM).frustumIntersection());
             List<Float> data = new ArrayList<>();
             for (Vector4f frustumDatum : frustumData) {
                 data.add(frustumDatum.x());

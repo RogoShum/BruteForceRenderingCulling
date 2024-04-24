@@ -17,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -35,7 +34,6 @@ import rogo.renderingculling.api.data.EntityCullingMap;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
 import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
-import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
@@ -52,7 +50,6 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE;
 import static org.lwjgl.opengl.GL30.*;
 
 public class CullingHandler {
-    public static boolean SHADER_ENABLED = false;
     public static final String MOD_ID = "brute_force_rendering_culling";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static EntityCullingMap ENTITY_CULLING_MAP = null;
