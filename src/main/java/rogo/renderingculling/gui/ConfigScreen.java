@@ -3,7 +3,6 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -169,7 +168,13 @@ public class ConfigScreen extends Screen {
         addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> Component.translatable("brute_force_rendering_culling.cull_chunk"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_chunk"));
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"))
-                .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_entity"));
+                .setDetailMessage(() -> {
+                    if (CullingHandler.gl33()) {
+                        return Component.translatable("brute_force_rendering_culling.detail.cull_entity");
+                    } else {
+                        return Component.translatable("brute_force_rendering_culling.detail.gl33");
+                    }
+                });
 
         super.init();
     }

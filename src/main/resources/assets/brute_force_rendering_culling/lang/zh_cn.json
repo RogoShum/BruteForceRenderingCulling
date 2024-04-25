@@ -29,7 +29,8 @@
   "brute_force_rendering_culling.detail.check_texture": "测试用，开启数据监控面板时可以查看深度纹理与剔除纹理工作是否正常。",
   "brute_force_rendering_culling.detail.debug": "测试用，仅在原版生效，用于查看被剔除区块。",
   "brute_force_rendering_culling.detail.nvidium": "warn:无法与Nvidium共用",
-  "brute_force_rendering_culling.detail.sodium": "warn:此功能需要Sodium(Embeddium, Rubidium)",
+  "brute_force_rendering_culling.detail.sodium": "warn:此功能需要Sodium(Embeddium)",
+  "brute_force_rendering_culling.detail.gl33": "warn:需要显卡支持OpenGL 3.3",
 
   "brute_force_rendering_culling.skip_culling_entities": "不被剔除的实体",
   "brute_force_rendering_culling.skip_culling_block_entities": "不被剔除的方块实体"
