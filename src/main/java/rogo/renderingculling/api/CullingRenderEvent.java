@@ -119,7 +119,7 @@ public class CullingRenderEvent {
             int bottom = height + heightOffset;
             int left = width + widthScale;
             int right = width - widthScale;
-            renderText(guiGraphics, monitorTexts, width, top);
+
             float bgColor = 1.0f;
             float bgAlpha = 0.3f;
             BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
@@ -141,7 +141,12 @@ public class CullingRenderEvent {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
+            RenderSystem.getModelViewStack().pushPose();
+            RenderSystem.getModelViewStack().translate(0, 0, -1);
+            RenderSystem.applyModelViewMatrix();
             BufferUploader.drawWithShader(bufferbuilder.end());
+            RenderSystem.getModelViewStack().popPose();
+            RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
 
             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
@@ -154,6 +159,8 @@ public class CullingRenderEvent {
             BufferUploader.drawWithShader(bufferbuilder.end());
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
+
+            renderText(guiGraphics, monitorTexts, width, top);
 
             if (!CullingHandler.checkTexture)
                 return;

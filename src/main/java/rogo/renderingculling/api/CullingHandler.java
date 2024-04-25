@@ -38,6 +38,7 @@ import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
 import rogo.renderingculling.util.LifeTimer;
+import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.ShaderLoader;
 
 import java.lang.reflect.Field;
@@ -709,7 +710,7 @@ public class CullingHandler {
     }
 
     public static boolean hasNvidium() {
-        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium"));
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
     }
 
     public static boolean needPauseRebuild() {
