@@ -97,6 +97,9 @@ public class CullingRenderEvent {
     }
 
     public static void setUniform(ShaderInstance shader) {
+        if (shader == ModLoader.CULL_TEST_SHADER && shader.SCREEN_SIZE != null) {
+            shader.SCREEN_SIZE.set((float) ModLoader.CULL_TEST_TARGET.width, (float) ModLoader.CULL_TEST_TARGET.height);
+        }
         ICullingShader shaderInstance = (ICullingShader) shader;
         if (shaderInstance.getCullingCameraPos() != null) {
             Vec3 pos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -316,6 +319,10 @@ public class CullingRenderEvent {
             RenderSystem.disableBlend();
             renderText(guiGraphics, monitorTexts, width, top);
 
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
             Tesselator tessellator = Tesselator.getInstance();
             height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
             width = (int) (minecraft.getWindow().getGuiScaledWidth() * 0.25f);

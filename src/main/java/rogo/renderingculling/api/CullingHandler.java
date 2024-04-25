@@ -1,5 +1,6 @@
 package rogo.renderingculling.api;
 
+import com.google.common.collect.Queues;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -21,10 +22,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
@@ -45,6 +49,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
@@ -543,6 +548,40 @@ public class CullingHandler {
             viewMatrix.mulPose(Axis.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
             VIEW_MATRIX = new Matrix4f(viewMatrix.last().pose());
+
+            AABB box = new AABB(0, 128, 0, 16, 144, 16);
+            Queue<Vec3> queue = Queues.newArrayDeque();
+            queue.add(new Vec3(box.minX, box.minY, box.minZ));
+            queue.add(new Vec3(box.maxX, box.minY, box.minZ));
+            queue.add(new Vec3(box.minX, box.maxY, box.minZ));
+            queue.add(new Vec3(box.minX, box.minY, box.maxZ));
+            queue.add(new Vec3(box.maxX, box.maxY, box.minZ));
+            queue.add(new Vec3(box.minX, box.maxY, box.maxZ));
+            queue.add(new Vec3(box.maxX, box.minY, box.maxZ));
+            queue.add(new Vec3(box.maxX, box.maxY, box.maxZ));
+
+            Queue<Vec3> screenPos = Queues.newArrayDeque();
+            for(Vec3 vector : queue) {
+                Vector4f worldPos = new Vector4f((float) vector.x, (float) vector.y, (float) vector.z, 1);
+                VIEW_MATRIX.transform(worldPos);
+                PROJECTION_MATRIX.transform(worldPos);
+                Vec3 ndcSpace = new Vec3(worldPos.x / worldPos.w, worldPos.y / worldPos.w, worldPos.z / worldPos.w);
+                Vec3 screenSpace = ndcSpace.add(1, 1, 1).scale(0.5);
+                screenPos.add(screenSpace);
+            }
+
+            Queue<Vec3> dots = Queues.newArrayDeque();
+            for(Vec3 vector : queue) {
+                Vector3f look = new Vector3f(CAMERA.getUpVector());
+                Vector3f left = CAMERA.getLeftVector();
+                Vec3 pos = CAMERA.getPosition().subtract(vector).normalize();
+                Vec3 pos2 = vector.subtract(CAMERA.getPosition()).normalize();
+
+                double xDot = pos.dot(new Vec3(look.x, look.y, look.z));
+                double yDot = pos.dot(new Vec3(-left.x, -left.y, -left.z));
+                dots.add(new Vec3(xDot, yDot, 0));
+            }
+            boolean breakPoint = true;
         }
     }
 

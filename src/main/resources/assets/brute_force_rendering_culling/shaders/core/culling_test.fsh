@@ -119,9 +119,8 @@ float getUVDepth(int idx, vec2 uv) {
 }
 
 void main() {
-    vec2 screenUV = gl_FragCoord.xy / ScreenSize;
-    fragColor = vec4(screenUV.x, screenUV.y, (screenUV.x+screenUV.y)*0.5, 1.0);
-    return;
+    vec2 screenUV = gl_FragCoord.xy / ScreenSize.xy;
+
     vec3 chunkBasePos = vec3(0, 8, 0);
     vec3 chunkPos = vec3(0, 8, 0)*16;
     chunkPos = vec3(chunkPos.x, chunkPos.y, chunkPos.z)+vec3(8.0);
@@ -135,13 +134,39 @@ void main() {
     chunkPos+vec3(-8.0, 8.0, 8.0), chunkPos+vec3(8.0, 8.0, 8.0)
     );
 
-    float maxX = -1;
-    float maxY = -1;
-    float minX = 1;
-    float minY = 1;
+    float maxX = -0.1;
+    float maxY = -0.1;
+    float minX = 1.1;
+    float minY = 1.1;
 
+    bool inside = false;
     for (int i = 0; i < 8; ++i) {
         vec3 screenPos = worldToScreenSpace(aabb[i]);
+        if (screenPos.x >= 0 && screenPos.x <= 1
+        && screenPos.y >= 0 && screenPos.y <= 1
+        && screenPos.z >= 0 && screenPos.z <= 1) {
+            inside = true;
+        } else {
+            vec3 up = normalize(CullingViewMat[1].xyz);
+            vec3 right = normalize(CullingViewMat[0].xyz);
+            vec3 vectorDir = normalize(aabb[i]-CullingCameraPos);
+
+            float xDot = dot(right, vectorDir);
+            if (xDot > 0.0 && screenPos.x > 0.5) {
+                screenPos.x = 0.0;
+            }
+            if (xDot < 0.0 && screenPos.x < 0.5) {
+                screenPos.x = 1.0;
+            }
+
+            float yDot = dot(up, vectorDir);
+            if (yDot > 0.0 && screenPos.y > 0.5) {
+                screenPos.y = 0.0;
+            }
+            if (yDot < 0.0 && screenPos.y < 0.5) {
+                screenPos.y = 1.0;
+            }
+        }
 
         if (screenPos.x > maxX)
         maxX = screenPos.x;
@@ -153,6 +178,11 @@ void main() {
         minY = screenPos.y;
     }
 
+    if (!inside) {
+        fragColor = vec4(screenUV.x, screenUV.y, (screenUV.x+screenUV.y)*0.5, 1.0);
+        return;
+    }
+
     float chunkDepth = LinearizeDepth(chunkCenterDepth);
     if (minX < screenUV.x && maxX > screenUV.x) {
         if (minY < screenUV.y && maxY > screenUV.y) {
@@ -162,5 +192,5 @@ void main() {
     }
 
 
-    fragColor = vec4(screenUV.x, screenUV.y, (screenUV.x+screenUV.y)*0.5, 1.0);
+    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
