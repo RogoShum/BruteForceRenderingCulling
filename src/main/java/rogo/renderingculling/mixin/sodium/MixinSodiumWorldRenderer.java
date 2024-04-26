@@ -31,6 +31,10 @@ public abstract class MixinSodiumWorldRenderer {
         if (Config.shouldCullChunk()) {
             SodiumSectionAsyncUtil.update(viewport, ((AccessorRenderSectionManager) this.renderSectionManager).invokeSearchDistance()
                     , ((AccessorRenderSectionManager) this.renderSectionManager).invokeShouldUseOcclusionCulling(camera, spectator));
+            if(SodiumSectionAsyncUtil.needSync) {
+                this.renderSectionManager.markGraphDirty();
+                SodiumSectionAsyncUtil.needSync = false;
+            }
         }
     }
 

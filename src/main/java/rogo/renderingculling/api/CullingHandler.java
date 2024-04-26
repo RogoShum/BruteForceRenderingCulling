@@ -3,16 +3,12 @@ package rogo.renderingculling.api;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -25,7 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
@@ -38,7 +33,7 @@ import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
 import rogo.renderingculling.util.DepthContext;
 import rogo.renderingculling.util.LifeTimer;
-import rogo.renderingculling.util.NvidiumUtil;
+import rogo.renderingculling.util.OcclusionCullerThread;
 import rogo.renderingculling.util.ShaderLoader;
 
 import java.lang.reflect.Field;
@@ -137,22 +132,6 @@ public class CullingHandler {
         });
     }
 
-    public static String fromID(String s) {
-        return MOD_ID + ":" + s;
-    }
-
-    public static final KeyMapping CONFIG_KEY = KeyBindingHelper.registerKeyBinding(
-            new KeyMapping(MOD_ID + ".key.config",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_R,
-                    "key.category." + MOD_ID));
-
-    public static final KeyMapping DEBUG_KEY = KeyBindingHelper.registerKeyBinding(
-            new KeyMapping(MOD_ID + ".key.debug",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_X,
-                    "key.category." + MOD_ID));
-
     public static void init() {
         try {
             OptiFine = Class.forName("net.optifine.shaders.Shaders");
@@ -167,7 +146,7 @@ public class CullingHandler {
             }
         }
 
-        if (hasIris()) {
+        if (ModLoader.hasIris()) {
             try {
                 SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
@@ -200,6 +179,19 @@ public class CullingHandler {
 
     public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
         if (section == null) {
+            return false;
+        }
+
+        if (DEBUG < 2) {
+            if (!useOcclusionCulling) {
+                return true;
+            }
+            if (!section.shouldCheckVisibility(lastVisibleUpdatedFrame)) {
+                return true;
+            } else if (CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ())) {
+                section.updateVisibleTick(lastVisibleUpdatedFrame);
+                return true;
+            }
             return false;
         }
 
@@ -251,10 +243,19 @@ public class CullingHandler {
         }
 
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
-        if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
         if (Config.getBlockEntitiesSkip().contains(type))
             return false;
+
+        if (DEBUG < 2) {
+            if (visibleBlock.contains(pos)) {
+                return false;
+            } else if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
+                visibleBlock.updateUsageTick(pos, clientTickCount);
+                return false;
+            }
+            return true;
+        }
 
         long time = System.nanoTime();
 
@@ -289,6 +290,16 @@ public class CullingHandler {
             return false;
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
+        if (DEBUG < 2) {
+            if (visibleEntity.contains(entity)) {
+                return false;
+            } else if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
+                visibleEntity.updateUsageTick(entity, clientTickCount);
+                return false;
+            }
+            return true;
+        }
+
         long time = System.nanoTime();
 
         boolean visible;
@@ -317,7 +328,11 @@ public class CullingHandler {
     public static void onProfilerPopPush(String s) {
         switch (s) {
             case "beforeRunTick" -> {
-                if (Minecraft.getInstance().level != null) {
+                if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
+                    if(ModLoader.hasMod("embeddium")) {
+                        fullChunkUpdateCooldown = 20;
+                    }
+
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
                     LEVEL_MIN_POS = Minecraft.getInstance().level.getMinBuildHeight();
@@ -327,6 +342,7 @@ public class CullingHandler {
             case "afterRunTick" -> {
                 ++frame;
                 updateMapData();
+                OcclusionCullerThread.shouldUpdate();
             }
             case "captureFrustum" -> {
                 AccessorLevelRender levelFrustum = (AccessorLevelRender) Minecraft.getInstance().levelRenderer;
@@ -363,9 +379,10 @@ public class CullingHandler {
     }
 
     public static void onProfilerPush(String s) {
-        if(s.equals("onKeyboardInput")) {
-           ModLoader.onKeyPress();
-        } if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
+        if (s.equals("onKeyboardInput")) {
+            ModLoader.onKeyPress();
+        }
+        if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -481,7 +498,7 @@ public class CullingHandler {
     }
 
     public static void updateDepthMap() {
-        CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
+        //CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
         if (anyCulling() && !checkCulling && anyNeedTransfer()) {
             float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();
@@ -612,6 +629,8 @@ public class CullingHandler {
 
                     CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addAllTemp();
                 }
+
+                CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             }
 
             fps = ((AccessorMinecraft) Minecraft.getInstance()).getFps();
@@ -697,24 +716,8 @@ public class CullingHandler {
         return gl33 == 1;
     }
 
-    public static boolean hasMod(String s) {
-        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals(s));
-    }
-
-    public static boolean hasSodium() {
-        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("sodium") || modInfo.getMetadata().getId().equals("embeddium") || modInfo.getMetadata().getId().equals("rubidium"));
-    }
-
-    public static boolean hasIris() {
-        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("iris") || modInfo.getMetadata().getId().equals("oculus"));
-    }
-
-    public static boolean hasNvidium() {
-        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
-    }
-
     public static boolean needPauseRebuild() {
-        return fullChunkUpdateCooldown > 0;
+        return false;
     }
 
     public static int mapChunkY(double posY) {

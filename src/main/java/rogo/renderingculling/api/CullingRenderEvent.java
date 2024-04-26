@@ -270,8 +270,8 @@ public class CullingRenderEvent {
             float[] array = new float[]{pos.x, pos.y, pos.z};
             shaderInstance.getCullingCameraDir().set(array);
         }
-        if (shaderInstance.getCullingFov() != null) {
-            shaderInstance.getCullingFov().set((float) CullingHandler.FOV + (float) (170 - CullingHandler.FOV));
+        if (shaderInstance.getBoxScale() != null) {
+            shaderInstance.getBoxScale().set(4.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(

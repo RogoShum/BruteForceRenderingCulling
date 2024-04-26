@@ -84,7 +84,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     }
 
     public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered() && !isFocused()) {
+        if (detailMessage != null && isHovered()) {
             CullingHandler.reColorToolTip = true;
             List<Component> components = new ArrayList<>();
             String[] parts = detailMessage.get().getString().split("\\n");

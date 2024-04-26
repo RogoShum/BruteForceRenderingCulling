@@ -3,6 +3,7 @@ package rogo.renderingculling.util;
 import net.minecraft.client.Minecraft;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.ModLoader;
 
 public class OcclusionCullerThread extends Thread {
     public static OcclusionCullerThread INSTANCE;
@@ -21,10 +22,10 @@ public class OcclusionCullerThread extends Thread {
             try {
                 if (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
                     if (Config.getAsyncChunkRebuild()) {
-                        if (CullingHandler.hasSodium()) {
+                        if (ModLoader.hasSodium()) {
                             SodiumSectionAsyncUtil.asyncSearchRebuildSection();
                         } else {
-                            VanillaAsyncUtil.asyncSearchRebuildSection();
+                            //VanillaAsyncUtil.asyncSearchRebuildSection();
                         }
                     }
                 }
@@ -32,9 +33,15 @@ public class OcclusionCullerThread extends Thread {
                 if (Minecraft.getInstance().level == null) {
                     finished = true;
                 }
-            } catch (Exception ignored) {
-
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        }
+    }
+
+    public static void shouldUpdate() {
+        if (ModLoader.hasSodium() && Config.getAsyncChunkRebuild()) {
+            SodiumSectionAsyncUtil.shouldUpdate();
         }
     }
 }

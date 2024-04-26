@@ -1,20 +1,25 @@
 package rogo.renderingculling.api;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
+import org.lwjgl.glfw.GLFW;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorFrustum;
+import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.OcclusionCullerThread;
 
 import java.io.IOException;
@@ -70,6 +75,10 @@ public class ModLoader implements ModInitializer {
         }
     }
 
+    public static String fromID(String s) {
+        return MOD_ID + ":" + s;
+    }
+
     private void registerEvents() {
         WorldUnloadEvent.WORLD_UNLOAD.register(this::onWorldUnload);
         ClientTickEvents.START_CLIENT_TICK.register(this::onStartClientTick);
@@ -102,6 +111,18 @@ public class ModLoader implements ModInitializer {
         }
     }
 
+    public static final KeyMapping CONFIG_KEY = KeyBindingHelper.registerKeyBinding(
+            new KeyMapping(MOD_ID + ".key.config",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_R,
+                    "key.category." + MOD_ID));
+
+    public static final KeyMapping DEBUG_KEY = KeyBindingHelper.registerKeyBinding(
+            new KeyMapping(MOD_ID + ".key.debug",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_X,
+                    "key.category." + MOD_ID));
+
     public static void onKeyPress() {
         if (CONFIG_KEY.isDown()) {
             Minecraft.getInstance().setScreen(new ConfigScreen(Component.translatable(MOD_ID + ".config")));
@@ -123,5 +144,21 @@ public class ModLoader implements ModInitializer {
 
     public static Vector4f[] getFrustumPlanes(FrustumIntersection frustum) {
         return ((AccessorFrustum.AccessorFrustumIntersection) frustum).planes();
+    }
+
+    public static boolean hasMod(String s) {
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals(s));
+    }
+
+    public static boolean hasSodium() {
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("sodium") || modInfo.getMetadata().getId().equals("embeddium") || modInfo.getMetadata().getId().equals("rubidium"));
+    }
+
+    public static boolean hasIris() {
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("iris") || modInfo.getMetadata().getId().equals("oculus"));
+    }
+
+    public static boolean hasNvidium() {
+        return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
     }
 }

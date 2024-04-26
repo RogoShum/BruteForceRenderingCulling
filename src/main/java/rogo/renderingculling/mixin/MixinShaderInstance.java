@@ -32,31 +32,31 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @Shadow
     private static String SHADER_CORE_PATH;
 
-    @Nullable
-    public Uniform CULLING_CAMERA_DIR;
-    @Nullable
-    public Uniform CULLING_FOV;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform CULLING_CAMERA_POS;
-    @Nullable
+    @javax.annotation.Nullable
+    public Uniform CULLING_CAMERA_DIR;
+    @javax.annotation.Nullable
+    public Uniform BOX_SCALE;
+    @javax.annotation.Nullable
     public Uniform RENDER_DISTANCE;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform DEPTH_SIZE;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform CULLING_SIZE;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform ENTITY_CULLING_SIZE;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform LEVEL_HEIGHT_OFFSET;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform LEVEL_MIN_SECTION;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform CULLING_FRUSTUM;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform FRUSTUM_POS;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform CULLING_VIEW_MAT;
-    @Nullable
+    @javax.annotation.Nullable
     public Uniform CULLING_PROJ_MAT;
 
     @Final
@@ -67,7 +67,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
     public void construct(CallbackInfo ci) {
         this.CULLING_CAMERA_POS = this.getUniform("CullingCameraPos");
         this.CULLING_CAMERA_DIR = this.getUniform("CullingCameraDir");
-        this.CULLING_FOV = this.getUniform("CullingFov");
+        this.BOX_SCALE = this.getUniform("BoxScale");
         this.RENDER_DISTANCE = this.getUniform("RenderDistance");
         this.DEPTH_SIZE = this.getUniform("DepthSize");
         this.CULLING_SIZE = this.getUniform("CullingSize");
@@ -169,8 +169,8 @@ public abstract class MixinShaderInstance implements ICullingShader {
     }
 
     @Override
-    public Uniform getCullingFov() {
-        return CULLING_FOV;
+    public Uniform getBoxScale() {
+        return BOX_SCALE;
     }
 
     @Inject(at = @At("TAIL"), method = "apply")

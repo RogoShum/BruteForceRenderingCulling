@@ -4,7 +4,6 @@ uniform vec2 EntityCullingSize;
 uniform mat4 CullingViewMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
-uniform float CullingFov;
 uniform mat4 CullingProjMat;
 uniform float DepthOffset;
 uniform vec3 FrustumPos;
@@ -124,22 +123,43 @@ void main() {
     Pos+vec3(-halfWidth, halfHeight, halfWidth), Pos+vec3(halfWidth, halfHeight, halfWidth)
     );
 
-    float maxX = -1;
-    float maxY = -1;
-    float minX = 1;
-    float minY = 1;
+    float maxX = -0.1;
+    float maxY = -0.1;
+    float minX = 1.1;
+    float minY = 1.1;
 
     bool inside = false;
-    float fovRadians = radians(CullingFov);
-    float halfFovRadians = fovRadians / 2.0;
-    float cosHalfFov = cos(halfFovRadians);
+    vec3 colmun0 = CullingViewMat[0].xyz;
+    vec3 colmun1 = CullingViewMat[1].xyz;
+    vec3 colmun2 = CullingViewMat[2].xyz;
+
+    vec3 cameraUp = vec3(colmun0.y, colmun1.y, colmun2.y);
+    vec3 cameraRight = vec3(colmun0.x, colmun1.x, colmun2.x);
     for (int i = 0; i < 8; ++i) {
-        if (dot(normalize(aabb[i] - CullingCameraPos), normalize(CullingCameraDir)) < cosHalfFov) {
-            continue;
-        } else {
-            inside = true;
-        }
         vec3 screenPos = worldToScreenSpace(aabb[i]);
+        if (screenPos.x >= 0 && screenPos.x <= 1
+        && screenPos.y >= 0 && screenPos.y <= 1
+        && screenPos.z >= 0 && screenPos.z <= 1) {
+            inside = true;
+        } else {
+            vec3 vectorDir = normalize(aabb[i]-CullingCameraPos);
+
+            float xDot = dot(vectorDir, cameraRight);
+            if (xDot < 0.0 && screenPos.x > 0.5) {
+                screenPos = vec3(0.0, screenPos.y, screenPos.z);
+            }
+            if (xDot > 0.0 && screenPos.x < 0.5) {
+                screenPos = vec3(1.0, screenPos.y, screenPos.z);
+            }
+
+            float yDot = dot(vectorDir, cameraUp);
+            if (yDot < 0.0 && screenPos.y > 0.5) {
+                screenPos = vec3(screenPos.x, 0.0, screenPos.z);
+            }
+            if (yDot > 0.0 && screenPos.y < 0.5) {
+                screenPos = vec3(screenPos.x, 1.0, screenPos.z);
+            }
+        }
 
         if (screenPos.x > maxX)
         maxX = screenPos.x;
@@ -156,17 +176,21 @@ void main() {
         return;
     }
 
-    int idx = getSampler(
-    min(1.0, max(0.0, maxX))-min(1.0, max(0.0, minX)),
-    min(1.0, max(0.0, maxY))-min(1.0, max(0.0, minY)));
+    minX = min(1.0, max(0.0, minX));
+    maxX = min(1.0, max(0.0, maxX));
+    maxY = min(1.0, max(0.0, maxY));
+    minY = min(1.0, max(0.0, minY));
+
+    int idx = getSampler(maxX-minX,
+    maxY-minY);
 
     float xStep = 1.0/DepthScreenSize[idx].x;
     float yStep = 1.0/DepthScreenSize[idx].y;
 
-    minX = min(1.0, max(0.0, minX-xStep));
-    maxX = min(1.0, max(0.0, maxX+xStep));
-    maxY = min(1.0, max(0.0, maxY+yStep));
-    minY = min(1.0, max(0.0, minY-yStep));
+    minX = max(minX-xStep, 0.0);
+    maxX = min(maxX+xStep, 1.0);
+    minY = max(minY-yStep, 0.0);
+    maxY = min(maxY+yStep, 1.0);
 
     float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z);
     for (float x = minX; x <= maxX; x += xStep) {

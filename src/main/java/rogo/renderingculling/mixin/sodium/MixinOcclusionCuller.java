@@ -12,8 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
-import rogo.renderingculling.util.OcclusionCullerThread;
-import rogo.renderingculling.util.SodiumSectionAsyncUtil;
 
 @Mixin(OcclusionCuller.class)
 public abstract class MixinOcclusionCuller {

@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 public class SodiumSectionAsyncUtil {
     private static int frame = 0;
@@ -29,13 +30,16 @@ public class SodiumSectionAsyncUtil {
     private static VisibleChunkCollector collector;
     private static VisibleChunkCollector shadowCollector;
     public static boolean renderingEntities;
+    private static final Semaphore shouldUpdate = new Semaphore(0);
+    public static boolean needSync;
 
     public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, Level world) {
         SodiumSectionAsyncUtil.occlusionCuller = new OcclusionCuller(sections, world);
     }
 
     public static void asyncSearchRebuildSection() {
-        if(CullingHandler.enabledShader() && shadowViewport != null) {
+        shouldUpdate.acquireUninterruptibly();
+        if (CullingHandler.enabledShader() && shadowViewport != null) {
             frame++;
             CullingHandler.useOcclusionCulling = false;
             AsynchronousChunkCollector shadowCollector = new AsynchronousChunkCollector(frame);
@@ -49,12 +53,21 @@ public class SodiumSectionAsyncUtil {
             AsynchronousChunkCollector collector = new AsynchronousChunkCollector(frame);
             occlusionCuller.findVisible(collector, viewport, searchDistance, useOcclusionCulling, frame);
             SodiumSectionAsyncUtil.collector = collector;
+
+            if(CullingHandler.CHUNK_CULLING_MAP != null)
+                CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
+            Map<ChunkUpdateType, ArrayDeque<RenderSection>> rebuildList = SodiumSectionAsyncUtil.collector.getRebuildLists();
+            for(ArrayDeque<RenderSection> arrayDeque : rebuildList.values()) {
+                if (!arrayDeque.isEmpty()) {
+                    needSync = true;
+                    break;
+                }
+            }
         }
-        CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
     }
 
     public static void update(Viewport viewport, float searchDistance, boolean useOcclusionCulling) {
-        if(CullingHandler.renderingShader()) {
+        if (CullingHandler.renderingShader()) {
             SodiumSectionAsyncUtil.shadowViewport = viewport;
             SodiumSectionAsyncUtil.shadowSearchDistance = searchDistance;
             SodiumSectionAsyncUtil.shadowUseOcclusionCulling = useOcclusionCulling;
@@ -71,6 +84,12 @@ public class SodiumSectionAsyncUtil {
 
     public static VisibleChunkCollector getShadowCollector() {
         return SodiumSectionAsyncUtil.shadowCollector;
+    }
+
+    public static void shouldUpdate() {
+        if (shouldUpdate.availablePermits() < 1) {
+            shouldUpdate.release();
+        }
     }
 
     public static class AsynchronousChunkCollector extends VisibleChunkCollector {
@@ -108,8 +127,8 @@ public class SodiumSectionAsyncUtil {
         @Override
         public Map<ChunkUpdateType, ArrayDeque<RenderSection>> getRebuildLists() {
             super.getRebuildLists().forEach(((chunkUpdateType, renderSections) -> {
-                for(RenderSection section : renderSections) {
-                    if (!section.isDisposed()) {
+                for (RenderSection section : renderSections) {
+                    if (!section.isDisposed() && section.getBuildCancellationToken() == null) {
                         syncRebuildLists.get(chunkUpdateType).add(section);
                     }
                 }

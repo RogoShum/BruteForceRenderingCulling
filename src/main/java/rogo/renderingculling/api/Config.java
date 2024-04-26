@@ -26,7 +26,7 @@ public class Config {
 
     public static double getSampling() {
         if(unload())
-            return 0.2;
+            return 0.5;
 
         return SAMPLING.getValue();
     }
@@ -75,10 +75,10 @@ public class Config {
         if(!shouldCullChunk())
             return false;
 
-        if(CullingHandler.hasNvidium())
+        if(ModLoader.hasNvidium())
             return false;
 
-        if(!CullingHandler.hasSodium())
+        if(!ModLoader.hasSodium())
             return false;
 
         return ASYNC.getValue();
@@ -88,10 +88,10 @@ public class Config {
         if(!shouldCullChunk())
             return;
 
-        if(CullingHandler.hasNvidium())
+        if(ModLoader.hasNvidium())
             return;
 
-        if(!CullingHandler.hasSodium())
+        if(!ModLoader.hasSodium())
             return;
 
         ASYNC.setValue(value);
