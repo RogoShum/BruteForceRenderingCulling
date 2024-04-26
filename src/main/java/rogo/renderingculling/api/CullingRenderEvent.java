@@ -39,26 +39,11 @@ public class CullingRenderEvent {
         if (!CullingHandler.anyCulling())
             return;
 
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuilder();
-
-        CullingHandler.useShader(ModLoader.CULL_TEST_SHADER);
-        if (ModLoader.CULL_TEST_TARGET.height != Minecraft.getInstance().getWindow().getHeight()
-                || ModLoader.CULL_TEST_TARGET.width != Minecraft.getInstance().getWindow().getWidth()) {
-            ModLoader.CULL_TEST_TARGET.resize(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), Minecraft.ON_OSX);
-        }
-        ModLoader.CULL_TEST_TARGET.clear(Minecraft.ON_OSX);
-        ModLoader.CULL_TEST_TARGET.bindWrite(false);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(1.0f, 1.0f, 0.0f).endVertex();
-        bufferbuilder.vertex(-1.0f, 1.0f, 0.0f).endVertex();
-        CullingHandler.callDepthTexture();
-        tessellator.end();
-
         if (CullingHandler.checkCulling)
             return;
+
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
 
         if (Config.getCullEntity() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
             CullingHandler.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
@@ -111,8 +96,8 @@ public class CullingRenderEvent {
             float[] array = new float[]{pos.x, pos.y, pos.z};
             shaderInstance.getCullingCameraDir().set(array);
         }
-        if (shaderInstance.getCullingFov() != null) {
-            shaderInstance.getCullingFov().set((float) 160);
+        if (shaderInstance.getBoxScale() != null) {
+            shaderInstance.getBoxScale().set(3.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(
@@ -319,25 +304,10 @@ public class CullingRenderEvent {
             RenderSystem.disableBlend();
             renderText(guiGraphics, monitorTexts, width, top);
 
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            Tesselator tessellator = Tesselator.getInstance();
-            height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
-            width = (int) (minecraft.getWindow().getGuiScaledWidth() * 0.25f);
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - width, height * 2, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height * 2, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
-            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - width, height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
-            RenderSystem.setShaderTexture(0, ModLoader.CULL_TEST_TARGET.getColorTextureId());
-            tessellator.end();
-
             if (!CullingHandler.checkTexture)
                 return;
 
-            tessellator = Tesselator.getInstance();
+            Tesselator tessellator = Tesselator.getInstance();
             float screenScale = 1.0f;
             double windowScale = 0.4;
             RenderSystem.setShader(GameRenderer::getPositionTexColorShader);

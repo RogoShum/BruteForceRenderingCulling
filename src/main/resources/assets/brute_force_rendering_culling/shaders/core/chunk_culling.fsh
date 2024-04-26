@@ -10,7 +10,7 @@ uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
-uniform float CullingFov;
+uniform float BoxScale;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
 uniform int LevelHeightOffset;
@@ -130,49 +130,78 @@ void main() {
     chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
 
     float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
-
-    if (calculateDistance(chunkPos, CullingCameraPos) < 256) {
+    float dis = calculateDistance(chunkPos, CullingCameraPos);
+    if (dis < 1024) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
 
+    /*
     if(!isVisible(chunkPos)) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
+    */
 
+    float sizeOffset = 8.0 + (16.0 * BoxScale * (dis / 250000));
     vec3 aabb[8] = vec3[](
-        chunkPos+vec3(-8.0, -8.0, -8.0), chunkPos+vec3(8.0, -8.0, -8.0),
-        chunkPos+vec3(-8.0, 8.0, -8.0), chunkPos+vec3(8.0, 8.0, -8.0),
-        chunkPos+vec3(-8.0, -8.0, 8.0), chunkPos+vec3(8.0, -8.0, 8.0),
-        chunkPos+vec3(-8.0, 8.0, 8.0), chunkPos+vec3(8.0, 8.0, 8.0)
+    chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
     );
 
-    float maxX = -1;
-    float maxY = -1;
-    float minX = 1;
-    float minY = 1;
+    float maxX = -0.1;
+    float maxY = -0.1;
+    float minX = 1.1;
+    float minY = 1.1;
 
     bool inside = false;
-    float fovRadians = radians(CullingFov);
-    float halfFovRadians = fovRadians / 2.0;
-    float cosHalfFov = cos(halfFovRadians);
-    for (int i = 0; i < 8; ++i) {
-        if(dot(normalize(aabb[i] - CullingCameraPos), normalize(CullingCameraDir)) < cosHalfFov) {
-            continue;
-        } else {
-            inside = true;
-        }
-        vec3 screenPos = worldToScreenSpace(aabb[i]);
+    vec3 colmun0 = CullingViewMat[0].xyz;
+    vec3 colmun1 = CullingViewMat[1].xyz;
+    vec3 colmun2 = CullingViewMat[2].xyz;
 
-        if(screenPos.x > maxX)
+    vec3 cameraUp = vec3(colmun0.y, colmun1.y, colmun2.y);
+    vec3 cameraRight = vec3(colmun0.x, colmun1.x, colmun2.x);
+    for (int i = 0; i < 8; ++i) {
+        vec3 screenPos = worldToScreenSpace(aabb[i]);
+        if (screenPos.x >= 0 && screenPos.x <= 1
+        && screenPos.y >= 0 && screenPos.y <= 1
+        && screenPos.z >= 0 && screenPos.z <= 1) {
+            inside = true;
+        } else {
+            vec3 vectorDir = normalize(aabb[i]-CullingCameraPos);
+
+            float xDot = dot(vectorDir, cameraRight);
+            if (xDot < 0.0 && screenPos.x > 0.5) {
+                screenPos = vec3(0.0, screenPos.y, screenPos.z);
+            }
+            if (xDot > 0.0 && screenPos.x < 0.5) {
+                screenPos = vec3(1.0, screenPos.y, screenPos.z);
+            }
+
+            float yDot = dot(vectorDir, cameraUp);
+            if (yDot < 0.0 && screenPos.y > 0.5) {
+                screenPos = vec3(screenPos.x, 0.0, screenPos.z);
+            }
+            if (yDot > 0.0 && screenPos.y < 0.5) {
+                screenPos = vec3(screenPos.x, 1.0, screenPos.z);
+            }
+        }
+
+        if (screenPos.x > maxX)
         maxX = screenPos.x;
-        if(screenPos.y > maxY)
+        if (screenPos.y > maxY)
         maxY = screenPos.y;
-        if(screenPos.x < minX)
+        if (screenPos.x < minX)
         minX = screenPos.x;
-        if(screenPos.y < minY)
+        if (screenPos.y < minY)
         minY = screenPos.y;
+    }
+
+    if (!inside) {
+        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        return;
     }
 
     float chunkDepth = LinearizeDepth(chunkCenterDepth);
@@ -181,22 +210,21 @@ void main() {
         return;
     }
 
-    if (!inside) {
-        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        return;
-    }
+    minX = min(1.0, max(0.0, minX));
+    maxX = min(1.0, max(0.0, maxX));
+    maxY = min(1.0, max(0.0, maxY));
+    minY = min(1.0, max(0.0, minY));
 
-    int idx = getSampler(
-    min(1.0, max(0.0, maxX))-min(1.0, max(0.0, minX)),
-    min(1.0, max(0.0, maxY))-min(1.0, max(0.0, minY)));
+    int idx = getSampler(maxX-minX,
+    maxY-minY);
 
     float xStep = 1.0/DepthScreenSize[idx].x;
     float yStep = 1.0/DepthScreenSize[idx].y;
 
-    minX = min(1.0, max(0.0, minX-xStep));
-    maxX = min(1.0, max(0.0, maxX+xStep));
-    maxY = min(1.0, max(0.0, maxY+yStep));
-    minY = min(1.0, max(0.0, minY-yStep));
+    minX = max(minX-xStep, 0.0);
+    maxX = min(maxX+xStep, 1.0);
+    minY = max(minY-yStep, 0.0);
+    maxY = min(maxY+yStep, 1.0);
 
     for(float x = minX; x <= maxX; x += xStep) {
         for(float y = minY; y <= maxY; y += yStep) {

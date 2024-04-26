@@ -1,6 +1,5 @@
 package rogo.renderingculling.api;
 
-import com.google.common.collect.Queues;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -22,13 +21,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
@@ -49,7 +45,6 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE;
@@ -549,8 +544,14 @@ public class CullingHandler {
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
             VIEW_MATRIX = new Matrix4f(viewMatrix.last().pose());
 
-            AABB box = new AABB(0, 128, 0, 16, 144, 16);
-            Queue<Vec3> queue = Queues.newArrayDeque();
+            /*
+            Vec3 chunkBasePos = new Vec3(0, 8, 0);
+            Vec3 chunkPos = chunkBasePos.scale(16);
+            chunkPos = chunkPos.add(new Vec3(8.0,8.0,8.0));
+
+            AABB box = new AABB(chunkPos.x-8, chunkPos.y-8, chunkPos.z-8
+                    , chunkPos.x+8, chunkPos.y+8, chunkPos.z+8);
+            List<Vec3> queue = Lists.newArrayList();
             queue.add(new Vec3(box.minX, box.minY, box.minZ));
             queue.add(new Vec3(box.maxX, box.minY, box.minZ));
             queue.add(new Vec3(box.minX, box.maxY, box.minZ));
@@ -560,7 +561,7 @@ public class CullingHandler {
             queue.add(new Vec3(box.maxX, box.minY, box.maxZ));
             queue.add(new Vec3(box.maxX, box.maxY, box.maxZ));
 
-            Queue<Vec3> screenPos = Queues.newArrayDeque();
+            List<Vec3> screenPos = Lists.newArrayList();
             for(Vec3 vector : queue) {
                 Vector4f worldPos = new Vector4f((float) vector.x, (float) vector.y, (float) vector.z, 1);
                 VIEW_MATRIX.transform(worldPos);
@@ -570,18 +571,55 @@ public class CullingHandler {
                 screenPos.add(screenSpace);
             }
 
-            Queue<Vec3> dots = Queues.newArrayDeque();
-            for(Vec3 vector : queue) {
-                Vector3f look = new Vector3f(CAMERA.getUpVector());
-                Vector3f left = CAMERA.getLeftVector();
-                Vec3 pos = CAMERA.getPosition().subtract(vector).normalize();
-                Vec3 pos2 = vector.subtract(CAMERA.getPosition()).normalize();
+            double maxX = -0.1;
+            double maxY = -0.1;
+            double minX = 1.1;
+            double minY = 1.1;
+            List<Vec3> dots = Lists.newArrayList();
+            List<Vec3> fixed = Lists.newArrayList();
+            Vector3f up = new Vector3f(VIEW_MATRIX.getColumn(1, new Vector3f(0, 0, 0)));
+            Vector3f right = new Vector3f(VIEW_MATRIX.getColumn(0, new Vector3f(0, 0, 0)));
 
-                double xDot = pos.dot(new Vec3(look.x, look.y, look.z));
-                double yDot = pos.dot(new Vec3(-left.x, -left.y, -left.z));
+            for(int i = 0; i < queue.size(); ++i) {
+                Vec3 vector = queue.get(i);
+                Vec3 screenSpace = screenPos.get(i);
+                Vec3 pos = vector.subtract(CAMERA.getPosition()).normalize();
+
+                double yDot = pos.dot(new Vec3(up.x, up.y, up.z));
+                double xDot = pos.dot(new Vec3(right.x, right.y, right.z));
                 dots.add(new Vec3(xDot, yDot, 0));
+
+                if (screenSpace.x >= 0 && screenSpace.x <= 1
+                        && screenSpace.y >= 0 && screenSpace.y <= 1
+                        && screenSpace.z >= 0 && screenSpace.z <= 1) {
+                } else {
+                    if (xDot < 0.0 && screenSpace.x > 0.5) {
+                        screenSpace = new Vec3(0, screenSpace.y, screenSpace.z);
+                    }
+                    if (xDot > 0.0 && screenSpace.x < 0.5) {
+                        screenSpace = new Vec3(1, screenSpace.y, screenSpace.z);
+                    }
+
+                    if (yDot < 0.0 && screenSpace.y > 0.5) {
+                        screenSpace = new Vec3(screenSpace.x, 0, screenSpace.z);
+                    }
+                    if (yDot > 0.0 && screenSpace.y < 0.5) {
+                        screenSpace = new Vec3(screenSpace.x, 1, screenSpace.z);
+                    }
+                }
+                fixed.add(screenSpace);
+                if (screenSpace.x > maxX)
+                    maxX = screenSpace.x;
+                if (screenSpace.y > maxY)
+                    maxY = screenSpace.y;
+                if (screenSpace.x < minX)
+                    minX = screenSpace.x;
+                if (screenSpace.y < minY)
+                    minY = screenSpace.y;
             }
+
             boolean breakPoint = true;
+             */
         }
     }
 

@@ -140,6 +140,12 @@ void main() {
     float minY = 1.1;
 
     bool inside = false;
+    vec3 colmun0 = CullingViewMat[0].xyz;
+    vec3 colmun1 = CullingViewMat[1].xyz;
+    vec3 colmun2 = CullingViewMat[2].xyz;
+
+    vec3 cameraUp = vec3(colmun0.y, colmun1.y, colmun2.y);
+    vec3 cameraRight = vec3(colmun0.x, colmun1.x, colmun2.x);
     for (int i = 0; i < 8; ++i) {
         vec3 screenPos = worldToScreenSpace(aabb[i]);
         if (screenPos.x >= 0 && screenPos.x <= 1
@@ -147,24 +153,22 @@ void main() {
         && screenPos.z >= 0 && screenPos.z <= 1) {
             inside = true;
         } else {
-            vec3 up = normalize(CullingViewMat[1].xyz);
-            vec3 right = normalize(CullingViewMat[0].xyz);
             vec3 vectorDir = normalize(aabb[i]-CullingCameraPos);
 
-            float xDot = dot(right, vectorDir);
-            if (xDot > 0.0 && screenPos.x > 0.5) {
-                screenPos.x = 0.0;
+            float xDot = dot(vectorDir, cameraRight);
+            if (xDot < 0.0 && screenPos.x > 0.5) {
+                screenPos = vec3(0.0, screenPos.y, screenPos.z);
             }
-            if (xDot < 0.0 && screenPos.x < 0.5) {
-                screenPos.x = 1.0;
+            if (xDot > 0.0 && screenPos.x < 0.5) {
+                screenPos = vec3(1.0, screenPos.y, screenPos.z);
             }
 
-            float yDot = dot(up, vectorDir);
-            if (yDot > 0.0 && screenPos.y > 0.5) {
-                screenPos.y = 0.0;
+            float yDot = dot(vectorDir, cameraUp);
+            if (yDot < 0.0 && screenPos.y > 0.5) {
+                screenPos = vec3(screenPos.x, 0.0, screenPos.z);
             }
-            if (yDot < 0.0 && screenPos.y < 0.5) {
-                screenPos.y = 1.0;
+            if (yDot > 0.0 && screenPos.y < 0.5) {
+                screenPos = vec3(screenPos.x, 1.0, screenPos.z);
             }
         }
 
@@ -183,12 +187,16 @@ void main() {
         return;
     }
 
+    minX = min(1.0, max(0.0, minX));
+    maxX = min(1.0, max(0.0, maxX));
+    maxY = min(1.0, max(0.0, maxY));
+    minY = min(1.0, max(0.0, minY));
+
     float chunkDepth = LinearizeDepth(chunkCenterDepth);
-    if (minX < screenUV.x && maxX > screenUV.x) {
-        if (minY < screenUV.y && maxY > screenUV.y) {
-            fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-            return;
-        }
+    if (minX < screenUV.x && maxX > screenUV.x
+    && minY < screenUV.y && maxY > screenUV.y) {
+        fragColor = vec4(0.0, screenUV.x - minX, screenUV.y - minY, 1.0);
+        return;
     }
 
 
