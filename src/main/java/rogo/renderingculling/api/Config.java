@@ -1,6 +1,7 @@
 package rogo.renderingculling.api;
 
 import com.google.common.collect.ImmutableList;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class Config {
 
     public static double getSampling() {
         if (unload())
-            return 0.2;
+            return 0.5;
 
         return SAMPLING.get();
     }
@@ -68,10 +69,10 @@ public class Config {
         if (!shouldCullChunk())
             return false;
 
-        if (CullingHandler.hasNvidium())
+        if (ModLoader.hasNvidium())
             return false;
 
-        if(!CullingHandler.hasSodium())
+        if(!ModLoader.hasSodium())
             return false;
 
         return ASYNC.get();
@@ -81,10 +82,10 @@ public class Config {
         if (!shouldCullChunk())
             return;
 
-        if (CullingHandler.hasNvidium())
+        if (ModLoader.hasNvidium())
             return;
 
-        if(!CullingHandler.hasSodium())
+        if(!ModLoader.hasSodium())
             return;
 
         ASYNC.set(value);

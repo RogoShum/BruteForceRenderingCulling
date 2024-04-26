@@ -22,14 +22,7 @@
         { "name": "DepthSize", "type": "float", "count": 8, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
         { "name": "CullingCameraPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingCameraDir", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
-      {
-        "name": "BoxScale",
-        "type": "float",
-        "count": 1,
-        "values": [
-          2.0
-        ]
-      },
+        { "name": "BoxScale", "type": "float", "count": 1, "values": [ 2.0 ] },
         { "name": "FrustumPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "RenderDistance", "type": "float", "count": 1, "values": [ 0.0] },
         { "name": "LevelHeightOffset", "type": "int", "count": 1, "values": [ 16 ] },

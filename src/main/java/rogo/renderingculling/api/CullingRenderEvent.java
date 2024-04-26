@@ -49,7 +49,6 @@ public class CullingRenderEvent {
             CullingHandler.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingHandler.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
             CullingHandler.callDepthTexture();
-            CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingHandler.INSTANCED_ENTITY_CULLING_SHADER);
         }
 
@@ -82,9 +81,6 @@ public class CullingRenderEvent {
     }
 
     public static void setUniform(ShaderInstance shader) {
-        if (shader == ModLoader.CULL_TEST_SHADER && shader.SCREEN_SIZE != null) {
-            shader.SCREEN_SIZE.set((float) ModLoader.CULL_TEST_TARGET.width, (float) ModLoader.CULL_TEST_TARGET.height);
-        }
         ICullingShader shaderInstance = (ICullingShader) shader;
         if (shaderInstance.getCullingCameraPos() != null) {
             Vec3 pos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -97,7 +93,7 @@ public class CullingRenderEvent {
             shaderInstance.getCullingCameraDir().set(array);
         }
         if (shaderInstance.getBoxScale() != null) {
-            shaderInstance.getBoxScale().set(3.0f);
+            shaderInstance.getBoxScale().set(4.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(

@@ -36,10 +36,7 @@ import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
-import rogo.renderingculling.util.DepthContext;
-import rogo.renderingculling.util.LifeTimer;
-import rogo.renderingculling.util.NvidiumUtil;
-import rogo.renderingculling.util.ShaderLoader;
+import rogo.renderingculling.util.*;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -137,18 +134,6 @@ public class CullingHandler {
         });
     }
 
-    public static final KeyMapping CONFIG_KEY = new KeyMapping(MOD_ID + ".key.config",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_R,
-            "key.category." + MOD_ID);
-
-    public static final KeyMapping DEBUG_KEY = new KeyMapping(MOD_ID + ".key.debug",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_X,
-            "key.category." + MOD_ID);
-
     public static void init() {
         try {
             OptiFine = Class.forName("net.optifine.shaders.Shaders");
@@ -163,7 +148,7 @@ public class CullingHandler {
             }
         }
 
-        if (hasIris()) {
+        if (ModLoader.hasIris()) {
             try {
                 SHADER_LOADER = Class.forName("rogo.renderingculling.util.IrisLoaderImpl").asSubclass(ShaderLoader.class).newInstance();
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
@@ -196,6 +181,19 @@ public class CullingHandler {
 
     public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
         if (section == null) {
+            return false;
+        }
+
+        if (DEBUG < 2) {
+            if (!useOcclusionCulling) {
+                return true;
+            }
+            if (!section.shouldCheckVisibility(lastVisibleUpdatedFrame)) {
+                return true;
+            } else if (CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ())) {
+                section.updateVisibleTick(lastVisibleUpdatedFrame);
+                return true;
+            }
             return false;
         }
 
@@ -247,10 +245,19 @@ public class CullingHandler {
         }
 
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
-        if (FRUSTUM == null || !FRUSTUM.isVisible(aabb)) return true;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
         if (Config.getBlockEntitiesSkip().contains(type))
             return false;
+
+        if (DEBUG < 2) {
+            if (visibleBlock.contains(pos)) {
+                return false;
+            } else if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
+                visibleBlock.updateUsageTick(pos, clientTickCount);
+                return false;
+            }
+            return true;
+        }
 
         long time = System.nanoTime();
 
@@ -285,6 +292,16 @@ public class CullingHandler {
             return false;
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
+        if (DEBUG < 2) {
+            if (visibleEntity.contains(entity)) {
+                return false;
+            } else if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
+                visibleEntity.updateUsageTick(entity, clientTickCount);
+                return false;
+            }
+            return true;
+        }
+
         long time = System.nanoTime();
 
         boolean visible;
@@ -314,7 +331,9 @@ public class CullingHandler {
         switch (s) {
             case "beforeRunTick" -> {
                 if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
-                    fullChunkUpdateCooldown = 20;
+                    if(ModLoader.hasMod("embeddium")) {
+                        fullChunkUpdateCooldown = 20;
+                    }
 
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
@@ -325,6 +344,7 @@ public class CullingHandler {
             case "afterRunTick" -> {
                 ++frame;
                 updateMapData();
+                OcclusionCullerThread.shouldUpdate();
             }
             case "captureFrustum" -> {
                 AccessorLevelRender levelFrustum = (AccessorLevelRender) Minecraft.getInstance().levelRenderer;
@@ -361,9 +381,10 @@ public class CullingHandler {
     }
 
     public static void onProfilerPush(String s) {
-        if(s.equals("onKeyboardInput")) {
+        if (s.equals("onKeyboardInput")) {
             ModLoader.onKeyPress();
-        } if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
+        }
+        if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
             if (SHADER_LOADER == null || OptiFine != null) {
                 chunkCount = 0;
                 chunkCulling = 0;
@@ -479,7 +500,7 @@ public class CullingHandler {
     }
 
     public static void updateDepthMap() {
-        CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
+        //CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
         if (anyCulling() && !checkCulling && anyNeedTransfer()) {
             float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();
@@ -543,83 +564,6 @@ public class CullingHandler {
             viewMatrix.mulPose(Axis.YP.rotationDegrees(CAMERA.getYRot() + 180.0F));
             viewMatrix.translate((float) -cameraPos.x, (float) -cameraPos.y, (float) -cameraPos.z);
             VIEW_MATRIX = new Matrix4f(viewMatrix.last().pose());
-
-            /*
-            Vec3 chunkBasePos = new Vec3(0, 8, 0);
-            Vec3 chunkPos = chunkBasePos.scale(16);
-            chunkPos = chunkPos.add(new Vec3(8.0,8.0,8.0));
-
-            AABB box = new AABB(chunkPos.x-8, chunkPos.y-8, chunkPos.z-8
-                    , chunkPos.x+8, chunkPos.y+8, chunkPos.z+8);
-            List<Vec3> queue = Lists.newArrayList();
-            queue.add(new Vec3(box.minX, box.minY, box.minZ));
-            queue.add(new Vec3(box.maxX, box.minY, box.minZ));
-            queue.add(new Vec3(box.minX, box.maxY, box.minZ));
-            queue.add(new Vec3(box.minX, box.minY, box.maxZ));
-            queue.add(new Vec3(box.maxX, box.maxY, box.minZ));
-            queue.add(new Vec3(box.minX, box.maxY, box.maxZ));
-            queue.add(new Vec3(box.maxX, box.minY, box.maxZ));
-            queue.add(new Vec3(box.maxX, box.maxY, box.maxZ));
-
-            List<Vec3> screenPos = Lists.newArrayList();
-            for(Vec3 vector : queue) {
-                Vector4f worldPos = new Vector4f((float) vector.x, (float) vector.y, (float) vector.z, 1);
-                VIEW_MATRIX.transform(worldPos);
-                PROJECTION_MATRIX.transform(worldPos);
-                Vec3 ndcSpace = new Vec3(worldPos.x / worldPos.w, worldPos.y / worldPos.w, worldPos.z / worldPos.w);
-                Vec3 screenSpace = ndcSpace.add(1, 1, 1).scale(0.5);
-                screenPos.add(screenSpace);
-            }
-
-            double maxX = -0.1;
-            double maxY = -0.1;
-            double minX = 1.1;
-            double minY = 1.1;
-            List<Vec3> dots = Lists.newArrayList();
-            List<Vec3> fixed = Lists.newArrayList();
-            Vector3f up = new Vector3f(VIEW_MATRIX.getColumn(1, new Vector3f(0, 0, 0)));
-            Vector3f right = new Vector3f(VIEW_MATRIX.getColumn(0, new Vector3f(0, 0, 0)));
-
-            for(int i = 0; i < queue.size(); ++i) {
-                Vec3 vector = queue.get(i);
-                Vec3 screenSpace = screenPos.get(i);
-                Vec3 pos = vector.subtract(CAMERA.getPosition()).normalize();
-
-                double yDot = pos.dot(new Vec3(up.x, up.y, up.z));
-                double xDot = pos.dot(new Vec3(right.x, right.y, right.z));
-                dots.add(new Vec3(xDot, yDot, 0));
-
-                if (screenSpace.x >= 0 && screenSpace.x <= 1
-                        && screenSpace.y >= 0 && screenSpace.y <= 1
-                        && screenSpace.z >= 0 && screenSpace.z <= 1) {
-                } else {
-                    if (xDot < 0.0 && screenSpace.x > 0.5) {
-                        screenSpace = new Vec3(0, screenSpace.y, screenSpace.z);
-                    }
-                    if (xDot > 0.0 && screenSpace.x < 0.5) {
-                        screenSpace = new Vec3(1, screenSpace.y, screenSpace.z);
-                    }
-
-                    if (yDot < 0.0 && screenSpace.y > 0.5) {
-                        screenSpace = new Vec3(screenSpace.x, 0, screenSpace.z);
-                    }
-                    if (yDot > 0.0 && screenSpace.y < 0.5) {
-                        screenSpace = new Vec3(screenSpace.x, 1, screenSpace.z);
-                    }
-                }
-                fixed.add(screenSpace);
-                if (screenSpace.x > maxX)
-                    maxX = screenSpace.x;
-                if (screenSpace.y > maxY)
-                    maxY = screenSpace.y;
-                if (screenSpace.x < minX)
-                    minX = screenSpace.x;
-                if (screenSpace.y < minY)
-                    minY = screenSpace.y;
-            }
-
-            boolean breakPoint = true;
-             */
         }
     }
 
@@ -690,6 +634,8 @@ public class CullingHandler {
 
                     CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addAllTemp();
                 }
+
+                CullingHandler.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             }
 
             fps = ((AccessorMinecraft) Minecraft.getInstance()).getFps();
@@ -773,22 +719,6 @@ public class CullingHandler {
                 gl33 = (GL.getCapabilities().OpenGL33 || Checks.checkFunctions(GL.getCapabilities().glVertexAttribDivisor)) ? 1 : 0;
         }
         return gl33 == 1;
-    }
-
-    public static boolean hasMod(String s) {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
-    }
-
-    public static boolean hasSodium() {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium") || modInfo.getModId().equals("rubidium"));
-    }
-
-    public static boolean hasIris() {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("iris") || modInfo.getModId().equals("oculus"));
-    }
-
-    public static boolean hasNvidium() {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
     }
 
     public static boolean needPauseRebuild() {

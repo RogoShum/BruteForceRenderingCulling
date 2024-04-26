@@ -10,11 +10,11 @@ uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
-uniform float BoxScale;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
 uniform int LevelHeightOffset;
 uniform int LevelMinSection;
+uniform float BoxScale;
 
 flat in int spacePartitionSize;
 flat in vec4[6] frustum;
@@ -130,25 +130,22 @@ void main() {
     chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
 
     float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
-    float dis = calculateDistance(chunkPos, CullingCameraPos);
-    if (dis < 1024) {
+    if (calculateDistance(chunkPos, CullingCameraPos) < 1024) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
 
-    /*
     if(!isVisible(chunkPos)) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
-    */
 
-    float sizeOffset = 8.0 + (16.0 * BoxScale * (dis / 250000));
+    float sizeOffset = 16.0;
     vec3 aabb[8] = vec3[](
-    chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
-    chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
-    chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
-    chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
+        chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
+        chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
+        chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
+        chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
     );
 
     float maxX = -0.1;
@@ -168,7 +165,7 @@ void main() {
         if (screenPos.x >= 0 && screenPos.x <= 1
         && screenPos.y >= 0 && screenPos.y <= 1
         && screenPos.z >= 0 && screenPos.z <= 1) {
-            inside = true;
+
         } else {
             vec3 vectorDir = normalize(aabb[i]-CullingCameraPos);
 
@@ -199,12 +196,7 @@ void main() {
         minY = screenPos.y;
     }
 
-    if (!inside) {
-        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        return;
-    }
-
-    float chunkDepth = LinearizeDepth(chunkCenterDepth);
+    float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
     if(chunkDepth < 0) {
         fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;

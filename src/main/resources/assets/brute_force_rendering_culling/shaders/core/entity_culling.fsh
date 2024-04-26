@@ -4,7 +4,6 @@ uniform vec2 EntityCullingSize;
 uniform mat4 CullingViewMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
-uniform float BoxScale;
 uniform mat4 CullingProjMat;
 uniform float DepthOffset;
 uniform vec3 FrustumPos;
@@ -112,12 +111,10 @@ void main() {
     float halfWidth = Size.x*0.5;
     float halfHeight = Size.y*0.5;
 
-    /*
     if (!isVisible(Pos, halfWidth, halfHeight)) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
-    */
 
     vec3 aabb[8] = vec3[](
     Pos+vec3(-halfWidth, -halfHeight, -halfWidth), Pos+vec3(halfWidth, -halfHeight, -halfWidth),

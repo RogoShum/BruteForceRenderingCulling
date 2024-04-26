@@ -2,8 +2,10 @@ package rogo.renderingculling.api;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
@@ -12,6 +14,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RenderTooltipEvent;
+import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,9 +23,12 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
+import org.lwjgl.glfw.GLFW;
 import rogo.renderingculling.gui.ConfigScreen;
+import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.OcclusionCullerThread;
 
 import java.io.IOException;
@@ -56,6 +62,18 @@ public class ModLoader {
         });
     }
 
+    public static final KeyMapping CONFIG_KEY = new KeyMapping(MOD_ID + ".key.config",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_R,
+            "key.category." + MOD_ID);
+
+    public static final KeyMapping DEBUG_KEY = new KeyMapping(MOD_ID + ".key.debug",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_X,
+            "key.category." + MOD_ID);
+
     public void registerKeyBinding(RegisterKeyMappingsEvent event) {
         event.register(CONFIG_KEY);
         event.register(DEBUG_KEY);
@@ -65,13 +83,6 @@ public class ModLoader {
         RenderSystem.recordRenderCall(this::initShader);
     }
 
-    public static ShaderInstance CULL_TEST_SHADER;
-    public static RenderTarget CULL_TEST_TARGET;
-
-    static {
-        CULL_TEST_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
-        CULL_TEST_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-    }
     private void initShader() {
         LOGGER.debug("try init shader chunk_culling");
         try {
@@ -79,8 +90,7 @@ public class ModLoader {
             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
             REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "remove_color"), DefaultVertexFormat.POSITION_COLOR_TEX);
-            CULL_TEST_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "culling_test"), DefaultVertexFormat.POSITION);
-        } catch (IOException e) {
+       } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -146,5 +156,21 @@ public class ModLoader {
         }
 
         return new Vector4f[6];
+    }
+
+    public static boolean hasMod(String s) {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
+    }
+
+    public static boolean hasSodium() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium"));
+    }
+
+    public static boolean hasIris() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("iris") || modInfo.getModId().equals("oculus"));
+    }
+
+    public static boolean hasNvidium() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
     }
 }

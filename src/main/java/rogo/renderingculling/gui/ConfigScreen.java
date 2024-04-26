@@ -15,6 +15,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.ModLoader;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -107,7 +108,7 @@ public class ConfigScreen extends Screen {
 
     @Override
     public boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
-        if (CullingHandler.CONFIG_KEY.matches(p_94715_, p_94716_)) {
+        if (ModLoader.CONFIG_KEY.matches(p_94715_, p_94716_)) {
             if (release) {
                 this.onClose();
                 return true;
@@ -156,11 +157,11 @@ public class ConfigScreen extends Screen {
         }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
 
-        addConfigButton(() -> Config.getCullChunk() && CullingHandler.hasSodium() && !CullingHandler.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
+        addConfigButton(() -> Config.getCullChunk() && ModLoader.hasSodium() && !ModLoader.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
                 .setDetailMessage(() -> {
-                    if (CullingHandler.hasNvidium()) {
+                    if (ModLoader.hasNvidium()) {
                         return Component.translatable("brute_force_rendering_culling.detail.nvidium");
-                    } else if (!CullingHandler.hasSodium()) {
+                    } else if (!ModLoader.hasSodium()) {
                         return Component.translatable("brute_force_rendering_culling.detail.sodium");
                     } else
                         return Component.translatable("brute_force_rendering_culling.detail.async");
