@@ -40,8 +40,13 @@ public class OcclusionCullerThread extends Thread {
     }
 
     public static void shouldUpdate() {
-        if (ModLoader.hasSodium() && Config.getAsyncChunkRebuild()) {
-            SodiumSectionAsyncUtil.shouldUpdate();
+        if (Config.getAsyncChunkRebuild()) {
+            if(ModLoader.hasSodium())
+                SodiumSectionAsyncUtil.shouldUpdate();
+            /*
+            else
+                VanillaAsyncUtil.shouldUpdate();
+             */
         }
     }
 }

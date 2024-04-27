@@ -31,7 +31,7 @@ public class SodiumSectionAsyncUtil {
     private static VisibleChunkCollector shadowCollector;
     public static boolean renderingEntities;
     private static final Semaphore shouldUpdate = new Semaphore(0);
-    public static boolean needSync;
+    public static boolean needSyncRebuild;
 
     public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, Level world) {
         SodiumSectionAsyncUtil.occlusionCuller = new OcclusionCuller(sections, world);
@@ -59,7 +59,7 @@ public class SodiumSectionAsyncUtil {
             Map<ChunkUpdateType, ArrayDeque<RenderSection>> rebuildList = SodiumSectionAsyncUtil.collector.getRebuildLists();
             for(ArrayDeque<RenderSection> arrayDeque : rebuildList.values()) {
                 if (!arrayDeque.isEmpty()) {
-                    needSync = true;
+                    needSyncRebuild = true;
                     break;
                 }
             }

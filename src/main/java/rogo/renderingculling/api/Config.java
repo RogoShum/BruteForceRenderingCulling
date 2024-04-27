@@ -72,9 +72,6 @@ public class Config {
         if (ModLoader.hasNvidium())
             return false;
 
-        if(!ModLoader.hasSodium())
-            return false;
-
         return ASYNC.get();
     }
 
@@ -83,9 +80,6 @@ public class Config {
             return;
 
         if (ModLoader.hasNvidium())
-            return;
-
-        if(!ModLoader.hasSodium())
             return;
 
         ASYNC.set(value);

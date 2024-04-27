@@ -51,32 +51,6 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
     private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
     private LevelRenderer.RenderChunkStorage renderChunkStorageTemp;
 
-    @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
-    public void onApplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.shouldCullChunk() && !VanillaAsyncUtil.shouldReplaceStorage()) {
-            if (CullingHandler.OptiFine != null) {
-                try {
-                    Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
-                    field.setAccessible(true);
-                    Object value = field.get(this);
-
-                    if (value instanceof ObjectArrayList) {
-                        ((ObjectArrayList<?>) value).removeIf((o -> {
-                            ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                            return !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
-                        }));
-                    }
-                } catch (NoSuchFieldException | IllegalAccessException ignored) {
-                }
-            }
-
-            this.renderChunksInFrustum.removeIf((o -> {
-                ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                return !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
-            }));
-        }
-    }
-
     @Inject(method = "setupRender", at = @At(value = "HEAD"))
     public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
         if (this.viewArea != null) {
@@ -86,17 +60,23 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
 
     @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
     public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
-        if (VanillaAsyncUtil.shouldReplaceStorage()) {
+        CullingHandler.applyFrustum = true;
+        /*
+        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.shouldReplaceStorage()) {
             renderChunkStorageTemp = this.renderChunkStorage.get();
             this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
         }
+         */
     }
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onApplyFrustumReturn(Frustum p_194355_, CallbackInfo ci) {
-        if (VanillaAsyncUtil.shouldReplaceStorage()) {
+        CullingHandler.applyFrustum = false;
+        /*
+        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.shouldReplaceStorage()) {
             this.renderChunkStorage.set(renderChunkStorageTemp);
         }
+         */
     }
 
     @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"))

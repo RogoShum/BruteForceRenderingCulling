@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public class ChunkCullingMap extends CullingMap {
     private int renderDistance = 0;
@@ -47,14 +44,14 @@ public class ChunkCullingMap extends CullingMap {
         cameraZ = (int) camera.z >> 4;
     }
 
-    public boolean isChunkOffsetCameraVisible(int x, int y, int z) {
-        return isChunkVisible((x >> 4) - cameraX, CullingHandler.mapChunkY(y), (z >> 4) - cameraZ);
+    public boolean isChunkOffsetCameraVisible(int x, int y, int z, boolean checkForChunk) {
+        return isChunkVisible((x >> 4) - cameraX, CullingHandler.mapChunkY(y), (z >> 4) - cameraZ, checkForChunk);
     }
 
-    public boolean isChunkVisible(int posX, int posY, int posZ) {
+    public boolean isChunkVisible(int posX, int posY, int posZ, boolean checkForChunk) {
         int index = 1 + (((posX + renderDistance) * spacePartitionSize * CullingHandler.LEVEL_SECTION_RANGE + (posZ + renderDistance) * CullingHandler.LEVEL_SECTION_RANGE + posY) << 2);
         if (index > 0 && index < cullingBuffer.limit()) {
-            return (cullingBuffer.get(index) & 0xFF) > 0;
+            return (cullingBuffer.get(index) & 0xFF) > (checkForChunk ? 0 : 127);
         }
         return false;
     }

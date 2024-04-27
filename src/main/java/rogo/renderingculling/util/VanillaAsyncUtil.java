@@ -16,6 +16,7 @@ import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Queue;
+import java.util.concurrent.Semaphore;
 
 import static net.minecraft.client.renderer.LevelRenderer.DIRECTIONS;
 
@@ -23,8 +24,10 @@ public class VanillaAsyncUtil {
     private static int chunkLength = 0;
     private static LevelRenderer.RenderChunkStorage storage;
     private static LevelRenderer levelRenderer;
+    private static final Semaphore shouldUpdate = new Semaphore(0);
 
     public static void asyncSearchRebuildSection() {
+        shouldUpdate.acquireUninterruptibly();
         if (levelRenderer == null) return;
         LevelRenderer.RenderChunkStorage renderChunkStorage = new LevelRenderer.RenderChunkStorage(chunkLength);
         Queue<LevelRenderer.RenderChunkInfo> queue = new ArrayDeque<>();
@@ -36,7 +39,7 @@ public class VanillaAsyncUtil {
         while (!queue.isEmpty()) {
             LevelRenderer.RenderChunkInfo last = queue.poll();
             ChunkRenderDispatcher.RenderChunk lastRenderChunk = ((IRenderChunkInfo) last).getRenderChunk();
-            if (originChunk != last && (!CullingHandler.FRUSTUM.isVisible(lastRenderChunk.getBoundingBox()) || !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) lastRenderChunk, false))) {
+            if (originChunk != last && (!CullingHandler.FRUSTUM.isVisible(lastRenderChunk.getBoundingBox()) || !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) lastRenderChunk, true))) {
                 continue;
             }
 
@@ -71,6 +74,12 @@ public class VanillaAsyncUtil {
 
     public static boolean shouldReplaceStorage() {
         return Config.getAsyncChunkRebuild() && getChunkStorage() != null;
+    }
+
+    public static void shouldUpdate() {
+        if (shouldUpdate.availablePermits() < 1) {
+            shouldUpdate.release();
+        }
     }
 
     @NotNull

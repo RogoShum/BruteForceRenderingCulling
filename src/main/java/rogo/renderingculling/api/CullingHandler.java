@@ -179,7 +179,7 @@ public class CullingHandler {
         SHADER_DEPTH_BUFFER_ID.clear();
     }
 
-    public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean count) {
+    public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean checkForChunk) {
         if (section == null) {
             return false;
         }
@@ -190,7 +190,7 @@ public class CullingHandler {
             }
             if (!section.shouldCheckVisibility(lastVisibleUpdatedFrame)) {
                 return true;
-            } else if (CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ())) {
+            } else if (CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ(), checkForChunk)) {
                 section.updateVisibleTick(lastVisibleUpdatedFrame);
                 return true;
             }
@@ -202,12 +202,12 @@ public class CullingHandler {
                 return true;
             }
 
-            count = false;
+            checkForChunk = false;
         }
 
         long time = System.nanoTime();
 
-        if (count)
+        if (checkForChunk)
             chunkCount++;
 
         boolean render;
@@ -216,20 +216,20 @@ public class CullingHandler {
         if (!section.shouldCheckVisibility(lastVisibleUpdatedFrame)) {
             render = true;
         } else {
-            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ());
+            actualRender = CHUNK_CULLING_MAP.isChunkOffsetCameraVisible(section.getPositionX(), section.getPositionY(), section.getPositionZ(), checkForChunk);
             render = actualRender;
         }
 
         if (checkCulling)
             render = !render;
 
-        if (!render && count) {
+        if (!render && checkForChunk) {
             chunkCulling++;
         } else if (actualRender) {
             section.updateVisibleTick(lastVisibleUpdatedFrame);
         }
 
-        if (count)
+        if (checkForChunk)
             preChunkCullingTime += System.nanoTime() - time;
 
         return render;
@@ -359,12 +359,6 @@ public class CullingHandler {
                     CullingHandler.CHUNK_CULLING_MAP.updateCamera();
                 }
                 checkShader();
-            }
-            case "terrain_setup" -> {
-                applyFrustum = true;
-            }
-            case "compilechunks" -> {
-                applyFrustum = false;
             }
             case "destroyProgress" -> {
                 updatingDepth = true;

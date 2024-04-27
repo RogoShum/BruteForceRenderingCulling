@@ -83,6 +83,14 @@ public class ModLoader {
         RenderSystem.recordRenderCall(this::initShader);
     }
 
+    public static ShaderInstance CULL_TEST_SHADER;
+    public static RenderTarget CULL_TEST_TARGET;
+
+    static {
+        CULL_TEST_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
+        CULL_TEST_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+    }
+
     private void initShader() {
         LOGGER.debug("try init shader chunk_culling");
         try {
@@ -90,7 +98,8 @@ public class ModLoader {
             INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
             COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
             REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "remove_color"), DefaultVertexFormat.POSITION_COLOR_TEX);
-       } catch (IOException e) {
+            CULL_TEST_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "culling_test"), DefaultVertexFormat.POSITION);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

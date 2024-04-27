@@ -157,7 +157,7 @@ public class ConfigScreen extends Screen {
         }, () -> Component.translatable("brute_force_rendering_culling.culling_map_update_delay"))
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
 
-        addConfigButton(() -> Config.getCullChunk() && ModLoader.hasSodium() && !ModLoader.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
+        addConfigButton(() -> Config.getCullChunk() && !ModLoader.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> Component.translatable("brute_force_rendering_culling.async"))
                 .setDetailMessage(() -> {
                     if (ModLoader.hasNvidium()) {
                         return Component.translatable("brute_force_rendering_culling.detail.nvidium");
