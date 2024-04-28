@@ -20,7 +20,7 @@ import rogo.renderingculling.util.DummySection;
 public abstract class MixinFrustum {
 
     @Inject(method = "isVisible", at = @At(value = "RETURN"), cancellable = true)
-    public void afterRunTick(AABB aabb, CallbackInfoReturnable<Boolean> cir) {
+    public void afterVisible(AABB aabb, CallbackInfoReturnable<Boolean> cir) {
         if (CullingHandler.applyFrustum && Config.shouldCullChunk() && cir.getReturnValue() && !CullingHandler.shouldRenderChunk(new DummySection(aabb), true))
             cir.setReturnValue(false);
     }

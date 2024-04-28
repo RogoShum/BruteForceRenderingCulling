@@ -315,8 +315,8 @@ public class CullingHandler {
         switch (s) {
             case "beforeRunTick" -> {
                 if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
-                    if(ModLoader.hasMod("embeddium")) {
-                        fullChunkUpdateCooldown = 20;
+                    if (ModLoader.hasMod("embeddium")) {
+                        fullChunkUpdateCooldown = 60;
                     }
 
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
@@ -537,7 +537,7 @@ public class CullingHandler {
 
     public static void updateMapData() {
         if (anyCulling()) {
-            if(anyNeedTransfer()) {
+            if (anyNeedTransfer()) {
                 preCullingInitCount++;
             }
 

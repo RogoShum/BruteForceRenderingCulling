@@ -93,7 +93,7 @@ public class CullingRenderEvent {
             shaderInstance.getCullingCameraDir().set(array);
         }
         if (shaderInstance.getBoxScale() != null) {
-            shaderInstance.getBoxScale().set(4.0f);
+            shaderInstance.getBoxScale().set(8.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(
@@ -203,7 +203,6 @@ public class CullingRenderEvent {
                 String fps = "FPS: " + extractedString;
                 addString(monitorTexts, fps);
             }
-            addString(monitorTexts, "frame count: "+CullingHandler.singleFrameInjectCount);
 
             String cull = Component.translatable("brute_force_rendering_culling.cull_entity").getString() + ": "
                     + (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
@@ -255,16 +254,16 @@ public class CullingRenderEvent {
             float bgAlpha = 0.3f;
             BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
             bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-            bufferbuilder.vertex(right - 1, bottom + 1, 90.0D)
+            bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
                     .color(bgColor, bgColor, bgColor, bgAlpha)
                     .uv(u(right - 1), v(bottom + 1)).endVertex();
-            bufferbuilder.vertex(left + 1, bottom + 1, 90.0D)
+            bufferbuilder.vertex(left + 1, bottom + 1, 0.0D)
                     .color(bgColor, bgColor, bgColor, bgAlpha)
                     .uv(u(left + 1), v(bottom + 1)).endVertex();
-            bufferbuilder.vertex(left + 1, top - 1, 90.0D)
+            bufferbuilder.vertex(left + 1, top - 1, 0.0D)
                     .color(bgColor, bgColor, bgColor, bgAlpha)
                     .uv(u(left + 1), v(top - 1)).endVertex();
-            bufferbuilder.vertex(right - 1, top - 1, 90.0D)
+            bufferbuilder.vertex(right - 1, top - 1, 0.0D)
                     .color(bgColor, bgColor, bgColor, bgAlpha)
                     .uv(u(right - 1), v(top - 1)).endVertex();
             RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());

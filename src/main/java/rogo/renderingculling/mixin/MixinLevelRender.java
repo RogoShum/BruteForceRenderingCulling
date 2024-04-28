@@ -18,15 +18,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
 import rogo.renderingculling.util.VanillaAsyncUtil;
 
 import javax.annotation.Nullable;
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRender implements IEntitiesForRender {
@@ -44,12 +41,6 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
     @Nullable
     private ViewArea viewArea;
 
-    @Shadow
-    @Final
-    private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
-
-    private boolean replaceRenderChunk = false;
-
     @Inject(method = "setupRender", at = @At(value = "HEAD"))
     public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
         if (this.viewArea != null) {
@@ -60,46 +51,11 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
     @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
     public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
         CullingHandler.applyFrustum = true;
-        replaceRenderChunk = true;
-        CullingHandler.singleFrameInjectCount = 0;
-        /*
-        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.shouldReplaceStorage()) {
-            renderChunkStorageTemp = this.renderChunkStorage.get();
-            this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
-        }
-         */
-    }
-
-    @ModifyVariable(require = 0, name = "var2", method = "applyFrustum", at = @At(value = "INVOKE", target = "Ljava/util/Iterator;hasNext()Z"))
-    public Iterator<?> onApplyFrustumVar2(Iterator<?> value) {
-        VanillaAsyncUtil.injectedAsyncMixin = true;
-        if (replaceRenderChunk && VanillaAsyncUtil.shouldReplaceStorage()) {
-            CullingHandler.singleFrameInjectCount++;
-            replaceRenderChunk = false;
-            return this.renderChunkStorage.get().renderChunks.iterator();
-        }
-        return value;
-    }
-
-    @ModifyVariable(require = 0, name = "iterator", method = "applyFrustum*", at = @At(value = "INVOKE", target = "Ljava/util/Iterator;hasNext()Z"))
-    public Iterator<?> onApplyFrustumiterator(Iterator<?> value) {
-        VanillaAsyncUtil.injectedAsyncMixin = true;
-        if (replaceRenderChunk && VanillaAsyncUtil.shouldReplaceStorage()) {
-            CullingHandler.singleFrameInjectCount++;
-            replaceRenderChunk = false;
-            return this.renderChunkStorage.get().renderChunks.iterator();
-        }
-        return value;
     }
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onApplyFrustumReturn(Frustum p_194355_, CallbackInfo ci) {
         CullingHandler.applyFrustum = false;
-        /*
-        if (Config.getAsyncChunkRebuild() && VanillaAsyncUtil.shouldReplaceStorage()) {
-            this.renderChunkStorage.set(renderChunkStorageTemp);
-        }
-         */
     }
 
     @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"))

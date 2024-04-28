@@ -126,10 +126,15 @@ public class SodiumSectionAsyncUtil {
 
         @Override
         public Map<ChunkUpdateType, ArrayDeque<RenderSection>> getRebuildLists() {
+            if(CullingHandler.needPauseRebuild()) {
+                return syncRebuildLists;
+            }
             super.getRebuildLists().forEach(((chunkUpdateType, renderSections) -> {
                 for (RenderSection section : renderSections) {
                     if (!section.isDisposed() && section.getBuildCancellationToken() == null) {
-                        syncRebuildLists.get(chunkUpdateType).add(section);
+                        try {
+                            syncRebuildLists.get(chunkUpdateType).add(section);
+                        } catch (Exception ignored) {}
                     }
                 }
             }));

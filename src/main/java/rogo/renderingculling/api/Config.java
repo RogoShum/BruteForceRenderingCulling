@@ -69,6 +69,12 @@ public class Config {
         if (!shouldCullChunk())
             return false;
 
+        if (CullingHandler.needPauseRebuild())
+            return false;
+
+        if (!ModLoader.hasSodium())
+            return false;
+
         if (ModLoader.hasNvidium())
             return false;
 
@@ -77,6 +83,12 @@ public class Config {
 
     public static void setAsyncChunkRebuild(boolean value) {
         if (!shouldCullChunk())
+            return;
+
+        if (!ModLoader.hasSodium())
+            return;
+
+        if (CullingHandler.needPauseRebuild())
             return;
 
         if (ModLoader.hasNvidium())
