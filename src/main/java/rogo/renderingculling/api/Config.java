@@ -69,6 +69,8 @@ public class Config {
     }
 
     public static boolean getAsyncChunkRebuild() {
+        if (true)
+            return false;
         if (unload())
             return false;
 
@@ -88,6 +90,8 @@ public class Config {
     }
 
     public static void setAsyncChunkRebuild(boolean value) {
+        if (true)
+            return;
         if(!shouldCullChunk())
             return;
 
