@@ -12,5 +12,8 @@ public interface AccessorLevelRender {
 
     @Accessor("capturedFrustum")
     Frustum getCapturedFrustum();
+
+    @Accessor("needsFullRenderChunkUpdate")
+    boolean getNeedsFullRenderChunkUpdate();
 }
 

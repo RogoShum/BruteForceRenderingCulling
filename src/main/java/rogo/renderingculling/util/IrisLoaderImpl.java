@@ -36,7 +36,12 @@ public class IrisLoaderImpl implements ShaderLoader {
     }
 
     @Override
-    public boolean renderingShader() {
+    public boolean renderingShaderPass() {
+        return IrisApi.getInstance().isRenderingShadowPass();
+    }
+
+    @Override
+    public boolean enabledShader() {
         return IrisApi.getInstance().isShaderPackInUse();
     }
 

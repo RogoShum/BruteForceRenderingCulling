@@ -1,10 +1,12 @@
-package rogo.renderingculling.api;
+package rogo.renderingculling.api.data;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
+import rogo.renderingculling.api.CullingHandler;
+
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
@@ -25,26 +27,31 @@ public abstract class CullingMap {
         cullingBuffer = BufferUtils.createByteBuffer(width * height * 4);
         pboId = GL15.glGenBuffers();
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
-        GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * Float.BYTES * 4, GL15.GL_DYNAMIC_COPY);
+        GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * 4 * Float.BYTES, GL15.GL_DYNAMIC_READ);
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
+        CullingHandler.bindMainFrameTarget();
     }
 
     public boolean needTransferData() {
         return delayCount <= 0;
     }
 
+    public void syncDelay(CullingMap map) {
+        map.delayCount = this.delayCount;
+    }
+
     public void transferData() {
-        if(delayCount <= 0) {
+        if (delayCount <= 0) {
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, bindFrameBufferId());
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
             GL11.glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-            delayCount = configDelayCount()+dynamicDelayCount();
+            CullingHandler.bindMainFrameTarget();
+            delayCount = configDelayCount() + dynamicDelayCount();
         } else {
             delayCount--;
         }
-        if(delayCount <= 0) {
+        if (delayCount <= 0) {
             setTransferred(true);
         }
     }
@@ -59,8 +66,8 @@ public abstract class CullingMap {
     abstract int configDelayCount();
 
     public int dynamicDelayCount() {
-        if(CullingHandler.INSTANCE.fps > 200) {
-            return CullingHandler.INSTANCE.fps / 200;
+        if (CullingHandler.fps > 100) {
+            return CullingHandler.fps / 100;
         }
 
         return 0;

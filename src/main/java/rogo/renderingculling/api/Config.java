@@ -8,7 +8,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.serialization.JanksonValueSerial
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.PropertyMirror;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 
 import java.io.*;
 import java.nio.file.*;
@@ -17,19 +17,24 @@ import java.util.List;
 
 public class Config {
     private static final PropertyMirror<Double> SAMPLING = PropertyMirror.create(ConfigTypes.DOUBLE);
+    private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
+    private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
+    private static final PropertyMirror<Boolean> ASYNC = PropertyMirror.create(ConfigTypes.BOOLEAN);
+    private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
+    private static final PropertyMirror<List<String>> ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
+    private static final PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
 
     public static double getSampling() {
         if(unload())
-            return 0.2;
+            return 0.5;
 
         return SAMPLING.getValue();
     }
 
     public static void setSampling(double value) {
         SAMPLING.setValue(value);
+        save();
     }
-
-    private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
 
     public static boolean getCullEntity() {
         if(unload() || !CullingHandler.gl33())
@@ -39,9 +44,8 @@ public class Config {
 
     public static void setCullEntity(boolean value) {
         CULL_ENTITY.setValue(value);
+        save();
     }
-
-    private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
 
     public static boolean getCullChunk() {
         if(unload())
@@ -49,44 +53,77 @@ public class Config {
         return CULL_CHUNK.getValue();
     }
 
-    public static void setCullChunk(boolean value) {
-        CULL_CHUNK.setValue(value);
+    public static boolean shouldCullChunk() {
+        if (unload())
+            return false;
+
+        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+            return false;
+
+        return getCullChunk();
     }
 
-    private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
+    public static void setCullChunk(boolean value) {
+        CULL_CHUNK.setValue(value);
+        save();
+    }
+
+    public static boolean getAsyncChunkRebuild() {
+        if (unload())
+            return false;
+
+        if(!shouldCullChunk())
+            return false;
+
+        if (CullingHandler.needPauseRebuild())
+            return false;
+
+        if(ModLoader.hasNvidium())
+            return false;
+
+        if(!ModLoader.hasSodium())
+            return false;
+
+        return ASYNC.getValue();
+    }
+
+    public static void setAsyncChunkRebuild(boolean value) {
+        if(!shouldCullChunk())
+            return;
+
+        if(ModLoader.hasNvidium())
+            return;
+
+        if (CullingHandler.needPauseRebuild())
+            return;
+
+        if(!ModLoader.hasSodium())
+            return;
+
+        ASYNC.setValue(value);
+        save();
+    }
+
+    public static int getShaderDynamicDelay() {
+        return CullingHandler.enabledShader() ? 1 : 0;
+    }
 
     public static int getDepthUpdateDelay() {
         if(unload())
             return 1;
-        int dynamicWithShader = CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
-        return UPDATE_DELAY.getValue() + dynamicWithShader;
+        return UPDATE_DELAY.getValue() <= 9 ? UPDATE_DELAY.getValue() + getShaderDynamicDelay() : UPDATE_DELAY.getValue();
     }
 
     public static void setDepthUpdateDelay(int value) {
         UPDATE_DELAY.setValue(value);
+        save();
     }
-
-    private static final PropertyMirror<Integer> CULLING_ENTITY_RATE = PropertyMirror.create(ConfigTypes.INTEGER);
-
-    public static int getCullingEntityRate() {
-        if(unload())
-            return 20;
-        return CULLING_ENTITY_RATE.getValue();
-    }
-
-    public static void setCullingEntityRate(int value) {
-        CULLING_ENTITY_RATE.setValue(value);
-    }
-
-    private static final PropertyMirror<List<String>> ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
 
     public static List<String> getEntitiesSkip() {
         if(unload())
             return ImmutableList.of();
         return ENTITY_SKIP.getValue();
     }
-
-    private static final PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
 
     public static List<String> getBlockEntitiesSkip() {
         if(unload())
@@ -103,7 +140,7 @@ public class Config {
     }
 
     private static String getTranslatedItem(String s) {
-        return new TranslatableComponent(s).getString();
+        return ComponentUtil.translatable(s).getString();
     }
 
     public static void save() {
@@ -135,8 +172,8 @@ public class Config {
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_chunk"), ConfigTypes.BOOLEAN, true)
                 .finishValue(CULL_CHUNK::mirror)
 
-                .beginValue(getTranslatedItem("brute_force_rendering_culling.culling_entity_update_rate"), ConfigTypes.INTEGER, 20)
-                .finishValue(CULLING_ENTITY_RATE::mirror)
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.async"), ConfigTypes.BOOLEAN, true)
+                .finishValue(ASYNC::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.skip_culling_entities"), ConfigTypes.makeList(ConfigTypes.STRING), entityList)
                 .finishValue(ENTITY_SKIP::mirror)

@@ -17,7 +17,7 @@ public class MixinKeyboardHandler {
     @Inject(method = "keyPress", at= @At(value = "RETURN"))
     <E extends Entity> void onKeyPress(long l, int i, int j, int k, int m, CallbackInfo ci) {
         if (l == Minecraft.getInstance().getWindow().getWindow()) {
-            CullingHandler.INSTANCE.onProfilerPush("onKeyboardInput");
+            CullingHandler.onProfilerPush("onKeyboardInput");
         }
     }
 }
