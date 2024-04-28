@@ -1,8 +1,5 @@
 package rogo.renderingculling.util;
 
-import net.minecraft.core.BlockPos;
-import org.lwjgl.system.CallbackI;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

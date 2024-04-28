@@ -1,0 +1,172 @@
+package rogo.renderingculling.api;
+
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RenderTooltipEvent;
+import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
+import org.lwjgl.glfw.GLFW;
+import rogo.renderingculling.gui.ConfigScreen;
+import rogo.renderingculling.util.NvidiumUtil;
+import rogo.renderingculling.util.OcclusionCullerThread;
+
+import java.io.IOException;
+
+import static java.lang.Thread.MAX_PRIORITY;
+import static rogo.renderingculling.api.CullingHandler.*;
+
+@Mod("brute_force_rendering_culling")
+public class ModLoader {
+
+    int BG = ((200 & 0xFF) << 24) |
+            ((0) << 16) |
+            ((0) << 8) |
+            ((0));
+
+    int B = ((100 & 0xFF) << 24) |
+            ((0xFF) << 16) |
+            ((0xFF) << 8) |
+            ((0xFF));
+
+    public ModLoader() {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            registerShader();
+            MinecraftForge.EVENT_BUS.register(this);
+            MinecraftForge.EVENT_BUS.register(new CullingRenderEvent());
+            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
+            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerKeyBinding);
+
+            CullingHandler.init();
+        });
+    }
+
+    public static final KeyMapping CONFIG_KEY = new KeyMapping(MOD_ID + ".key.config",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_R,
+            "key.category." + MOD_ID);
+
+    public static final KeyMapping DEBUG_KEY = new KeyMapping(MOD_ID + ".key.debug",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_X,
+            "key.category." + MOD_ID);
+
+    private void registerKeyBinding(final FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ClientRegistry.registerKeyBinding(CONFIG_KEY);
+            ClientRegistry.registerKeyBinding(DEBUG_KEY);
+        });
+    }
+
+    private void registerShader() {
+        RenderSystem.recordRenderCall(this::initShader);
+    }
+
+    public static ShaderInstance CULL_TEST_SHADER;
+    public static RenderTarget CULL_TEST_TARGET;
+
+    static {
+        CULL_TEST_TARGET = new TextureTarget(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight(), false, Minecraft.ON_OSX);
+        CULL_TEST_TARGET.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+    }
+
+    private void initShader() {
+        LOGGER.debug("try init shader chunk_culling");
+        try {
+            CHUNK_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "chunk_culling"), DefaultVertexFormat.POSITION);
+            INSTANCED_ENTITY_CULLING_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "instanced_entity_culling"), DefaultVertexFormat.POSITION);
+            COPY_DEPTH_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "copy_depth"), DefaultVertexFormat.POSITION);
+            REMOVE_COLOR_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "remove_color"), DefaultVertexFormat.POSITION_COLOR_TEX);
+            CULL_TEST_SHADER = new ShaderInstance(Minecraft.getInstance().getResourceManager(), new ResourceLocation(MOD_ID, "culling_test"), DefaultVertexFormat.POSITION);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @SubscribeEvent
+    public void onKeyboardInput(InputEvent.KeyInputEvent event) {
+        if (Minecraft.getInstance().player != null) {
+            if (CONFIG_KEY.isDown()) {
+                Minecraft.getInstance().setScreen(new ConfigScreen(ComponentUtil.translatable(MOD_ID + ".config")));
+            }
+            if (DEBUG_KEY.isDown()) {
+                DEBUG++;
+                if (DEBUG >= 3)
+                    DEBUG = 0;
+            }
+        }
+    }
+
+    public static void onKeyPress() {
+    }
+
+    @SubscribeEvent
+    public void onTooltip(RenderTooltipEvent.Color event) {
+        if (reColorToolTip) {
+            event.setBackgroundStart(BG);
+            event.setBackgroundEnd(BG);
+            event.setBorderStart(B);
+            event.setBorderEnd(B);
+        }
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
+                clientTickCount++;
+                if (Minecraft.getInstance().player.tickCount > 60 && clientTickCount > 60 && CHUNK_CULLING_MAP != null && !CHUNK_CULLING_MAP.isDone()) {
+                    CHUNK_CULLING_MAP.setDone();
+                    LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
+                    LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
+                    LEVEL_MIN_POS = Minecraft.getInstance().level.getMinBuildHeight();
+                    LEVEL_POS_RANGE = Minecraft.getInstance().level.getMaxBuildHeight() - Minecraft.getInstance().level.getMinBuildHeight();
+
+                    OcclusionCullerThread occlusionCullerThread = new OcclusionCullerThread();
+                    occlusionCullerThread.setName("Chunk Depth Occlusion Cull thread");
+                    occlusionCullerThread.setPriority(MAX_PRIORITY);
+                    occlusionCullerThread.start();
+                }
+                Config.setLoaded();
+            } else {
+                cleanup();
+            }
+        }
+    }
+
+    public static boolean hasMod(String s) {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals(s));
+    }
+
+    public static boolean hasSodium() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium"));
+    }
+
+    public static boolean hasIris() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("iris") || modInfo.getModId().equals("oculus"));
+    }
+
+    public static boolean hasNvidium() {
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
+    }
+}

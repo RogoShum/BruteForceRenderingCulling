@@ -3,7 +3,9 @@ package rogo.renderingculling.util;
 public interface ShaderLoader {
     int getFrameBufferID();
 
-    boolean renderingShader();
+    boolean renderingShaderPass();
+
+    boolean enabledShader();
 
     void bindDefaultFrameBuffer();
 }

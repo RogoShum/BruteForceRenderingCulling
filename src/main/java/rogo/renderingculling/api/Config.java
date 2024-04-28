@@ -11,15 +11,14 @@ public class Config {
     private static ForgeConfigSpec.DoubleValue SAMPLING;
     private static ForgeConfigSpec.BooleanValue CULL_ENTITY;
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
+    private static ForgeConfigSpec.BooleanValue ASYNC;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
-    private static ForgeConfigSpec.IntValue CULLING_ENTITY_RATE;
-
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_SKIP;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCK_ENTITY_SKIP;
 
     public static double getSampling() {
-        if(unload())
-            return 0.2;
+        if (unload())
+            return 0.5;
 
         return SAMPLING.get();
     }
@@ -30,7 +29,7 @@ public class Config {
     }
 
     public static boolean getCullEntity() {
-        if(unload() || !CullingHandler.gl33())
+        if (unload() || !CullingHandler.gl33())
             return false;
         return CULL_ENTITY.get();
     }
@@ -41,9 +40,20 @@ public class Config {
     }
 
     public static boolean getCullChunk() {
-        if(unload())
+        if (unload())
             return false;
+
         return CULL_CHUNK.get();
+    }
+
+    public static boolean shouldCullChunk() {
+        if (unload())
+            return false;
+
+        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+            return false;
+
+        return getCullChunk();
     }
 
     public static void setCullChunk(boolean value) {
@@ -51,11 +61,54 @@ public class Config {
         CULL_CHUNK.save();
     }
 
+    public static boolean getAsyncChunkRebuild() {
+        if (true)
+            return false;
+        if (unload())
+            return false;
+
+        if (!shouldCullChunk())
+            return false;
+
+        if (CullingHandler.needPauseRebuild())
+            return false;
+
+        if (!ModLoader.hasSodium())
+            return false;
+
+        if (ModLoader.hasNvidium())
+            return false;
+
+        return ASYNC.get();
+    }
+
+    public static void setAsyncChunkRebuild(boolean value) {
+        if (true)
+            return;
+        if (!shouldCullChunk())
+            return;
+
+        if (!ModLoader.hasSodium())
+            return;
+
+        if (CullingHandler.needPauseRebuild())
+            return;
+
+        if (ModLoader.hasNvidium())
+            return;
+
+        ASYNC.set(value);
+        ASYNC.save();
+    }
+
+    public static int getShaderDynamicDelay() {
+        return CullingHandler.enabledShader() ? 1 : 0;
+    }
+
     public static int getDepthUpdateDelay() {
-        if(unload())
+        if (unload())
             return 1;
-        int dynamicWithShader = CullingHandler.INSTANCE.renderingShader() ? 1 : 0;
-        return UPDATE_DELAY.get() + dynamicWithShader;
+        return UPDATE_DELAY.get() <= 9 ? UPDATE_DELAY.get() + getShaderDynamicDelay() : UPDATE_DELAY.get();
     }
 
     public static void setDepthUpdateDelay(int value) {
@@ -63,31 +116,26 @@ public class Config {
         UPDATE_DELAY.save();
     }
 
-    public static int getCullingEntityRate() {
-        if(unload())
-            return 20;
-        return CULLING_ENTITY_RATE.get();
-    }
-
-    public static void setCullingEntityRate(int value) {
-        CULLING_ENTITY_RATE.set(value);
-        CULLING_ENTITY_RATE.save();
-    }
-
     public static List<? extends String> getEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return ENTITY_SKIP.get();
     }
 
     public static List<? extends String> getBlockEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return BLOCK_ENTITY_SKIP.get();
     }
 
+    private static boolean loaded = false;
+
+    public static void setLoaded() {
+        loaded = true;
+    }
+
     private static boolean unload() {
-        return false;
+        return !loaded;
     }
 
     static {
@@ -108,8 +156,8 @@ public class Config {
         CULL_CHUNK = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
-        CLIENT_BUILDER.push("Culling entity update frequency");
-        CULLING_ENTITY_RATE = CLIENT_BUILDER.defineInRange("frequency", 20, 0, 20);
+        CLIENT_BUILDER.push("Async chunk rebuild");
+        ASYNC = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
         List<String> list = new ArrayList<>();

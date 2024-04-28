@@ -1,6 +1,5 @@
 package rogo.renderingculling.mixin;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.culling.Frustum;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,5 +12,8 @@ public interface AccessorLevelRender {
 
     @Accessor("capturedFrustum")
     Frustum getCapturedFrustum();
+
+    @Accessor("needsFullRenderChunkUpdate")
+    boolean getNeedsFullRenderChunkUpdate();
 }
 

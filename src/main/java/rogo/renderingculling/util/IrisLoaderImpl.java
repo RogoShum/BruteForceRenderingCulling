@@ -1,6 +1,5 @@
 package rogo.renderingculling.util;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.pipeline.SodiumTerrainPipeline;
@@ -37,7 +36,12 @@ public class IrisLoaderImpl implements ShaderLoader {
     }
 
     @Override
-    public boolean renderingShader() {
+    public boolean renderingShaderPass() {
+        return IrisApi.getInstance().isRenderingShadowPass();
+    }
+
+    @Override
+    public boolean enabledShader() {
         return IrisApi.getInstance().isShaderPackInUse();
     }
 

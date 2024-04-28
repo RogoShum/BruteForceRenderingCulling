@@ -1,20 +1,24 @@
 #version 150
 
-uniform vec2 EntityCullingSize;
-uniform mat4 CullingViewMat;
-uniform vec3 CullingCameraPos;
-uniform vec3 CullingCameraDir;
-uniform mat4 CullingProjMat;
-uniform float DepthOffset;
-uniform vec3 FrustumPos;
-
 uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler3;
 
-flat in vec3 Pos;
-flat in vec2 Size;
+uniform vec2 CullingSize;
+uniform vec2 ScreenSize;
+uniform mat4 CullingViewMat;
+uniform mat4 CullingProjMat;
+uniform vec3 CullingCameraPos;
+uniform vec3 CullingCameraDir;
+uniform float CullingFov;
+uniform vec3 FrustumPos;
+uniform float RenderDistance;
+uniform int LevelHeightOffset;
+uniform int LevelMinSection;
+uniform float BoxScale;
+
+flat in int spacePartitionSize;
 flat in vec4[6] frustum;
 flat in vec2[4] DepthScreenSize;
 
@@ -57,6 +61,14 @@ vec3 moveTowardsCamera(vec3 pos, float distance) {
     return newPos;
 }
 
+vec3 blockToChunk(vec3 blockPos) {
+    vec3 chunkPos;
+    chunkPos.x = floor(blockPos.x / 16.0);
+    chunkPos.y = floor(blockPos.y / 16.0);
+    chunkPos.z = floor(blockPos.z / 16.0);
+    return chunkPos;
+}
+
 bool cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
     for (int i = 0; i < 6; ++i) {
         vec4 plane = frustum[i];
@@ -84,15 +96,15 @@ bool calculateCube(float minX, float minY, float minZ, float maxX, float maxY, f
     return cubeInFrustum(f, f1, f2, f3, f4, f5);
 }
 
-bool isVisible(vec3 vec, float width, float height) {
+bool isVisible(vec3 vec) {
     float minX, minY, minZ, maxX, maxY, maxZ;
-    minX = vec.x - width;
-    minY = vec.y - height;
-    minZ = vec.z - width;
+    minX = vec.x - 8;
+    minY = vec.y - 8;
+    minZ = vec.z - 8;
 
-    maxX = vec.x + width;
-    maxY = vec.y + height;
-    maxZ = vec.z + width;
+    maxX = vec.x + 8;
+    maxY = vec.y + 8;
+    maxZ = vec.z + 8;
     return calculateCube(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
@@ -108,19 +120,20 @@ float getUVDepth(int idx, vec2 uv) {
 }
 
 void main() {
-    float halfWidth = Size.x*0.5;
-    float halfHeight = Size.y*0.5;
+    vec2 screenUV = gl_FragCoord.xy / ScreenSize.xy;
 
-    if (!isVisible(Pos, halfWidth, halfHeight)) {
-        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        return;
-    }
+    vec3 chunkBasePos = vec3(0, 8, 0);
+    vec3 chunkPos = chunkBasePos*16;
+    chunkPos = vec3(chunkPos.x, chunkPos.y, chunkPos.z)+vec3(8.0);
 
+    float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
+
+    float sizeOffset = 16.0;
     vec3 aabb[8] = vec3[](
-    Pos+vec3(-halfWidth, -halfHeight, -halfWidth), Pos+vec3(halfWidth, -halfHeight, -halfWidth),
-    Pos+vec3(-halfWidth, halfHeight, -halfWidth), Pos+vec3(halfWidth, halfHeight, -halfWidth),
-    Pos+vec3(-halfWidth, -halfHeight, halfWidth), Pos+vec3(halfWidth, -halfHeight, halfWidth),
-    Pos+vec3(-halfWidth, halfHeight, halfWidth), Pos+vec3(halfWidth, halfHeight, halfWidth)
+    chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
     );
 
     float maxX = -0.1;
@@ -172,9 +185,11 @@ void main() {
     }
 
     if (!inside) {
-        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        fragColor = vec4(screenUV.x, screenUV.y, (screenUV.x+screenUV.y)*0.5, 1.0);
         return;
     }
+
+    float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
 
     minX = min(1.0, max(0.0, minX));
     maxX = min(1.0, max(0.0, maxX));
@@ -192,17 +207,17 @@ void main() {
     minY = max(minY-yStep, 0.0);
     maxY = min(maxY+yStep, 1.0);
 
-    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z);
-    for (float x = minX; x <= maxX; x += xStep) {
-        for (float y = minY; y <= maxY; y += yStep) {
-            float pixelDepth = getUVDepth(idx, vec2(x, y));
-
-            if (entityDepth < pixelDepth) {
-                fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                return;
-            }
+    if(screenUV.x >= minX && screenUV.x <= maxX && screenUV.y >= minY && screenUV.y <= maxY) {
+        float pixelDepth = getUVDepth(idx, screenUV);
+        if(chunkDepth < pixelDepth) {
+            fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            return;
+        } else {
+            fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            return;
         }
     }
 
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+
+    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
