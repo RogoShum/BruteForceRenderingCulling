@@ -57,10 +57,6 @@ public class CullingRenderEvent {
                 CullingHandler.cullingInitCount++;
             }
 
-            if (CullingHandler.chunkCount == 0) {
-                CullingHandler.chunkCount++;
-            }
-
             int index = Minecraft.getInstance().fpsString.indexOf("fps");
             if (index != -1) {
                 String extractedString = Minecraft.getInstance().fpsString.substring(0, index + 3);
@@ -97,22 +93,17 @@ public class CullingRenderEvent {
                     addString(monitorTexts, initTime);
                 }
 
-                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.chunkCulling + " / " + CullingHandler.chunkCount;
-                addString(monitorTexts, chunkCulling);
-
                 if (Config.getCullChunk()) {
                     if (CullingHandler.CHUNK_CULLING_MAP != null) {
                         String chunkCullingCount = Component.translatable("brute_force_rendering_culling.chunk_update_count").getString() + ": " + CullingHandler.CHUNK_CULLING_MAP.lastQueueUpdateCount;
                         addString(monitorTexts, chunkCullingCount);
                     }
 
-                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.chunkCullingTime / 1000 / CullingHandler.fps) + " μs";
-                    addString(monitorTexts, chunkCullingTime);
-
-                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.chunkCullingInitTime / 1000 / CullingHandler.cullingInitCount) + " μs";
+                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.chunkCullingInitTime / CullingHandler.cullingInitCount / CullingHandler.fps) + " ns";
                     addString(monitorTexts, cullingInitTime);
                 }
             }
+
 
             int heightOffset = minecraft.font.lineHeight * monitorTexts.size();
             int top = height;
@@ -139,8 +130,7 @@ public class CullingRenderEvent {
             RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
             CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableBlend();
             RenderSystem.getModelViewStack().pushPose();
             RenderSystem.getModelViewStack().translate(0, 0, -1);
             RenderSystem.applyModelViewMatrix();
@@ -148,7 +138,7 @@ public class CullingRenderEvent {
             RenderSystem.getModelViewStack().popPose();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
-
+            RenderSystem.enableBlend();
             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
             bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
             bufferbuilder.vertex(right, bottom, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
@@ -159,7 +149,6 @@ public class CullingRenderEvent {
             BufferUploader.drawWithShader(bufferbuilder.end());
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
-
             renderText(guiGraphics, monitorTexts, width, top);
 
             if (!CullingHandler.checkTexture)
@@ -271,7 +260,7 @@ public class CullingRenderEvent {
             shaderInstance.getCullingCameraDir().set(array);
         }
         if (shaderInstance.getBoxScale() != null) {
-            shaderInstance.getBoxScale().set(4.0f);
+            shaderInstance.getBoxScale().set(8.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(

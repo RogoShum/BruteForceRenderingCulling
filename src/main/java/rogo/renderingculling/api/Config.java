@@ -75,6 +75,9 @@ public class Config {
         if(!shouldCullChunk())
             return false;
 
+        if (CullingHandler.needPauseRebuild())
+            return false;
+
         if(ModLoader.hasNvidium())
             return false;
 
@@ -89,6 +92,9 @@ public class Config {
             return;
 
         if(ModLoader.hasNvidium())
+            return;
+
+        if (CullingHandler.needPauseRebuild())
             return;
 
         if(!ModLoader.hasSodium())

@@ -16,6 +16,16 @@ public class OcclusionCullerThread extends Thread {
         INSTANCE = this;
     }
 
+    public static void shouldUpdate() {
+        if (Config.getAsyncChunkRebuild()) {
+            if(ModLoader.hasSodium()) {
+                SodiumSectionAsyncUtil.shouldUpdate();
+            } else if (VanillaAsyncUtil.injectedAsyncMixin) {
+                //VanillaAsyncUtil.shouldUpdate();
+            }
+        }
+    }
+
     @Override
     public void run() {
         while (!finished) {
@@ -24,7 +34,7 @@ public class OcclusionCullerThread extends Thread {
                     if (Config.getAsyncChunkRebuild()) {
                         if (ModLoader.hasSodium()) {
                             SodiumSectionAsyncUtil.asyncSearchRebuildSection();
-                        } else {
+                        } else if(VanillaAsyncUtil.injectedAsyncMixin) {
                             //VanillaAsyncUtil.asyncSearchRebuildSection();
                         }
                     }
@@ -36,12 +46,6 @@ public class OcclusionCullerThread extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static void shouldUpdate() {
-        if (ModLoader.hasSodium() && Config.getAsyncChunkRebuild()) {
-            SodiumSectionAsyncUtil.shouldUpdate();
         }
     }
 }

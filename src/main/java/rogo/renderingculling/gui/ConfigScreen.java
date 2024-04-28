@@ -48,7 +48,7 @@ public class ConfigScreen extends Screen {
     public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth() / 2;
-        int widthScale = width / 4;
+        int widthScale = 60;
         int right = width - widthScale;
         int left = width + widthScale;
         int bottom = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.8) + 20;

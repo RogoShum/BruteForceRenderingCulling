@@ -19,16 +19,11 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
-import rogo.renderingculling.api.impl.IRenderChunkInfo;
-import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.util.VanillaAsyncUtil;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRender implements IEntitiesForRender {
@@ -46,37 +41,6 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
     @Nullable
     private ViewArea viewArea;
 
-    @Shadow
-    @Final
-    private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
-    private LevelRenderer.RenderChunkStorage renderChunkStorageTemp;
-
-    @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
-    public void onApplyFrustum(Frustum p_194355_, CallbackInfo ci) {
-        if (Config.shouldCullChunk() && !VanillaAsyncUtil.shouldReplaceStorage()) {
-            if (CullingHandler.OptiFine != null) {
-                try {
-                    Field field = LevelRenderer.class.getDeclaredField("renderInfosTerrain");
-                    field.setAccessible(true);
-                    Object value = field.get(this);
-
-                    if (value instanceof ObjectArrayList) {
-                        ((ObjectArrayList<?>) value).removeIf((o -> {
-                            ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                            return !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
-                        }));
-                    }
-                } catch (NoSuchFieldException | IllegalAccessException ignored) {
-                }
-            }
-
-            this.renderChunksInFrustum.removeIf((o -> {
-                ChunkRenderDispatcher.RenderChunk chunk = ((IRenderChunkInfo) o).getRenderChunk();
-                return !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) chunk, true);
-            }));
-        }
-    }
-
     @Inject(method = "setupRender", at = @At(value = "HEAD"))
     public void onSetupRenderHead(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_, CallbackInfo ci) {
         if (this.viewArea != null) {
@@ -86,17 +50,12 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
 
     @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
     public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
-        if (VanillaAsyncUtil.shouldReplaceStorage()) {
-            renderChunkStorageTemp = this.renderChunkStorage.get();
-            this.renderChunkStorage.set(VanillaAsyncUtil.getChunkStorage());
-        }
+        CullingHandler.applyFrustum = true;
     }
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onApplyFrustumReturn(Frustum p_194355_, CallbackInfo ci) {
-        if (VanillaAsyncUtil.shouldReplaceStorage()) {
-            this.renderChunkStorage.set(renderChunkStorageTemp);
-        }
+        CullingHandler.applyFrustum = false;
     }
 
     @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"))
