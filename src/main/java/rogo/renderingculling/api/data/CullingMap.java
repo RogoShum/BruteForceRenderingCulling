@@ -26,9 +26,11 @@ public abstract class CullingMap {
         this.height = height;
         cullingBuffer = BufferUtils.createByteBuffer(width * height * 4);
         pboId = GL15.glGenBuffers();
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, bindFrameBufferId());
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
         GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * 4 * Float.BYTES, GL15.GL_DYNAMIC_READ);
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
+        CullingHandler.bindMainFrameTarget();
     }
 
     public boolean needTransferData() {
@@ -41,11 +43,9 @@ public abstract class CullingMap {
 
     public void transferData() {
         if (delayCount <= 0) {
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, bindFrameBufferId());
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
             GL11.glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
-            CullingHandler.bindMainFrameTarget();
             delayCount = configDelayCount() + dynamicDelayCount();
         } else {
             delayCount--;
@@ -56,11 +56,9 @@ public abstract class CullingMap {
     }
 
     public void readData() {
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, bindFrameBufferId());
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
         GL15.glGetBufferSubData(GL31.GL_PIXEL_PACK_BUFFER, 0, cullingBuffer);
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
-        CullingHandler.bindMainFrameTarget();
         setTransferred(false);
     }
 

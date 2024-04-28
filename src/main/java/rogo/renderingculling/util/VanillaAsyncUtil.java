@@ -25,6 +25,7 @@ public class VanillaAsyncUtil {
     private static LevelRenderer.RenderChunkStorage storage;
     private static LevelRenderer levelRenderer;
     private static final Semaphore shouldUpdate = new Semaphore(0);
+    public static boolean injectedAsyncMixin;
 
     public static void asyncSearchRebuildSection() {
         shouldUpdate.acquireUninterruptibly();
@@ -60,6 +61,8 @@ public class VanillaAsyncUtil {
                 }
             }
         }
+        if(CullingHandler.CHUNK_CULLING_MAP != null)
+            CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
         storage = renderChunkStorage;
     }
 

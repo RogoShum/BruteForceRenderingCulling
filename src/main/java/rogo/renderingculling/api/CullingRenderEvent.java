@@ -197,16 +197,13 @@ public class CullingRenderEvent {
                 CullingHandler.cullingInitCount++;
             }
 
-            if (CullingHandler.chunkCount == 0) {
-                CullingHandler.chunkCount++;
-            }
-
             int index = Minecraft.getInstance().fpsString.indexOf("fps");
             if (index != -1) {
                 String extractedString = Minecraft.getInstance().fpsString.substring(0, index + 3);
                 String fps = "FPS: " + extractedString;
                 addString(monitorTexts, fps);
             }
+            addString(monitorTexts, "frame count: "+CullingHandler.singleFrameInjectCount);
 
             String cull = Component.translatable("brute_force_rendering_culling.cull_entity").getString() + ": "
                     + (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
@@ -233,12 +230,9 @@ public class CullingRenderEvent {
                     String entityCulling = Component.translatable("brute_force_rendering_culling.entity_culling").getString() + ": " + CullingHandler.entityCulling + " / " + CullingHandler.entityCount;
                     addString(monitorTexts, entityCulling);
 
-                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.entityCullingInitTime / 1000 / CullingHandler.cullingInitCount) + " μs";
+                    String initTime = Component.translatable("brute_force_rendering_culling.entity_culling_init").getString() + ": " + (CullingHandler.entityCullingInitTime / CullingHandler.cullingInitCount / CullingHandler.fps) + " ns";
                     addString(monitorTexts, initTime);
                 }
-
-                String chunkCulling = Component.translatable("brute_force_rendering_culling.chunk_culling").getString() + ": " + CullingHandler.chunkCulling + " / " + CullingHandler.chunkCount;
-                addString(monitorTexts, chunkCulling);
 
                 if (Config.getCullChunk()) {
                     if (CullingHandler.CHUNK_CULLING_MAP != null) {
@@ -246,10 +240,7 @@ public class CullingRenderEvent {
                         addString(monitorTexts, chunkCullingCount);
                     }
 
-                    String chunkCullingTime = Component.translatable("brute_force_rendering_culling.chunk_culling_time").getString() + ": " + (CullingHandler.chunkCullingTime / 1000 / CullingHandler.fps) + " μs";
-                    addString(monitorTexts, chunkCullingTime);
-
-                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.chunkCullingInitTime / 1000 / CullingHandler.cullingInitCount) + " μs";
+                    String cullingInitTime = Component.translatable("brute_force_rendering_culling.chunk_culling_init").getString() + ": " + (CullingHandler.chunkCullingInitTime / CullingHandler.cullingInitCount / CullingHandler.fps) + " ns";
                     addString(monitorTexts, cullingInitTime);
                 }
             }

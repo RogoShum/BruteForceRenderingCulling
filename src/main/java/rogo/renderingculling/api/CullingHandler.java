@@ -3,14 +3,12 @@ package rogo.renderingculling.api;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -22,10 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
 import org.slf4j.Logger;
@@ -36,7 +31,10 @@ import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
-import rogo.renderingculling.util.*;
+import rogo.renderingculling.util.DepthContext;
+import rogo.renderingculling.util.LifeTimer;
+import rogo.renderingculling.util.OcclusionCullerThread;
+import rogo.renderingculling.util.ShaderLoader;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -97,7 +95,7 @@ public class CullingHandler {
     public static long preApplyFrustumTime = 0;
     public static long applyFrustumTime = 0;
     public static int chunkCulling = 0;
-    public static int chunkCount = 0;
+    public static int singleFrameInjectCount = 0;
     public static long chunkCullingInitTime = 0;
     public static long preChunkCullingInitTime = 0;
     public static long entityCullingInitTime = 0;
@@ -197,18 +195,9 @@ public class CullingHandler {
             return false;
         }
 
-        if (Config.getAsyncChunkRebuild()) {
-            if (!useOcclusionCulling) {
-                return true;
-            }
-
-            checkForChunk = false;
+        if (Config.getAsyncChunkRebuild() && !useOcclusionCulling) {
+            return true;
         }
-
-        long time = System.nanoTime();
-
-        if (checkForChunk)
-            chunkCount++;
 
         boolean render;
         boolean actualRender = false;
@@ -223,14 +212,9 @@ public class CullingHandler {
         if (checkCulling)
             render = !render;
 
-        if (!render && checkForChunk) {
-            chunkCulling++;
-        } else if (actualRender) {
+        if (actualRender) {
             section.updateVisibleTick(lastVisibleUpdatedFrame);
         }
-
-        if (checkForChunk)
-            preChunkCullingTime += System.nanoTime() - time;
 
         return render;
     }
@@ -367,22 +351,12 @@ public class CullingHandler {
                 CullingRenderEvent.updateCullingMap();
                 updatingDepth = false;
             }
-            case "chunk_render_lists" -> {
-                chunkCount = 0;
-                chunkCulling = 0;
-            }
         }
     }
 
     public static void onProfilerPush(String s) {
         if (s.equals("onKeyboardInput")) {
             ModLoader.onKeyPress();
-        }
-        if (Config.shouldCullChunk() && s.equals("apply_frustum")) {
-            if (SHADER_LOADER == null || OptiFine != null) {
-                chunkCount = 0;
-                chunkCulling = 0;
-            }
         } else if (s.equals("center")) {
             CAMERA = Minecraft.getInstance().gameRenderer.getMainCamera();
             int thisTick = clientTickCount % 20;
@@ -563,7 +537,9 @@ public class CullingHandler {
 
     public static void updateMapData() {
         if (anyCulling()) {
-            preCullingInitCount++;
+            if(anyNeedTransfer()) {
+                preCullingInitCount++;
+            }
 
             if (Config.getCullChunk()) {
                 int renderingDiameter = Minecraft.getInstance().options.getEffectiveRenderDistance() * 2 + 1;
