@@ -94,8 +94,6 @@ public class CullingHandler {
     private static long preChunkCullingTime = 0;
     public static long preApplyFrustumTime = 0;
     public static long applyFrustumTime = 0;
-    public static int chunkCulling = 0;
-    public static int singleFrameInjectCount = 0;
     public static long chunkCullingInitTime = 0;
     public static long preChunkCullingInitTime = 0;
     public static long entityCullingInitTime = 0;

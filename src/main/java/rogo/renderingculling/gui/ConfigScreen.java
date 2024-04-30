@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import org.apache.commons.compress.utils.Lists;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
 import rogo.renderingculling.api.ModLoader;
@@ -217,10 +218,28 @@ public class ConfigScreen extends Screen {
         }
 
         for (GuiEventListener button : children) {
-            if (button instanceof NeatButton b)
-                b.shouDetail(guiGraphics, minecraft.font);
-            if (button instanceof NeatSliderButton b)
-                b.shouDetail(guiGraphics, minecraft.font);
+            List<Component> components = Lists.newArrayList();
+            int x = 0;
+            int y = 0;
+            if (button instanceof NeatButton b) {
+                components = b.getDetails();
+                x = b.getX() + b.getWidth() / 2;
+                y = b.getY() + (b.getHeight() - 8) / 2;
+            }
+            if (button instanceof NeatSliderButton b) {
+                components = b.getDetails();
+                x = b.getX() + b.getWidth() / 2;
+                y = b.getY() + (b.getHeight() - 8) / 2;
+            }
+            if(!components.isEmpty()) {
+                renderButtonDetails(guiGraphics, components, x, y);
+            }
         }
+    }
+
+    private void renderButtonDetails(GuiGraphics guiGraphics, List<Component> components, int x, int y) {
+        CullingHandler.reColorToolTip = true;
+        guiGraphics.renderComponentTooltip(minecraft.font, components, x, y);
+        CullingHandler.reColorToolTip = false;
     }
 }

@@ -1,5 +1,6 @@
 package rogo.renderingculling.gui;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -11,7 +12,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import rogo.renderingculling.api.CullingHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,9 +86,8 @@ public class NeatButton extends Button {
         RenderSystem.defaultBlendFunc();
     }
 
-    public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered()) {
-            CullingHandler.reColorToolTip = true;
+    public List<Component> getDetails() {
+        if (detailMessage != null && isHovered) {
             List<Component> components = new ArrayList<>();
             String[] parts = detailMessage.get().getString().split("\\n");
             for (String part : parts) {
@@ -99,9 +98,10 @@ public class NeatButton extends Button {
                 }
                 components.add(text);
             }
-            guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
-            CullingHandler.reColorToolTip = false;
+            return components;
         }
+
+        return Lists.newArrayList();
     }
 
     @Override

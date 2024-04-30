@@ -1,5 +1,6 @@
 package rogo.renderingculling.gui;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -12,7 +13,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
-import rogo.renderingculling.api.CullingHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,9 +83,29 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         RenderSystem.disableBlend();
     }
 
-    public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered()) {
-            CullingHandler.reColorToolTip = true;
+    public static String wrapText(String text, int maxWidth) {
+        StringBuilder result = new StringBuilder();
+        int currentWidth = 0;
+        String[] words = text.split("\\s+");
+
+        for (String word : words) {
+            int wordWidth = Minecraft.getInstance().font.width(word);
+
+            // 检查当前行是否能容纳下这个单词
+            if (currentWidth + wordWidth <= maxWidth) {
+                result.append(word).append(" ");
+                currentWidth += wordWidth + 1; // 考虑单词间的空格
+            } else {
+                result.append("\n").append(word).append(" ");
+                currentWidth = wordWidth + 1;
+            }
+        }
+
+        return result.toString();
+    }
+
+    public List<Component> getDetails() {
+        if (detailMessage != null && isHovered) {
             List<Component> components = new ArrayList<>();
             String[] parts = detailMessage.get().getString().split("\\n");
             for (String part : parts) {
@@ -96,9 +116,10 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
                 }
                 components.add(text);
             }
-            guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
-            CullingHandler.reColorToolTip = false;
+            return components;
         }
+
+        return Lists.newArrayList();
     }
 
     @Override

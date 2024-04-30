@@ -6,7 +6,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.impl.IAABBObject;
+import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
@@ -33,14 +33,7 @@ public class EntityCullingMap extends CullingMap {
     }
 
     public boolean isObjectVisible(Object o) {
-        AABB aabb = null;
-        if (o instanceof BlockEntity) {
-            aabb = ((BlockEntity) o).getRenderBoundingBox();
-        } else if (o instanceof Entity) {
-            aabb = ((Entity) o).getBoundingBox();
-        } else if (o instanceof IAABBObject) {
-            aabb = ((IAABBObject) o).getAABB();
-        }
+        AABB aabb = ModLoader.getObjectAABB(o);
 
         if (aabb == INFINITE_EXTENT_AABB) {
             return true;
@@ -136,13 +129,7 @@ public class EntityCullingMap extends CullingMap {
 
         public void addEntityAttribute(Consumer<Consumer<FloatBuffer>> consumer) {
             indexMap.forEach((o, index) -> {
-                if (o instanceof Entity) {
-                    addAttribute(consumer, ((Entity) o).getBoundingBox(), index);
-                } else if (o instanceof BlockEntity) {
-                    addAttribute(consumer, ((BlockEntity) o).getRenderBoundingBox(), index);
-                } else if (o instanceof IAABBObject) {
-                    addAttribute(consumer, ((IAABBObject) o).getAABB(), index);
-                }
+                addAttribute(consumer, ModLoader.getObjectAABB(o), index);
             });
         }
 

@@ -7,14 +7,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -35,6 +36,7 @@ import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
+import rogo.renderingculling.api.impl.IAABBObject;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.OcclusionCullerThread;
@@ -208,5 +210,17 @@ public class ModLoader {
 
     public static boolean hasNvidium() {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
+    }
+
+    public static AABB getObjectAABB(Object o) {
+        if (o instanceof BlockEntity) {
+            return  ((BlockEntity) o).getRenderBoundingBox();
+        } else if (o instanceof Entity) {
+            return ((Entity) o).getBoundingBox();
+        } else if (o instanceof IAABBObject) {
+            return ((IAABBObject) o).getAABB();
+        }
+
+        return null;
     }
 }
