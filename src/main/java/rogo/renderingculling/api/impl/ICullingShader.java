@@ -16,4 +16,5 @@ public interface ICullingShader {
     Uniform getFrustumPos();
     Uniform getCullingViewMat();
     Uniform getCullingProjMat();
+    Uniform getTestPos();
 }

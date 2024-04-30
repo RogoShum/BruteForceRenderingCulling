@@ -58,7 +58,7 @@ public class CullingHandler {
         PROJECTION_MATRIX.identity();
     }
 
-    public static final int DEPTH_SIZE = 4;
+    public static final int DEPTH_SIZE = 5;
     public static int DEPTH_INDEX;
     public static int MAIN_DEPTH_TEXTURE = 0;
     public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[DEPTH_SIZE];

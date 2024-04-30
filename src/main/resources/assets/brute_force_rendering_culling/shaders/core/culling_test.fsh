@@ -4,6 +4,7 @@ uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler3;
+uniform sampler2D Sampler4;
 
 uniform vec2 CullingSize;
 uniform vec2 ScreenSize;
@@ -11,6 +12,7 @@ uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
+uniform vec3 TestPos;
 uniform float CullingFov;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
@@ -20,7 +22,7 @@ uniform float BoxScale;
 
 flat in int spacePartitionSize;
 flat in vec4[6] frustum;
-flat in vec2[4] DepthScreenSize;
+flat in vec2[5] DepthScreenSize;
 
 out vec4 fragColor;
 
@@ -28,10 +30,10 @@ float near = 0.1;
 float far  = 1000.0;
 
 int getSampler(float xLength, float yLength) {
-    for (int i = 0; i < DepthScreenSize.length(); ++i) {
-        float xStep = 3.0 / DepthScreenSize[i].x;
-        float yStep = 3.0 / DepthScreenSize[i].y;
-        if (xStep > xLength && yStep > yLength) {
+    for(int i = 0; i < DepthScreenSize.length(); ++i) {
+        float xStep = 2.0 / DepthScreenSize[i].x;
+        float yStep = 2.0 / DepthScreenSize[i].y;
+        if(xStep > xLength && yStep > yLength) {
             return i;
         }
     }
@@ -109,26 +111,28 @@ bool isVisible(vec3 vec) {
 }
 
 float getUVDepth(int idx, vec2 uv) {
-    if (idx == 0)
+    if(idx == 0)
     return texture(Sampler0, uv).r * 500;
-    else if (idx == 1)
+    else if(idx == 1)
     return texture(Sampler1, uv).r * 500;
-    else if (idx == 2)
+    else if(idx == 2)
     return texture(Sampler2, uv).r * 500;
-
+    else if(idx == 3)
     return texture(Sampler3, uv).r * 500;
+
+    return texture(Sampler4, uv).r * 500;
 }
 
 void main() {
     vec2 screenUV = gl_FragCoord.xy / ScreenSize.xy;
 
-    vec3 chunkBasePos = vec3(0, 8, 0);
+    vec3 chunkBasePos = TestPos;
     vec3 chunkPos = chunkBasePos*16;
     chunkPos = vec3(chunkPos.x, chunkPos.y, chunkPos.z)+vec3(8.0);
 
     float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
 
-    float sizeOffset = 16.0;
+    float sizeOffset = 8.0;
     vec3 aabb[8] = vec3[](
     chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
     chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
@@ -190,11 +194,6 @@ void main() {
     }
 
     float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
-
-    minX = min(1.0, max(0.0, minX));
-    maxX = min(1.0, max(0.0, maxX));
-    maxY = min(1.0, max(0.0, maxY));
-    minY = min(1.0, max(0.0, minY));
 
     int idx = getSampler(maxX-minX,
     maxY-minY);

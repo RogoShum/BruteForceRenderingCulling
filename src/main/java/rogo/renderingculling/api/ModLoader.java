@@ -7,9 +7,17 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -74,9 +82,16 @@ public class ModLoader {
             GLFW.GLFW_KEY_X,
             "key.category." + MOD_ID);
 
+    public static final KeyMapping TEST_CULL_KEY = new KeyMapping(MOD_ID + ".key.cull",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            "key.category." + MOD_ID);
+
     public void registerKeyBinding(RegisterKeyMappingsEvent event) {
         event.register(CONFIG_KEY);
         event.register(DEBUG_KEY);
+        event.register(TEST_CULL_KEY);
     }
 
     private void registerShader() {
@@ -115,8 +130,20 @@ public class ModLoader {
                 if (DEBUG >= 3)
                     DEBUG = 0;
             }
+            if (TEST_CULL_KEY.isDown()) {
+                Vec3 vec3 = Minecraft.getInstance().player.getViewVector(0.0F).scale(999);
+                Level level = Minecraft.getInstance().player.level();
+                Vec3 vec31 = Minecraft.getInstance().player.getEyePosition();
+                HitResult hitResult = level.clip(new ClipContext(vec31, vec31.add(vec3), ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, Minecraft.getInstance().player));
+                if(hitResult instanceof BlockHitResult) {
+                    BlockPos pos = ((BlockHitResult) hitResult).getBlockPos();
+                    testPos = new BlockPos(pos.getX()>>4, pos.getY()>>4, pos.getZ()>>4);
+                }
+            }
         }
     }
+
+    public static BlockPos testPos = new BlockPos(0, 8, 0);
 
     public static void onKeyPress() {
     }

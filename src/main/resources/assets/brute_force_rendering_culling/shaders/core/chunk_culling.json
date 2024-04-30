@@ -13,13 +13,14 @@
         { "name": "Sampler0" },
         { "name": "Sampler1" },
         { "name": "Sampler2" },
-        { "name": "Sampler3" }
+        { "name": "Sampler3" },
+        { "name": "Sampler4" }
     ],
     "uniforms": [
         { "name": "CullingViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "CullingProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
         { "name": "CullingSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
-        { "name": "DepthSize", "type": "float", "count": 8, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+        { "name": "DepthSize", "type": "float", "count": 10, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
         { "name": "CullingCameraPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingCameraDir", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "BoxScale", "type": "float", "count": 1, "values": [ 2.0 ] },

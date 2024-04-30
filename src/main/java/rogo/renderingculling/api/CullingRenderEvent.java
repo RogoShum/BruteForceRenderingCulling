@@ -39,11 +39,26 @@ public class CullingRenderEvent {
         if (!CullingHandler.anyCulling())
             return;
 
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+
+        /*
+        CullingHandler.useShader(ModLoader.CULL_TEST_SHADER);
+        ModLoader.CULL_TEST_TARGET.clear(Minecraft.ON_OSX);
+        ModLoader.CULL_TEST_TARGET.bindWrite(false);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.vertex(-1.0f, -1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(1.0f, 1.0f, 0.0f).endVertex();
+        bufferbuilder.vertex(-1.0f, 1.0f, 0.0f).endVertex();
+        CullingHandler.callDepthTexture();
+        tessellator.end();
+         */
+
         if (CullingHandler.checkCulling)
             return;
 
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuilder();
+
 
         if (Config.getCullEntity() && CullingHandler.ENTITY_CULLING_MAP != null && CullingHandler.ENTITY_CULLING_MAP.needTransferData()) {
             CullingHandler.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
@@ -93,7 +108,11 @@ public class CullingRenderEvent {
             shaderInstance.getCullingCameraDir().set(array);
         }
         if (shaderInstance.getBoxScale() != null) {
-            shaderInstance.getBoxScale().set(8.0f);
+            shaderInstance.getBoxScale().set(4.0f);
+        }
+        if (shaderInstance.getTestPos() != null) {
+            float[] array = new float[]{ModLoader.testPos.getX(), ModLoader.testPos.getY(), ModLoader.testPos.getZ()};
+            shaderInstance.getTestPos().set(array);
         }
         if (shaderInstance.getFrustumPos() != null && CullingHandler.FRUSTUM != null) {
             Vec3 pos = new Vec3(
@@ -289,6 +308,23 @@ public class CullingRenderEvent {
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
             renderText(guiGraphics, monitorTexts, width, top);
+
+            /*
+            RenderSystem.enableBlend();
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.depthMask(false);
+
+            height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
+            width = (int) (minecraft.getWindow().getGuiScaledWidth() * 0.25f);
+            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - width, height * 2, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height * 2, 0.0D).uv(1, 0.0F).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex((double) minecraft.getWindow().getGuiScaledWidth(), height, 0.0D).uv(1, 1).color(255, 255, 255, 255).endVertex();
+            bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - width, height, 0.0D).uv(0.0F, 1).color(255, 255, 255, 255).endVertex();
+            RenderSystem.setShaderTexture(0, ModLoader.CULL_TEST_TARGET.getColorTextureId());
+            tessellator.end();
+             */
 
             if (!CullingHandler.checkTexture)
                 return;

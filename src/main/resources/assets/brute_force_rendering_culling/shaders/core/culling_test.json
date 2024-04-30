@@ -87,22 +87,7 @@
         1.0,
         1.0
       ]
-    },
-    {
-      "name": "DepthSize",
-      "type": "float",
-      "count": 8,
-      "values": [
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ]
-    },
+    }, { "name": "DepthSize", "type": "float", "count": 10, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
     {
       "name": "CullingCameraPos",
       "type": "float",
@@ -139,6 +124,16 @@
         1.0,
         1.0,
         1.0
+      ]
+    },
+    {
+      "name": "TestPos",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        8.0,
+        0.0
       ]
     },
     {
