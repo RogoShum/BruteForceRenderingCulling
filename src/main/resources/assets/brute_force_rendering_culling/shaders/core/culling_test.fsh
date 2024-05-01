@@ -7,10 +7,13 @@ uniform sampler2D Sampler3;
 uniform sampler2D Sampler4;
 
 uniform vec2 CullingSize;
+uniform vec2 ScreenSize;
 uniform mat4 CullingViewMat;
 uniform mat4 CullingProjMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
+uniform vec3 TestPos;
+uniform float CullingFov;
 uniform vec3 FrustumPos;
 uniform float RenderDistance;
 uniform int LevelHeightOffset;
@@ -69,7 +72,7 @@ vec3 blockToChunk(vec3 blockPos) {
 }
 
 bool cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         vec4 plane = frustum[i];
         if (!(dot(plane, vec4(minX, minY, minZ, 1.0)) > 0.0) &&
         !(dot(plane, vec4(maxX, minY, minZ, 1.0)) > 0.0) &&
@@ -121,43 +124,20 @@ float getUVDepth(int idx, vec2 uv) {
 }
 
 void main() {
-    int screenIndex = int(gl_FragCoord.x) + int(gl_FragCoord.y) * int(CullingSize.x);
-    int renderDistance = int(RenderDistance);
-    int spacePartitionSize = renderDistance*2+1;
+    vec2 screenUV = gl_FragCoord.xy / ScreenSize.xy;
 
-    int chunkX = screenIndex / (spacePartitionSize * LevelHeightOffset) - renderDistance;
-    int chunkZ = (screenIndex / LevelHeightOffset) % spacePartitionSize - renderDistance;
-    int chunkY = screenIndex % LevelHeightOffset + LevelMinSection;
-    vec3 chunkBasePos = vec3(chunkX, chunkY, chunkZ);
-    vec3 chunkPos = vec3(chunkBasePos+blockToChunk(CullingCameraPos))*16;
-    chunkPos = vec3(chunkPos.x, chunkY*16, chunkPos.z)+vec3(8.0);
+    vec3 chunkBasePos = TestPos;
+    vec3 chunkPos = chunkBasePos*16;
+    chunkPos = vec3(chunkPos.x, chunkPos.y, chunkPos.z)+vec3(8.0);
 
     float chunkCenterDepth = worldToScreenSpace(moveTowardsCamera(chunkPos, 16)).z;
-    if (calculateDistance(chunkPos, CullingCameraPos) < 1024) {
-        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
-        return;
-    }
-
-    float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
-
-    if(chunkDepth < 0) {
-        fragColor = vec4(0.0, 0.4, 0.5, 1.0);
-        return;
-    }
-
-    /*
-       if(!isVisible(chunkPos)) {
-        fragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        return;
-    }
-    */
 
     float sizeOffset = 8.0;
     vec3 aabb[8] = vec3[](
-        chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
-        chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
-        chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
-        chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
+    chunkPos+vec3(-sizeOffset, -sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, -sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, -sizeOffset),
+    chunkPos+vec3(-sizeOffset, -sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, -sizeOffset, sizeOffset),
+    chunkPos+vec3(-sizeOffset, sizeOffset, sizeOffset), chunkPos+vec3(sizeOffset, sizeOffset, sizeOffset)
     );
 
     float maxX = -0.1;
@@ -208,10 +188,12 @@ void main() {
         minY = screenPos.y;
     }
 
-    if(!inside) {
-        fragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    if (!inside) {
+        fragColor = vec4(screenUV.x, screenUV.y, (screenUV.x+screenUV.y)*0.5, 1.0);
         return;
     }
+
+    float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
 
     int idx = getSampler(maxX-minX,
     maxY-minY);
@@ -224,15 +206,17 @@ void main() {
     minY = max(minY-yStep, 0.0);
     maxY = min(maxY+yStep, 1.0);
 
-    for(float x = minX; x <= maxX; x += xStep) {
-        for(float y = minY; y <= maxY; y += yStep) {
-            float pixelDepth = getUVDepth(idx, vec2(x, y));
-            if(chunkDepth < pixelDepth) {
-                fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                return;
-            }
+    if(screenUV.x >= minX && screenUV.x <= maxX && screenUV.y >= minY && screenUV.y <= maxY) {
+        float pixelDepth = getUVDepth(idx, screenUV);
+        if(chunkDepth < pixelDepth) {
+            fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            return;
+        } else {
+            fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            return;
         }
     }
 
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+
+    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }

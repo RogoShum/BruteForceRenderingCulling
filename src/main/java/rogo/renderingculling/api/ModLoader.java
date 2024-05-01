@@ -12,10 +12,14 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
+import rogo.renderingculling.api.impl.IAABBObject;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.mixin.AccessorFrustum;
@@ -30,16 +34,6 @@ import static rogo.renderingculling.api.CullingHandler.*;
 
 public class ModLoader implements ModInitializer {
 
-    static int BG = ((200 & 0xFF) << 24) |
-            ((0) << 16) |
-            ((0) << 8) |
-            ((0));
-
-    static int B = ((100 & 0xFF) << 24) |
-            ((0xFF) << 16) |
-            ((0xFF) << 8) |
-            ((0xFF));
-
     public static boolean SHADER_ENABLED = false;
 
     @Override
@@ -52,7 +46,7 @@ public class ModLoader implements ModInitializer {
     }
 
     public static void callWhenOn(EnvType envType, Supplier<Runnable> supplier) {
-        if(envType == FabricLoader.getInstance().getEnvironmentType()) {
+        if (envType == FabricLoader.getInstance().getEnvironmentType()) {
             supplier.get().run();
         }
     }
@@ -85,7 +79,7 @@ public class ModLoader implements ModInitializer {
     }
 
     private void onWorldUnload(Level world) {
-        if(world == Minecraft.getInstance().level) {
+        if (world == Minecraft.getInstance().level) {
             cleanup();
         }
     }
@@ -134,14 +128,6 @@ public class ModLoader implements ModInitializer {
         }
     }
 
-    public static int getBG() {
-        return BG;
-    }
-
-    public static int getB() {
-        return B;
-    }
-
     public static Vector4f[] getFrustumPlanes(FrustumIntersection frustum) {
         return ((AccessorFrustum.AccessorFrustumIntersection) frustum).planes();
     }
@@ -160,5 +146,17 @@ public class ModLoader implements ModInitializer {
 
     public static boolean hasNvidium() {
         return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
+    }
+
+    public static AABB getObjectAABB(Object o) {
+        if (o instanceof BlockEntity) {
+            return new AABB(((BlockEntity) o).getBlockPos());
+        } else if (o instanceof Entity) {
+            return ((Entity) o).getBoundingBox();
+        } else if (o instanceof IAABBObject) {
+            return ((IAABBObject) o).getAABB();
+        }
+
+        return null;
     }
 }

@@ -58,7 +58,7 @@ public class CullingHandler {
         PROJECTION_MATRIX.identity();
     }
 
-    public static final int DEPTH_SIZE = 4;
+    public static final int DEPTH_SIZE = 5;
     public static int DEPTH_INDEX;
     public static int MAIN_DEPTH_TEXTURE = 0;
     public static RenderTarget[] DEPTH_BUFFER_TARGET = new RenderTarget[DEPTH_SIZE];
@@ -94,8 +94,6 @@ public class CullingHandler {
     private static long preChunkCullingTime = 0;
     public static long preApplyFrustumTime = 0;
     public static long applyFrustumTime = 0;
-    public static int chunkCulling = 0;
-    public static int singleFrameInjectCount = 0;
     public static long chunkCullingInitTime = 0;
     public static long preChunkCullingInitTime = 0;
     public static long entityCullingInitTime = 0;
@@ -116,7 +114,6 @@ public class CullingHandler {
     private static int frame;
     private static int lastVisibleUpdatedFrame;
     public static volatile boolean useOcclusionCulling = true;
-    public static boolean reColorToolTip = false;
 
     static {
         RenderSystem.recordRenderCall(() -> {
@@ -221,7 +218,7 @@ public class CullingHandler {
 
     public static boolean shouldSkipBlockEntity(BlockEntity blockEntity, AABB aabb, BlockPos pos) {
         blockCount++;
-
+        
         //for valkyrien skies
         if (CAMERA.getPosition().distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) >
                 Minecraft.getInstance().options.getEffectiveRenderDistance() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 2) {
@@ -468,7 +465,7 @@ public class CullingHandler {
     }
 
     public static void updateDepthMap() {
-        //CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
+        CullingHandler.PROJECTION_MATRIX = new Matrix4f(RenderSystem.getProjectionMatrix());
         if (anyCulling() && !checkCulling && anyNeedTransfer()) {
             float sampling = (float) (double) Config.getSampling();
             Window window = Minecraft.getInstance().getWindow();

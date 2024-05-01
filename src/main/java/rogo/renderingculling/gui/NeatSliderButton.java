@@ -3,7 +3,6 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,10 +11,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
-import rogo.renderingculling.api.CullingHandler;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,6 +35,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     public void setDetailMessage(Supplier<Component> detailMessage) {
         this.detailMessage = detailMessage;
     }
+
     @Override
     public void updateMessage() {
         this.setMessage(name.apply(this));
@@ -74,31 +71,20 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         bufferbuilder.vertex(this.getX() - 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
 
         color = 1.0f;
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY() + height, 90.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY() + height, 90.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
-        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY() + height, 1.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY() + height, 1.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY(), 1.0D).color(color, color, color, 1.0f).endVertex();
+        bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(), 1.0D).color(color, color, color, 1.0f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
 
-    public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered()) {
-            CullingHandler.reColorToolTip = true;
-            List<Component> components = new ArrayList<>();
-            String[] parts = detailMessage.get().getString().split("\\n");
-            for (String part : parts) {
-                Component text = Component.literal(part);
-                if(part.contains("warn:")) {
-                    String[] warn = part.split("warn:");
-                    text = Component.literal(warn[1]).withStyle(ChatFormatting.DARK_RED);
-                }
-                components.add(text);
-            }
-            guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
-            CullingHandler.reColorToolTip = false;
+    public Component getDetails() {
+        if (isHovered) {
+            return detailMessage.get();
         }
+        return null;
     }
 
     @Override

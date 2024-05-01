@@ -3,7 +3,6 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,10 +10,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import rogo.renderingculling.api.CullingHandler;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -52,7 +48,7 @@ public class NeatButton extends Button {
         Font font = minecraft.font;
         boolean display = getter.get();
         int j = display && enable.get() ? 16777215 : 10526880;
-        guiGraphics.drawCenteredString(font, display ? Component.literal("■") : Component.literal("□"), this.getX() + this.width / 2 - 40, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
+        guiGraphics.drawCenteredString(font, display ? Component.literal("■") : Component.literal("□"), this.getX() + this.width / 2 - ((this.width - 20) / 2), this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
 
         if (display != cache) {
             cache = display;
@@ -86,22 +82,11 @@ public class NeatButton extends Button {
         RenderSystem.defaultBlendFunc();
     }
 
-    public void shouDetail(GuiGraphics guiGraphics, Font font) {
-        if (detailMessage != null && isHovered()) {
-            CullingHandler.reColorToolTip = true;
-            List<Component> components = new ArrayList<>();
-            String[] parts = detailMessage.get().getString().split("\\n");
-            for (String part : parts) {
-                Component text = Component.literal(part);
-                if(part.contains("warn:")) {
-                    String[] warn = part.split("warn:");
-                    text = Component.literal(warn[1]).withStyle(ChatFormatting.DARK_RED);
-                }
-                components.add(text);
-            }
-            guiGraphics.renderComponentTooltip(font, components, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2);
-            CullingHandler.reColorToolTip = false;
+    public Component getDetails() {
+        if (isHovered) {
+            return detailMessage.get();
         }
+        return null;
     }
 
     @Override

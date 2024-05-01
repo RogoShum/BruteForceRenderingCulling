@@ -25,7 +25,6 @@
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
     "fabric.MixinKeyboardHandler",
-    "fabric.MixinTooltipRenderUtil",
     "fabric.MixinWindow",
     "sodium.AccessorRenderSectionManager",
     "sodium.MixinOcclusionCuller",

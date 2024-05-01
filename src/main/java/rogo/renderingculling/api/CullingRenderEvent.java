@@ -104,7 +104,6 @@ public class CullingRenderEvent {
                 }
             }
 
-
             int heightOffset = minecraft.font.lineHeight * monitorTexts.size();
             int top = height;
             int bottom = height + heightOffset;

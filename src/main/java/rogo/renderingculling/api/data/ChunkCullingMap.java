@@ -1,15 +1,8 @@
 package rogo.renderingculling.api.data;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingHandler;
-
-import java.util.*;
 
 public class ChunkCullingMap extends CullingMap {
     private int renderDistance = 0;

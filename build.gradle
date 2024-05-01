@@ -48,6 +48,8 @@ dependencies {
 	modImplementation("io.github.douira:glsl-transformer:2.0.0-pre13")
 
 	modImplementation('maven.modrinth:nvidium:0.2.6-beta')
+	//architectury
+	modImplementation('maven.modrinth:lhGA9TYQ:WbL7MStR')
 }
 
 processResources {
