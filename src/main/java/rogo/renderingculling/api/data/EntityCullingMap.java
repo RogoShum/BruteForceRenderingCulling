@@ -5,8 +5,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.impl.IAABBObject;
+import rogo.renderingculling.api.CullingStateManager;
+import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
@@ -23,24 +23,22 @@ public class EntityCullingMap extends CullingMap {
     }
 
     @Override
+    protected boolean shouldUpdate() {
+        return true;
+    }
+
+    @Override
     int configDelayCount() {
         return Config.getDepthUpdateDelay();
     }
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.ENTITY_CULLING_MAP_TARGET.frameBufferId;
+        return CullingStateManager.ENTITY_CULLING_MAP_TARGET.frameBufferId;
     }
 
     public boolean isObjectVisible(Object o) {
-        AABB aabb = null;
-        if (o instanceof BlockEntity) {
-            aabb = ((BlockEntity) o).getRenderBoundingBox();
-        } else if (o instanceof Entity) {
-            aabb = ((Entity) o).getBoundingBox();
-        } else if (o instanceof IAABBObject) {
-            aabb = ((IAABBObject) o).getAABB();
-        }
+        AABB aabb = ModLoader.getObjectAABB(o);
 
         if (aabb == INFINITE_EXTENT_AABB) {
             return true;
@@ -49,12 +47,12 @@ public class EntityCullingMap extends CullingMap {
         int idx = entityMap.getIndex(o);
         idx = 1 + idx * 4;
         if (entityMap.tempObjectTimer.contains(o))
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
 
         if (idx > -1 && idx < cullingBuffer.limit()) {
             return (cullingBuffer.get(idx) & 0xFF) > 0;
         } else {
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
         }
         return true;
     }
@@ -136,13 +134,7 @@ public class EntityCullingMap extends CullingMap {
 
         public void addEntityAttribute(Consumer<Consumer<FloatBuffer>> consumer) {
             indexMap.forEach((o, index) -> {
-                if (o instanceof Entity) {
-                    addAttribute(consumer, ((Entity) o).getBoundingBox(), index);
-                } else if (o instanceof BlockEntity) {
-                    addAttribute(consumer, ((BlockEntity) o).getRenderBoundingBox(), index);
-                } else if (o instanceof IAABBObject) {
-                    addAttribute(consumer, ((IAABBObject) o).getAABB(), index);
-                }
+                addAttribute(consumer, ModLoader.getObjectAABB(o), index);
             });
         }
 

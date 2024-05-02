@@ -1,10 +1,8 @@
 package rogo.renderingculling.gui;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractOptionSliderButton;
@@ -13,10 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import rogo.renderingculling.api.ComponentUtil;
-import rogo.renderingculling.api.CullingHandler;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,6 +35,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     public void setDetailMessage(Supplier<Component> detailMessage) {
         this.detailMessage = detailMessage;
     }
+
     @Override
     public void updateMessage() {
         this.setMessage(name.apply(this));
@@ -93,22 +89,11 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         return this.y;
     }
 
-    public List<Component> getDetails() {
-        if (detailMessage != null && isHovered) {
-            List<Component> components = new ArrayList<>();
-            String[] parts = detailMessage.get().getString().split("\\n");
-            for (String part : parts) {
-                Component text = ComponentUtil.literal(part);
-                if(part.contains("warn:")) {
-                    String[] warn = part.split("warn:");
-                    text = ComponentUtil.literal(warn[1]).withStyle(ChatFormatting.DARK_RED);
-                }
-                components.add(text);
-            }
-            return components;
+    public Component getDetails() {
+        if (isHovered) {
+            return detailMessage.get();
         }
-
-        return Lists.newArrayList();
+        return null;
     }
 
     @Override

@@ -191,7 +191,10 @@ dependencies {
     //implementation "maven.modrinth:rubidium:9DCa1IzX"
     //implementation 'maven.modrinth:oculus:UynWw2df'
     //implementation fg.deobf("blank:magick-1.18.2:0.9.1")
-    implementation fg.deobf("blank:rubidium-1.18.2:0.5.6")
+    //Embeddium 0.3.14
+    implementation fg.deobf("maven.modrinth:sk9rgfiA:rNFOdDcR")
+    //implementation fg.deobf("blank:embeddium-1.18.2:0.3.12")
+    //compileOnly fg.deobf("blank:rubidium-1.18.2:0.5.6")
     implementation fg.deobf("blank:oculus-1.18.2:1.6.4")
 
     //implementation fg.deobf("blank:optifine-1.18.2:7")

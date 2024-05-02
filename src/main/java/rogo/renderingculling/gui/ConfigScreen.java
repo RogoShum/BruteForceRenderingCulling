@@ -3,7 +3,6 @@ package rogo.renderingculling.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -11,15 +10,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FastColor;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import org.apache.commons.compress.utils.Lists;
+import org.jetbrains.annotations.NotNull;
 import rogo.renderingculling.api.ComponentUtil;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -51,7 +51,7 @@ public class ConfigScreen extends Screen {
     public void renderBackground(PoseStack p_96557_) {
         Minecraft minecraft = Minecraft.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth() / 2;
-        int widthScale = 60;
+        int widthScale = 85;
         int right = width - widthScale;
         int left = width + widthScale;
         int bottom = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.8) + 20;
@@ -60,7 +60,7 @@ public class ConfigScreen extends Screen {
         float bgColor = 1.0f;
         float bgAlpha = 0.3f;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
-        CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
+        CullingStateManager.useShader(CullingStateManager.REMOVE_COLOR_SHADER);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
         bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
@@ -133,10 +133,10 @@ public class ConfigScreen extends Screen {
         }
 
         if (player.getName().getString().equals("Dev")) {
-            addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> ComponentUtil.literal("Debug"))
+            addConfigButton(() -> CullingStateManager.checkCulling, (b) -> CullingStateManager.checkCulling = b, () -> ComponentUtil.literal("Debug"))
                     .setDetailMessage(() -> ComponentUtil.translatable("brute_force_rendering_culling.detail.debug"));
 
-            addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> ComponentUtil.literal("Check Texture"))
+            addConfigButton(() -> CullingStateManager.checkTexture, (b) -> CullingStateManager.checkTexture = b, () -> ComponentUtil.literal("Check Texture"))
                     .setDetailMessage(() -> ComponentUtil.translatable("brute_force_rendering_culling.detail.check_texture"));
         }
 
@@ -162,7 +162,6 @@ public class ConfigScreen extends Screen {
         }, () -> ComponentUtil.translatable("brute_force_rendering_culling.culling_map_update_delay"))
                 .setDetailMessage(() -> ComponentUtil.translatable("brute_force_rendering_culling.detail.culling_map_update_delay"));
 
-        /*
         addConfigButton(() -> Config.getCullChunk() && ModLoader.hasSodium() && !ModLoader.hasNvidium(), Config::getAsyncChunkRebuild, Config::setAsyncChunkRebuild, () -> ComponentUtil.translatable("brute_force_rendering_culling.async"))
                 .setDetailMessage(() -> {
                     if (ModLoader.hasNvidium()) {
@@ -172,12 +171,12 @@ public class ConfigScreen extends Screen {
                     } else
                         return ComponentUtil.translatable("brute_force_rendering_culling.detail.async");
                 });
-         */
+
         addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> ComponentUtil.translatable("brute_force_rendering_culling.cull_chunk"))
                 .setDetailMessage(() -> ComponentUtil.translatable("brute_force_rendering_culling.detail.cull_chunk"));
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> ComponentUtil.translatable("brute_force_rendering_culling.cull_entity"))
                 .setDetailMessage(() -> {
-                    if (CullingHandler.gl33()) {
+                    if (CullingStateManager.gl33()) {
                         return ComponentUtil.translatable("brute_force_rendering_culling.detail.cull_entity");
                     } else {
                         return ComponentUtil.translatable("brute_force_rendering_culling.detail.gl33");
@@ -188,21 +187,27 @@ public class ConfigScreen extends Screen {
     }
 
     public NeatButton addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
-        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+        int width = 150;
+        int x = this.width / 2 - width / 2;
+        NeatButton button = new NeatButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
                 , getter, setter, updateMessage);
         this.addWidget(button);
         return button;
     }
 
     public NeatButton addConfigButton(Supplier<Boolean> enable, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
-        NeatButton button = new NeatButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+        int width = 150;
+        int x = this.width / 2 - width / 2;
+        NeatButton button = new NeatButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
                 , enable, getter, setter, updateMessage);
         this.addWidget(button);
         return button;
     }
 
     public NeatSliderButton addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
-        NeatSliderButton button = new NeatSliderButton(width / 2 - 50, (int) ((height * 0.8) - heightScale * children().size()), 100, 14
+        int width = 150;
+        int x = this.width / 2 - width / 2;
+        NeatSliderButton button = new NeatSliderButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
                 , getter, setter, display, name);
         this.addWidget(button);
         return button;
@@ -214,38 +219,78 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
+    public void render(@NotNull PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(poseStack);
         List<? extends GuiEventListener> children = children();
 
         for (GuiEventListener button : children) {
             if (button instanceof AbstractWidget b)
-                b.render(matrixStack, mouseX, mouseY, partialTicks);
+                b.render(poseStack, mouseX, mouseY, partialTicks);
         }
 
         for (GuiEventListener button : children) {
-            List<Component> components = Lists.newArrayList();
-            int x = 0;
-            int y = 0;
+            Component details = null;
             if (button instanceof NeatButton b) {
-                components = b.getDetails();
-                x = b.x + b.getWidth() / 2;
-                y = b.y + (b.getHeight() - 8) / 2;
+                details = b.getDetails();
             }
             if (button instanceof NeatSliderButton b) {
-                components = b.getDetails();
-                x = b.x + b.getWidth() / 2;
-                y = b.y + (b.getHeight() - 8) / 2;
+                details = b.getDetails();
             }
-            if(!components.isEmpty()) {
-                renderButtonDetails(matrixStack, components, x, y);
+            if (details != null) {
+                renderButtonDetails(poseStack, details);
             }
         }
     }
 
-    private void renderButtonDetails(PoseStack poseStack, List<Component> components, int x, int y) {
-        CullingHandler.reColorToolTip = true;
-        renderComponentTooltip(poseStack, components, x, y);
-        CullingHandler.reColorToolTip = false;
+    private void renderButtonDetails(PoseStack poseStack, Component details) {
+        String[] parts = details.getString().split("\\n");
+        int partHeight = 0;
+        int textWidth = Math.min(minecraft.getWindow().getScreenWidth(), 200);
+        int x = minecraft.getWindow().getGuiScaledWidth() / 2 - (textWidth) / 2 + 2;
+        for (String part : parts) {
+            part = part.replace("warn:", "");
+            List<FormattedCharSequence> text = Minecraft.getInstance().font.split(ComponentUtil.literal(part), textWidth);
+            partHeight += text.size() * minecraft.font.lineHeight + minecraft.font.lineHeight / 2;
+        }
+
+        int width = minecraft.getWindow().getGuiScaledWidth() / 2;
+        int widthScale = textWidth / 2 + 4;
+        int right = width - widthScale;
+        int left = width + widthScale;
+        int bottom = partHeight + 2;
+        int top = 2;
+
+        float bgColor = 0.0f;
+        float bgAlpha = 0.7f;
+
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferbuilder.vertex(right, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, bottom, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(left, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        bufferbuilder.vertex(right, top, 0.0D)
+                .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        bufferbuilder.end();
+        BufferUploader.end(bufferbuilder);
+        RenderSystem.disableBlend();
+
+        partHeight = 0;
+        for (String part : parts) {
+            boolean red = part.contains("warn:");
+            if (red)
+                part = part.replace("warn:", "");
+            List<FormattedCharSequence> text = Minecraft.getInstance().font.split(ComponentUtil.literal(part), textWidth);
+            for (int row = 0; row < text.size(); ++row) {
+                minecraft.font.drawShadow(poseStack, text.get(row), x, 4 + partHeight + row * minecraft.font.lineHeight,
+                        red ? FastColor.ARGB32.color(255, 170, 0, 0) : FastColor.ARGB32.color(255, 255, 255, 255));
+            }
+            partHeight += text.size() * minecraft.font.lineHeight + minecraft.font.lineHeight / 2;
+        }
     }
 }

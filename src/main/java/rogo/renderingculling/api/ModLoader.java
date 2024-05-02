@@ -9,10 +9,12 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -25,6 +27,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.lwjgl.glfw.GLFW;
+import rogo.renderingculling.api.impl.IAABBObject;
 import rogo.renderingculling.gui.ConfigScreen;
 import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.OcclusionCullerThread;
@@ -32,20 +35,10 @@ import rogo.renderingculling.util.OcclusionCullerThread;
 import java.io.IOException;
 
 import static java.lang.Thread.MAX_PRIORITY;
-import static rogo.renderingculling.api.CullingHandler.*;
+import static rogo.renderingculling.api.CullingStateManager.*;
 
 @Mod("brute_force_rendering_culling")
 public class ModLoader {
-
-    int BG = ((200 & 0xFF) << 24) |
-            ((0) << 16) |
-            ((0) << 8) |
-            ((0));
-
-    int B = ((100 & 0xFF) << 24) |
-            ((0xFF) << 16) |
-            ((0xFF) << 8) |
-            ((0xFF));
 
     public ModLoader() {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
@@ -55,7 +48,7 @@ public class ModLoader {
             ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
             FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerKeyBinding);
 
-            CullingHandler.init();
+            CullingStateManager.init();
         });
     }
 
@@ -121,16 +114,6 @@ public class ModLoader {
     }
 
     @SubscribeEvent
-    public void onTooltip(RenderTooltipEvent.Color event) {
-        if (reColorToolTip) {
-            event.setBackgroundStart(BG);
-            event.setBackgroundEnd(BG);
-            event.setBorderStart(B);
-            event.setBorderEnd(B);
-        }
-    }
-
-    @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null) {
@@ -159,7 +142,7 @@ public class ModLoader {
     }
 
     public static boolean hasSodium() {
-        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium"));
+        return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("sodium") || modInfo.getModId().equals("embeddium") || modInfo.getModId().equals("rubidium"));
     }
 
     public static boolean hasIris() {
@@ -168,5 +151,20 @@ public class ModLoader {
 
     public static boolean hasNvidium() {
         return FMLLoader.getLoadingModList().getMods().stream().anyMatch(modInfo -> modInfo.getModId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
+    }
+
+    public static AABB getObjectAABB(Object o) {
+        if (o instanceof BlockEntity) {
+            return ((BlockEntity) o).getRenderBoundingBox();
+        } else if (o instanceof Entity) {
+            return ((Entity) o).getBoundingBox();
+        } else if (o instanceof IAABBObject) {
+            return ((IAABBObject) o).getAABB();
+        }
+
+        return null;
+    }
+
+    public static void pauseAsync() {
     }
 }

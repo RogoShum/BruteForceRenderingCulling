@@ -14,15 +14,17 @@
     "MixinBlockEntityRender",
     "MixinEntityRender",
     "MixinFrustum",
-    "MixinGameRenderer",
     "MixinInactiveProfiler",
     "MixinLevelRender",
+    "MixinMinecraft",
     "MixinRenderChunk",
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
-    "MixinMinecraft",
     "sodium.MixinRenderSection",
-    "sodium.MixinRenderSectionManager"
+    "sodium.MixinRenderSectionManager",
+    "sodium.AccessorRenderSectionManager",
+    "sodium.MixinRegionChunkRenderer",
+    "sodium.MixinSodiumWorldRenderer"
   ]
 }
