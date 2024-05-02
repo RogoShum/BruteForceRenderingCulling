@@ -8,10 +8,12 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.serialization.JanksonValueSerial
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.PropertyMirror;
-import net.minecraft.network.chat.Component;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class Config {
     private static final PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
 
     public static double getSampling() {
-        if(unload())
+        if (unload())
             return 0.5;
 
         return SAMPLING.getValue();
@@ -37,7 +39,7 @@ public class Config {
     }
 
     public static boolean getCullEntity() {
-        if(unload() || !CullingHandler.gl33())
+        if (unload() || !CullingStateManager.gl33())
             return false;
         return CULL_ENTITY.getValue();
     }
@@ -48,7 +50,7 @@ public class Config {
     }
 
     public static boolean getCullChunk() {
-        if(unload())
+        if (unload())
             return false;
         return CULL_CHUNK.getValue();
     }
@@ -57,7 +59,7 @@ public class Config {
         if (unload())
             return false;
 
-        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+        if (CullingStateManager.CHUNK_CULLING_MAP == null || !CullingStateManager.CHUNK_CULLING_MAP.isDone())
             return false;
 
         return getCullChunk();
@@ -69,39 +71,35 @@ public class Config {
     }
 
     public static boolean getAsyncChunkRebuild() {
-        if (true)
-            return false;
         if (unload())
             return false;
 
-        if(!shouldCullChunk())
+        if (!shouldCullChunk())
             return false;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return false;
 
-        if(ModLoader.hasNvidium())
+        if (ModLoader.hasNvidium())
             return false;
 
-        if(!ModLoader.hasSodium())
+        if (!ModLoader.hasSodium())
             return false;
 
         return ASYNC.getValue();
     }
 
     public static void setAsyncChunkRebuild(boolean value) {
-        if (true)
-            return;
-        if(!shouldCullChunk())
+        if (!shouldCullChunk())
             return;
 
-        if(ModLoader.hasNvidium())
+        if (ModLoader.hasNvidium())
             return;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return;
 
-        if(!ModLoader.hasSodium())
+        if (!ModLoader.hasSodium())
             return;
 
         ASYNC.setValue(value);
@@ -109,11 +107,11 @@ public class Config {
     }
 
     public static int getShaderDynamicDelay() {
-        return CullingHandler.enabledShader() ? 1 : 0;
+        return CullingStateManager.enabledShader() ? 1 : 0;
     }
 
     public static int getDepthUpdateDelay() {
-        if(unload())
+        if (unload())
             return 1;
         return UPDATE_DELAY.getValue() <= 9 ? UPDATE_DELAY.getValue() + getShaderDynamicDelay() : UPDATE_DELAY.getValue();
     }
@@ -124,13 +122,13 @@ public class Config {
     }
 
     public static List<String> getEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return ENTITY_SKIP.getValue();
     }
 
     public static List<String> getBlockEntitiesSkip() {
-        if(unload())
+        if (unload())
             return ImmutableList.of();
         return BLOCK_ENTITY_SKIP.getValue();
     }
@@ -148,7 +146,7 @@ public class Config {
     }
 
     public static void save() {
-        if(CONTEXT != null) {
+        if (CONTEXT != null) {
             try (OutputStream s = new BufferedOutputStream(Files.newOutputStream(CONTEXT.path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING))) {
                 FiberSerialization.serialize(CONTEXT.config, s, CONTEXT.serializer);
             } catch (IOException ignored) {
@@ -188,14 +186,14 @@ public class Config {
     }
 
     public static void loadConfig() {
-        if(!configLoaded) {
+        if (!configLoaded) {
             Config.init();
             try {
                 Files.createDirectory(Paths.get("config"));
             } catch (IOException ignored) {
             }
             JanksonValueSerializer serializer = new JanksonValueSerializer(false);
-            CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingHandler.MOD_ID + ".json"), serializer);
+            CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingStateManager.MOD_ID + ".json"), serializer);
             setupConfig(CONTEXT);
             configLoaded = true;
         }
@@ -217,5 +215,6 @@ public class Config {
         }
     }
 
-    public record ConfigContext(ConfigTree config, Path path, JanksonValueSerializer serializer){}
+    public record ConfigContext(ConfigTree config, Path path, JanksonValueSerializer serializer) {
+    }
 }

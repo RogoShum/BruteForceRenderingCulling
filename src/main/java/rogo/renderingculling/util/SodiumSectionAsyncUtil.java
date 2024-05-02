@@ -1,136 +1,247 @@
 package rogo.renderingculling.util;
 
-public class SodiumSectionAsyncUtil {
-    /*
-    private static int frame = 0;
-    private static OcclusionCuller occlusionCuller;
-    private static Viewport viewport;
-    private static float searchDistance;
-    private static boolean useOcclusionCulling;
-    private static Viewport shadowViewport;
-    private static float shadowSearchDistance;
-    private static boolean shadowUseOcclusionCulling;
-    private static VisibleChunkCollector collector;
-    private static VisibleChunkCollector shadowCollector;
-    public static boolean renderingEntities;
-    private static final Semaphore shouldUpdate = new Semaphore(0);
-    public static boolean needSyncRebuild;
+import it.unimi.dsi.fastutil.PriorityQueue;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderList;
+import me.jellysquid.mods.sodium.client.render.chunk.ChunkTracker;
+import me.jellysquid.mods.sodium.client.render.chunk.ChunkUpdateType;
+import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
+import me.jellysquid.mods.sodium.client.render.chunk.graph.ChunkGraphInfo;
+import me.jellysquid.mods.sodium.client.render.chunk.graph.ChunkGraphIterationQueue;
+import me.jellysquid.mods.sodium.client.util.frustum.Frustum;
+import me.jellysquid.mods.sodium.common.util.DirectionUtil;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.NotNull;
+import rogo.renderingculling.api.CullingStateManager;
+import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 
-    public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, Level world) {
-        SodiumSectionAsyncUtil.occlusionCuller = new OcclusionCuller(sections, world);
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
+
+public class SodiumSectionAsyncUtil {
+    private static int renderDistance;
+    private static double fogRenderCutoff;
+    private static boolean useFogCulling;
+    private static boolean useOcclusionCulling;
+    private static Camera camera;
+    private static Frustum frustum;
+    private static Camera shadowCamera;
+    private static Frustum shadowFrustum;
+    private static AsynchronousChunkCollector collector;
+    private static AsynchronousChunkCollector shadowCollector;
+    private static final Semaphore shouldUpdate = new Semaphore(0);
+    private static Long2ReferenceMap<RenderSection> sections;
+    private static ChunkTracker tracker;
+    public static boolean needSyncRebuild;
+    public static int frame;
+
+    public static void fromSectionManager(Long2ReferenceMap<RenderSection> sections, ChunkTracker tracker, int renderDistance) {
+        SodiumSectionAsyncUtil.sections = sections;
+        SodiumSectionAsyncUtil.tracker = tracker;
+        SodiumSectionAsyncUtil.renderDistance = renderDistance;
     }
-     */
 
     public static void asyncSearchRebuildSection() {
-        /*
         shouldUpdate.acquireUninterruptibly();
-        if (CullingHandler.enabledShader() && shadowViewport != null) {
-            frame++;
-            CullingHandler.useOcclusionCulling = false;
-            AsynchronousChunkCollector shadowCollector = new AsynchronousChunkCollector(frame);
-            occlusionCuller.findVisible(shadowCollector, shadowViewport, shadowSearchDistance, shadowUseOcclusionCulling, frame);
-            SodiumSectionAsyncUtil.shadowCollector = shadowCollector;
-            CullingHandler.useOcclusionCulling = true;
-        }
+        if (camera != null && frustum != null) {
+            if (CullingStateManager.enabledShader() && shadowCamera != null && shadowFrustum != null) {
+                frame++;
+                CullingStateManager.useOcclusionCulling = false;
+                AsynchronousChunkCollector shadowCollector = new AsynchronousChunkCollector(frame, shadowCamera, shadowFrustum);
+                shadowCollector.findVisible();
+                SodiumSectionAsyncUtil.shadowCollector = shadowCollector;
+                CullingStateManager.useOcclusionCulling = true;
+            }
 
-        if (viewport != null) {
             frame++;
-            AsynchronousChunkCollector collector = new AsynchronousChunkCollector(frame);
-            occlusionCuller.findVisible(collector, viewport, searchDistance, useOcclusionCulling, frame);
+            AsynchronousChunkCollector collector = new AsynchronousChunkCollector(frame, camera, frustum);
+            collector.findVisible();
             SodiumSectionAsyncUtil.collector = collector;
 
-            if(CullingHandler.CHUNK_CULLING_MAP != null)
-                CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
-            Map<ChunkUpdateType, ArrayDeque<RenderSection>> rebuildList = SodiumSectionAsyncUtil.collector.getRebuildLists();
-            for(ArrayDeque<RenderSection> arrayDeque : rebuildList.values()) {
+            if (CullingStateManager.CHUNK_CULLING_MAP != null)
+                CullingStateManager.CHUNK_CULLING_MAP.queueUpdateCount++;
+            Map<ChunkUpdateType, PriorityQueue<RenderSection>> rebuildList = SodiumSectionAsyncUtil.collector.getRebuildLists();
+            for (PriorityQueue<RenderSection> arrayDeque : rebuildList.values()) {
                 if (!arrayDeque.isEmpty()) {
                     needSyncRebuild = true;
                     break;
                 }
             }
         }
-         */
     }
 
-/*
-    public static void update(Viewport viewport, float searchDistance, boolean useOcclusionCulling) {
-        if (CullingHandler.renderingShader()) {
-            SodiumSectionAsyncUtil.shadowViewport = viewport;
-            SodiumSectionAsyncUtil.shadowSearchDistance = searchDistance;
-            SodiumSectionAsyncUtil.shadowUseOcclusionCulling = useOcclusionCulling;
+    public static void update(Camera camera, Frustum frustum, double fogRenderCutoff, boolean useFogCulling, boolean useOcclusionCulling) {
+        if (CullingStateManager.renderingShader()) {
+            SodiumSectionAsyncUtil.shadowCamera = camera;
+            SodiumSectionAsyncUtil.shadowFrustum = frustum;
         } else {
-            SodiumSectionAsyncUtil.viewport = viewport;
-            SodiumSectionAsyncUtil.searchDistance = searchDistance;
-            SodiumSectionAsyncUtil.useOcclusionCulling = useOcclusionCulling;
+            SodiumSectionAsyncUtil.camera = camera;
+            SodiumSectionAsyncUtil.frustum = frustum;
         }
+        SodiumSectionAsyncUtil.fogRenderCutoff = fogRenderCutoff;
+        SodiumSectionAsyncUtil.useFogCulling = useFogCulling;
+        SodiumSectionAsyncUtil.useOcclusionCulling = useOcclusionCulling;
     }
 
-    public static VisibleChunkCollector getChunkCollector() {
+    public static AsynchronousChunkCollector getChunkCollector() {
         return SodiumSectionAsyncUtil.collector;
     }
 
-    public static VisibleChunkCollector getShadowCollector() {
+    public static AsynchronousChunkCollector getShadowCollector() {
         return SodiumSectionAsyncUtil.shadowCollector;
     }
- */
 
     public static void shouldUpdate() {
-        /*
         if (shouldUpdate.availablePermits() < 1) {
             shouldUpdate.release();
         }
-         */
     }
 
-    /*
-    public static class AsynchronousChunkCollector extends VisibleChunkCollector {
-        private final HashMap<RenderRegion, ChunkRenderList> renderListMap = new HashMap<>();
-        private final EnumMap<ChunkUpdateType, ArrayDeque<RenderSection>> syncRebuildLists;
+    protected static RenderSection getRenderSection(int x, int y, int z) {
+        return sections.get(SectionPos.asLong(x, y, z));
+    }
 
-        public AsynchronousChunkCollector(int frame) {
-            super(frame);
-            this.syncRebuildLists = new EnumMap<>(ChunkUpdateType.class);
-            ChunkUpdateType[] var2 = ChunkUpdateType.values();
+    public static boolean shouldCancelBuild(RenderSection section) {
+        return section == null || section.getRegion().getArenas() == null;
+    }
 
-            for (ChunkUpdateType type : var2) {
-                this.syncRebuildLists.put(type, new ArrayDeque<>());
+    public static class AsynchronousChunkCollector {
+        private final Map<ChunkUpdateType, PriorityQueue<RenderSection>> rebuildLists = new EnumMap<>(ChunkUpdateType.class);
+        private final ChunkRenderList chunkRenderList = new ChunkRenderList();
+        private final ChunkGraphIterationQueue iterationQueue = new ChunkGraphIterationQueue();
+        private final ObjectList<RenderSection> tickableChunks = new ObjectArrayList<>();
+        private final ObjectList<BlockEntity> visibleBlockEntities = new ObjectArrayList<>();
+        private final Camera camera;
+        private final Frustum frustum;
+        private final int currentFrame;
+        private int centerChunkX;
+        private int centerChunkZ;
+        private final Level level = Minecraft.getInstance().level;
+
+        public AsynchronousChunkCollector(int currentFrame, Camera camera, Frustum frustum) {
+            ChunkUpdateType[] var6 = ChunkUpdateType.values();
+            for (ChunkUpdateType type : var6) {
+                this.rebuildLists.put(type, new ObjectArrayFIFOQueue<>());
             }
+            this.camera = camera;
+            this.frustum = frustum;
+            this.currentFrame = currentFrame;
         }
 
-        @Override
-        public void visit(RenderSection section, boolean visible) {
-            if (visible && section.getFlags() != 0) {
-                RenderRegion region = section.getRegion();
-                ChunkRenderList renderList;
-                if (!renderListMap.containsKey(region)) {
-                    renderList = new ChunkRenderList(region);
-                    ((ICollectorAccessor) this).addRenderList(renderList);
-                    renderListMap.put(region, renderList);
-                } else {
-                    renderList = renderListMap.get(region);
-                }
-                renderList.add(section);
+        public void findVisible() {
+            if (level == null) {
+                return;
             }
-
-            ((ICollectorAccessor) this).addAsyncToRebuildLists(section);
-        }
-
-        @Override
-        public Map<ChunkUpdateType, ArrayDeque<RenderSection>> getRebuildLists() {
-            if(CullingHandler.needPauseRebuild()) {
-                return syncRebuildLists;
-            }
-            super.getRebuildLists().forEach(((chunkUpdateType, renderSections) -> {
-                for (RenderSection section : renderSections) {
-                    if (!section.isDisposed() && section.getBuildCancellationToken() == null) {
-                        try {
-                            syncRebuildLists.get(chunkUpdateType).add(section);
-                        } catch (Exception ignored) {}
+            ChunkGraphIterationQueue queue = this.iterationQueue;
+            BlockPos pos = getOriginPos();
+            this.centerChunkX = pos.getX() >> 4;
+            this.centerChunkZ = pos.getZ() >> 4;
+            RenderSection rootRender = SodiumSectionAsyncUtil.getRenderSection(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
+            rootRender.getGraphInfo().resetCullingState();
+            rootRender.getGraphInfo().setLastVisibleFrame(this.currentFrame);
+            addVisible(rootRender, null);
+            for (int i = 0; i < queue.size(); ++i) {
+                RenderSection section = queue.getRender(i);
+                Direction flow = queue.getDirection(i);
+                this.schedulePendingUpdates(section);
+                for (Direction dir : DirectionUtil.ALL_DIRECTIONS) {
+                    if (!this.isCulled(section.getGraphInfo(), flow, dir)) {
+                        RenderSection adj = section.getAdjacent(dir);
+                        if (adj != null && this.isWithinRenderDistance(adj) && this.isVisible(adj)) {
+                            this.bfsEnqueue(section, adj, DirectionUtil.getOpposite(dir));
+                        }
                     }
                 }
-            }));
-            return syncRebuildLists;
+            }
+        }
+
+        private void bfsEnqueue(RenderSection parent, RenderSection render, Direction flow) {
+            ChunkGraphInfo info = render.getGraphInfo();
+            if (info.getLastVisibleFrame() != this.currentFrame) {
+                info.setLastVisibleFrame(this.currentFrame);
+                info.setCullingState(parent.getGraphInfo().getCullingState(), flow);
+                this.addVisible(render, flow);
+            }
+        }
+
+        private void addVisible(RenderSection render, Direction flow) {
+            this.iterationQueue.add(render, flow);
+            if (!useFogCulling || !(render.getSquaredDistanceXZ(this.camera.getPosition().x, this.camera.getPosition().z) >= fogRenderCutoff)) {
+                if (!render.isEmpty()) {
+                    this.chunkRenderList.add(render);
+                    if (render.isTickable()) {
+                        this.tickableChunks.add(render);
+                    }
+                    if (!render.getData().getBlockEntities().isEmpty()) {
+                        this.visibleBlockEntities.addAll(render.getData().getBlockEntities());
+                    }
+                }
+
+            }
+        }
+
+        private boolean isCulled(ChunkGraphInfo node, Direction from, Direction to) {
+            if (node.canCull(to)) {
+                return true;
+            } else {
+                return SodiumSectionAsyncUtil.useOcclusionCulling && from != null && !node.isVisibleThrough(from, to);
+            }
+        }
+
+        public boolean isVisible(RenderSection section) {
+            return !section.getGraphInfo().isCulledByFrustum(this.frustum) && CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, true);
+        }
+
+        private void schedulePendingUpdates(RenderSection section) {
+            if (section.getPendingUpdate() != null && SodiumSectionAsyncUtil.tracker.hasMergedFlags(section.getChunkX(), section.getChunkZ(), 3)) {
+                PriorityQueue<RenderSection> queue = this.rebuildLists.get(section.getPendingUpdate());
+                if (queue.size() < 32) {
+                    queue.enqueue(section);
+                }
+            }
+        }
+
+        public Map<ChunkUpdateType, PriorityQueue<RenderSection>> getRebuildLists() {
+            return rebuildLists;
+        }
+
+        public ChunkRenderList getChunkRenderList() {
+            return chunkRenderList;
+        }
+
+        public ObjectList<BlockEntity> getVisibleBlockEntities() {
+            return visibleBlockEntities;
+        }
+
+        public ObjectList<RenderSection> getTickableChunks() {
+            return tickableChunks;
+        }
+
+        @NotNull
+        private static BlockPos getOriginPos() {
+            BlockPos origin = Minecraft.getInstance().gameRenderer.getMainCamera().getBlockPosition();
+            if (origin.getY() < Minecraft.getInstance().level.getMinBuildHeight()) {
+                origin = new BlockPos(origin.getX(), Minecraft.getInstance().level.getMinBuildHeight(), origin.getZ());
+            } else if (origin.getY() > Minecraft.getInstance().level.getMaxBuildHeight()) {
+                origin = new BlockPos(origin.getX(), Minecraft.getInstance().level.getMaxBuildHeight(), origin.getZ());
+            }
+            return origin;
+        }
+
+        private boolean isWithinRenderDistance(RenderSection adj) {
+            int x = Math.abs(adj.getChunkX() - this.centerChunkX);
+            int z = Math.abs(adj.getChunkZ() - this.centerChunkZ);
+            return x <= SodiumSectionAsyncUtil.renderDistance && z <= SodiumSectionAsyncUtil.renderDistance;
         }
     }
-     */
 }

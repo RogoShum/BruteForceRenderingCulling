@@ -11,14 +11,14 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import org.joml.FrustumIntersection;
-import org.joml.Vector4f;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import org.lwjgl.glfw.GLFW;
+import rogo.renderingculling.api.impl.IAABBObject;
 import rogo.renderingculling.event.WorldUnloadEvent;
 import rogo.renderingculling.gui.ConfigScreen;
-import rogo.renderingculling.mixin.AccessorFrustum;
 import rogo.renderingculling.util.NvidiumUtil;
 import rogo.renderingculling.util.OcclusionCullerThread;
 
@@ -26,19 +26,9 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import static java.lang.Thread.MAX_PRIORITY;
-import static rogo.renderingculling.api.CullingHandler.*;
+import static rogo.renderingculling.api.CullingStateManager.*;
 
 public class ModLoader implements ModInitializer {
-
-    static int BG = ((200 & 0xFF) << 24) |
-            ((0) << 16) |
-            ((0) << 8) |
-            ((0));
-
-    static int B = ((100 & 0xFF) << 24) |
-            ((0xFF) << 16) |
-            ((0xFF) << 8) |
-            ((0xFF));
 
     public static boolean SHADER_ENABLED = false;
 
@@ -134,14 +124,6 @@ public class ModLoader implements ModInitializer {
         }
     }
 
-    public static int getBG() {
-        return BG;
-    }
-
-    public static int getB() {
-        return B;
-    }
-
     public static boolean hasMod(String s) {
         return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals(s));
     }
@@ -156,5 +138,20 @@ public class ModLoader implements ModInitializer {
 
     public static boolean hasNvidium() {
         return FabricLoader.getInstance().getAllMods().stream().anyMatch(modInfo -> modInfo.getMetadata().getId().equals("nvidium")) && NvidiumUtil.nvidiumBfs();
+    }
+
+    public static AABB getObjectAABB(Object o) {
+        if (o instanceof BlockEntity) {
+            return new AABB(((BlockEntity) o).getBlockPos());
+        } else if (o instanceof Entity) {
+            return ((Entity) o).getBoundingBox();
+        } else if (o instanceof IAABBObject) {
+            return ((IAABBObject) o).getAABB();
+        }
+
+        return null;
+    }
+
+    public static void pauseAsync() {
     }
 }

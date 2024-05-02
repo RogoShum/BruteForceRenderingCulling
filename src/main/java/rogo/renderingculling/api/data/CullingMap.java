@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 
 import java.nio.ByteBuffer;
 
@@ -29,7 +29,7 @@ public abstract class CullingMap {
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
         GL15.glBufferData(GL31.GL_PIXEL_PACK_BUFFER, (long) width * height * 4 * Float.BYTES, GL15.GL_DYNAMIC_READ);
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
-        CullingHandler.bindMainFrameTarget();
+        CullingStateManager.bindMainFrameTarget();
     }
 
     public boolean needTransferData() {
@@ -46,15 +46,17 @@ public abstract class CullingMap {
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
             GL11.glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
             GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, 0);
-            CullingHandler.bindMainFrameTarget();
+            CullingStateManager.bindMainFrameTarget();
             delayCount = configDelayCount() + dynamicDelayCount();
-        } else {
+        } else if (shouldUpdate()) {
             delayCount--;
         }
         if (delayCount <= 0) {
             setTransferred(true);
         }
     }
+
+    protected abstract boolean shouldUpdate();
 
     public void readData() {
         GL15.glBindBuffer(GL31.GL_PIXEL_PACK_BUFFER, pboId);
@@ -66,8 +68,8 @@ public abstract class CullingMap {
     abstract int configDelayCount();
 
     public int dynamicDelayCount() {
-        if (CullingHandler.fps > 100) {
-            return CullingHandler.fps / 100;
+        if (CullingStateManager.fps > 100) {
+            return CullingStateManager.fps / 100;
         }
 
         return 0;

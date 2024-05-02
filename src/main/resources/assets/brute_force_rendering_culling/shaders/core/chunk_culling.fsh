@@ -4,6 +4,7 @@ uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform sampler2D Sampler3;
+uniform sampler2D Sampler4;
 
 uniform vec2 CullingSize;
 uniform mat4 CullingViewMat;
@@ -18,7 +19,7 @@ uniform float BoxScale;
 
 flat in int spacePartitionSize;
 flat in vec4[6] frustum;
-flat in vec2[4] DepthScreenSize;
+flat in vec2[5] DepthScreenSize;
 
 out vec4 fragColor;
 
@@ -27,8 +28,8 @@ float far  = 1000.0;
 
 int getSampler(float xLength, float yLength) {
     for(int i = 0; i < DepthScreenSize.length(); ++i) {
-        float xStep = 5.0 / DepthScreenSize[i].x;
-        float yStep = 5.0 / DepthScreenSize[i].y;
+        float xStep = 2.0 / DepthScreenSize[i].x;
+        float yStep = 2.0 / DepthScreenSize[i].y;
         if(xStep > xLength && yStep > yLength) {
             return i;
         }
@@ -113,8 +114,10 @@ float getUVDepth(int idx, vec2 uv) {
     return texture(Sampler1, uv).r * 500;
     else if(idx == 2)
     return texture(Sampler2, uv).r * 500;
-
+    else if(idx == 3)
     return texture(Sampler3, uv).r * 500;
+
+    return texture(Sampler4, uv).r * 500;
 }
 
 void main() {
@@ -136,8 +139,9 @@ void main() {
     }
 
     float chunkDepth = LinearizeDepth(chunkCenterDepth)-BoxScale;
+
     if(chunkDepth < 0) {
-        fragColor = vec4(0.0, 0.3, 0.3, 1.0);
+        fragColor = vec4(0.0, 0.4, 0.5, 1.0);
         return;
     }
 
@@ -205,14 +209,9 @@ void main() {
     }
 
     if(!inside) {
-        fragColor = vec4(0.3, 0.3, 0.0, 1.0);
+        fragColor = vec4(1.0, 1.0, 0.0, 1.0);
         return;
     }
-
-    minX = min(1.0, max(0.0, minX));
-    maxX = min(1.0, max(0.0, maxX));
-    maxY = min(1.0, max(0.0, maxY));
-    minY = min(1.0, max(0.0, minY));
 
     int idx = getSampler(maxX-minX,
     maxY-minY);
@@ -220,10 +219,10 @@ void main() {
     float xStep = 1.0/DepthScreenSize[idx].x;
     float yStep = 1.0/DepthScreenSize[idx].y;
 
-    minX = max(minX-xStep*2, 0.0);
-    maxX = min(maxX+xStep*2, 1.0);
-    minY = max(minY-yStep*2, 0.0);
-    maxY = min(maxY+yStep*2, 1.0);
+    minX = max(minX-xStep, 0.0);
+    maxX = min(maxX+xStep, 1.0);
+    minY = max(minY-yStep, 0.0);
+    maxY = min(maxY+yStep, 1.0);
 
     for(float x = minX; x <= maxX; x += xStep) {
         for(float y = minY; y <= maxY; y += yStep) {

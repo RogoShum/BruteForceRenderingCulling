@@ -5,8 +5,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
-import rogo.renderingculling.api.impl.IAABBObject;
+import rogo.renderingculling.api.CullingStateManager;
+import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
@@ -21,26 +21,30 @@ public class EntityCullingMap extends CullingMap {
     }
 
     @Override
+    protected boolean shouldUpdate() {
+        return true;
+    }
+
+    @Override
     int configDelayCount() {
         return Config.getDepthUpdateDelay();
     }
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.ENTITY_CULLING_MAP_TARGET.frameBufferId;
+        return CullingStateManager.ENTITY_CULLING_MAP_TARGET.frameBufferId;
     }
 
     public boolean isObjectVisible(Object o) {
         int idx = entityMap.getIndex(o);
-        idx = 1+idx*4;
-        if(entityMap.tempObjectTimer.contains(o))
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+        idx = 1 + idx * 4;
+        if (entityMap.tempObjectTimer.contains(o))
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
 
-        if(idx > -1 && idx < cullingBuffer.limit()) {
-            float cullingValue = (float) (cullingBuffer.get(idx) & 0xFF) / 255.0f;
-            return cullingValue > 0.5;
+        if (idx > -1 && idx < cullingBuffer.limit()) {
+            return (cullingBuffer.get(idx) & 0xFF) > 0;
         } else {
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
         }
         return true;
     }
@@ -60,14 +64,15 @@ public class EntityCullingMap extends CullingMap {
         private final LifeTimer<Object> tempObjectTimer = new LifeTimer<>();
         private int innerCount;
 
-        public EntityMap() {}
+        public EntityMap() {
+        }
 
         public void addObject(Object obj) {
-            if(indexMap.containsKey(obj))
+            if (indexMap.containsKey(obj))
                 return;
-            if(obj instanceof Entity && ((Entity) obj).isAlive())
+            if (obj instanceof Entity && ((Entity) obj).isAlive())
                 indexMap.put(obj, indexMap.size());
-            else if(obj instanceof BlockEntity && !((BlockEntity) obj).isRemoved())
+            else if (obj instanceof BlockEntity && !((BlockEntity) obj).isRemoved())
                 indexMap.put(obj, indexMap.size());
             else
                 indexMap.put(obj, indexMap.size());
@@ -78,7 +83,7 @@ public class EntityCullingMap extends CullingMap {
         }
 
         public void copyTemp(EntityMap entityMap, int tickCount) {
-            entityMap.tempObjectTimer.foreach(o-> addTemp(o, tickCount));
+            entityMap.tempObjectTimer.foreach(o -> addTemp(o, tickCount));
             innerCount = tickCount;
         }
 
@@ -88,7 +93,7 @@ public class EntityCullingMap extends CullingMap {
 
         public void tick(int tickCount) {
             indexMap.clear();
-            if(innerCount < tickCount) {
+            if (innerCount < tickCount) {
                 tempObjectTimer.tick(tickCount, 40);
                 innerCount = tickCount;
             }
@@ -121,13 +126,7 @@ public class EntityCullingMap extends CullingMap {
 
         public void addEntityAttribute(Consumer<Consumer<FloatBuffer>> consumer) {
             indexMap.forEach((o, index) -> {
-                if(o instanceof Entity) {
-                    addAttribute(consumer, ((Entity) o).getBoundingBox(), index);
-                } else if(o instanceof BlockEntity) {
-                    addAttribute(consumer, new AABB(((BlockEntity) o).getBlockPos()), index);
-                } else if (o instanceof IAABBObject) {
-                    addAttribute(consumer, ((IAABBObject) o).getAABB(), index);
-                }
+                addAttribute(consumer, ModLoader.getObjectAABB(o), index);
             });
         }
 
