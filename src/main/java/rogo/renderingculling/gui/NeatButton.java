@@ -48,7 +48,6 @@ public class NeatButton extends Button {
         Font font = minecraft.font;
         boolean display = getter.get();
         int j = display && enable.get() ? 16777215 : 10526880;
-        guiGraphics.drawCenteredString(font, display ? Component.literal("■") : Component.literal("□"), this.getX() + this.width / 2 - ((this.width - 20) / 2), this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
 
         if (display != cache) {
             cache = display;
@@ -78,6 +77,7 @@ public class NeatButton extends Button {
         bufferbuilder.vertex(this.getX() - 1, this.getY() - 1, 0.0D).color(color, color, color, 1.0f).endVertex();
         BufferUploader.drawWithShader(bufferbuilder.end());
         guiGraphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
+        guiGraphics.drawCenteredString(font, display ? Component.literal("■") : Component.literal("□"), this.getX() + this.width / 2 - ((this.width - 20) / 2), this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
         RenderSystem.disableBlend();
         RenderSystem.defaultBlendFunc();
     }

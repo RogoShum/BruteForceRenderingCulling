@@ -28,16 +28,16 @@ public class Config {
         if(unload())
             return 0.5;
 
-        return SAMPLING.getValue();
+        return Math.max(SAMPLING.getValue(), 0.05);
     }
 
     public static void setSampling(double value) {
-        SAMPLING.setValue(value);
+        SAMPLING.setValue(Math.max(0.05, value));
         save();
     }
 
     public static boolean getCullEntity() {
-        if(unload() || !CullingHandler.gl33())
+        if(unload() || !CullingStateManager.gl33())
             return false;
         return CULL_ENTITY.getValue();
     }
@@ -57,7 +57,7 @@ public class Config {
         if (unload())
             return false;
 
-        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+        if (CullingStateManager.CHUNK_CULLING_MAP == null || !CullingStateManager.CHUNK_CULLING_MAP.isDone())
             return false;
 
         return getCullChunk();
@@ -75,7 +75,7 @@ public class Config {
         if(!shouldCullChunk())
             return false;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return false;
 
         if(ModLoader.hasNvidium())
@@ -94,7 +94,7 @@ public class Config {
         if(ModLoader.hasNvidium())
             return;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return;
 
         if(!ModLoader.hasSodium())
@@ -105,7 +105,7 @@ public class Config {
     }
 
     public static int getShaderDynamicDelay() {
-        return CullingHandler.enabledShader() ? 1 : 0;
+        return CullingStateManager.enabledShader() ? 1 : 0;
     }
 
     public static int getDepthUpdateDelay() {
@@ -160,7 +160,7 @@ public class Config {
         blockList.add("minecraft:beacon");
 
         BRANCH = ConfigTree.builder()
-                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.05)
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.2)
                 .finishValue(SAMPLING::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.culling_map_update_delay"), ConfigTypes.INTEGER, 1)
@@ -191,7 +191,7 @@ public class Config {
             } catch (IOException ignored) {
             }
             JanksonValueSerializer serializer = new JanksonValueSerializer(false);
-            CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingHandler.MOD_ID + ".json"), serializer);
+            CONTEXT = new ConfigContext(BRANCH, Paths.get("config", CullingStateManager.MOD_ID + ".json"), serializer);
             setupConfig(CONTEXT);
             configLoaded = true;
         }

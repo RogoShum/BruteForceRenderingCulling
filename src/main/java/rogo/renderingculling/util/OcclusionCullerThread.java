@@ -2,7 +2,7 @@ package rogo.renderingculling.util;
 
 import net.minecraft.client.Minecraft;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
 
 public class OcclusionCullerThread extends Thread {
@@ -30,7 +30,7 @@ public class OcclusionCullerThread extends Thread {
     public void run() {
         while (!finished) {
             try {
-                if (CullingHandler.CHUNK_CULLING_MAP != null && CullingHandler.CHUNK_CULLING_MAP.isDone()) {
+                if (CullingStateManager.CHUNK_CULLING_MAP != null && CullingStateManager.CHUNK_CULLING_MAP.isDone()) {
                     if (Config.getAsyncChunkRebuild()) {
                         if (ModLoader.hasSodium()) {
                             SodiumSectionAsyncUtil.asyncSearchRebuildSection();

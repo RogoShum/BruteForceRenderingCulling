@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import static java.lang.Thread.MAX_PRIORITY;
-import static rogo.renderingculling.api.CullingHandler.*;
+import static rogo.renderingculling.api.CullingStateManager.*;
 
 public class ModLoader implements ModInitializer {
 
@@ -158,5 +158,11 @@ public class ModLoader implements ModInitializer {
         }
 
         return null;
+    }
+
+    public static void pauseAsync() {
+        if (ModLoader.hasMod("embeddium")) {
+            fullChunkUpdateCooldown = 60;
+        }
     }
 }

@@ -16,7 +16,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
 
 import java.util.List;
@@ -59,7 +59,7 @@ public class ConfigScreen extends Screen {
         float bgColor = 1.0f;
         float bgAlpha = 0.3f;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.1f);
-        CullingHandler.useShader(CullingHandler.REMOVE_COLOR_SHADER);
+        CullingStateManager.useShader(CullingStateManager.REMOVE_COLOR_SHADER);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
         bufferbuilder.vertex(right - 1, bottom + 1, 0.0D)
@@ -130,10 +130,10 @@ public class ConfigScreen extends Screen {
         }
 
         if (player.getName().getString().equals("Dev")) {
-            addConfigButton(() -> CullingHandler.checkCulling, (b) -> CullingHandler.checkCulling = b, () -> Component.literal("Debug"))
+            addConfigButton(() -> CullingStateManager.checkCulling, (b) -> CullingStateManager.checkCulling = b, () -> Component.literal("Debug"))
                     .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.debug"));
 
-            addConfigButton(() -> CullingHandler.checkTexture, (b) -> CullingHandler.checkTexture = b, () -> Component.literal("Check Texture"))
+            addConfigButton(() -> CullingStateManager.checkTexture, (b) -> CullingStateManager.checkTexture = b, () -> Component.literal("Check Texture"))
                     .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.check_texture"));
         }
 
@@ -172,7 +172,7 @@ public class ConfigScreen extends Screen {
                 .setDetailMessage(() -> Component.translatable("brute_force_rendering_culling.detail.cull_chunk"));
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> Component.translatable("brute_force_rendering_culling.cull_entity"))
                 .setDetailMessage(() -> {
-                    if (CullingHandler.gl33()) {
+                    if (CullingStateManager.gl33()) {
                         return Component.translatable("brute_force_rendering_culling.detail.cull_entity");
                     } else {
                         return Component.translatable("brute_force_rendering_culling.detail.gl33");
@@ -273,7 +273,7 @@ public class ConfigScreen extends Screen {
         int top = 2;
 
         float bgColor = 0.0f;
-        float bgAlpha = 0.6f;
+        float bgAlpha = 0.7f;
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();

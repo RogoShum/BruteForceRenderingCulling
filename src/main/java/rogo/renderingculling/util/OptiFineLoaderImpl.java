@@ -2,7 +2,7 @@ package rogo.renderingculling.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 
 import java.lang.reflect.Field;
 
@@ -12,7 +12,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
     @Override
     public int getFrameBufferID() {
         try {
-            Field f = CullingHandler.OptiFine.getDeclaredField("dfb");
+            Field f = CullingStateManager.OptiFine.getDeclaredField("dfb");
             f.setAccessible(true);
             Object dfb = f.get(null);
             Field buffer = dfb.getClass().getDeclaredField("glFramebuffer");
@@ -28,7 +28,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
     @Override
     public boolean renderingShaderPass() {
         try {
-            Field field = CullingHandler.OptiFine.getDeclaredField("shaderPackLoaded");
+            Field field = CullingStateManager.OptiFine.getDeclaredField("shaderPackLoaded");
             field.setAccessible(true);
             return (Boolean) field.get(null);
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -48,7 +48,7 @@ public class OptiFineLoaderImpl implements ShaderLoader {
             try {
                 glState = Class.forName("net.optifine.shaders.GlState");
             } catch (ClassNotFoundException e) {
-                CullingHandler.LOGGER.debug("GlState Not Found");
+                CullingStateManager.LOGGER.debug("GlState Not Found");
             }
         }
         try {

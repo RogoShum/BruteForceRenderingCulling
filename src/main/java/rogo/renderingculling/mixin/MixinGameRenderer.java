@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRenderer {
@@ -20,6 +20,6 @@ public abstract class MixinGameRenderer {
 
     @Inject(method = "renderLevel", at = @At(value = "HEAD"))
     public void afterRunTick(float p_109090_, long p_109091_, PoseStack p_109092_, CallbackInfo ci) {
-        CullingHandler.FOV = this.getFov(this.getMainCamera(), p_109090_, true);
+        CullingStateManager.FOV = this.getFov(this.getMainCamera(), p_109090_, true);
     }
 }
