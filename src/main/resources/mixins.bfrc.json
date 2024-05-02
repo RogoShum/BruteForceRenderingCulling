@@ -15,7 +15,6 @@
     "MixinBlockEntityRender",
     "MixinEntityRender",
     "MixinFrustum",
-    "MixinGameRenderer",
     "MixinInactiveProfiler",
     "MixinLevelRender",
     "MixinLevelRender$AccessorViewArea",

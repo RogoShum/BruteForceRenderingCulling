@@ -1,7 +1,6 @@
 package rogo.renderingculling.api;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.ArrayList;
@@ -21,16 +20,16 @@ public class Config {
         if (unload())
             return 0.5;
 
-        return SAMPLING.get();
+        return Math.max(SAMPLING.get(), 0.05);
     }
 
     public static void setSampling(double value) {
-        SAMPLING.set(value);
+        SAMPLING.set(Math.max(0.05, value));
         SAMPLING.save();
     }
 
     public static boolean getCullEntity() {
-        if (unload() || !CullingHandler.gl33())
+        if (unload() || !CullingStateManager.gl33())
             return false;
         return CULL_ENTITY.get();
     }
@@ -51,7 +50,7 @@ public class Config {
         if (unload())
             return false;
 
-        if (CullingHandler.CHUNK_CULLING_MAP == null || !CullingHandler.CHUNK_CULLING_MAP.isDone())
+        if (CullingStateManager.CHUNK_CULLING_MAP == null || !CullingStateManager.CHUNK_CULLING_MAP.isDone())
             return false;
 
         return getCullChunk();
@@ -69,7 +68,7 @@ public class Config {
         if (!shouldCullChunk())
             return false;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return false;
 
         if (!ModLoader.hasSodium())
@@ -88,7 +87,7 @@ public class Config {
         if (!ModLoader.hasSodium())
             return;
 
-        if (CullingHandler.needPauseRebuild())
+        if (CullingStateManager.needPauseRebuild())
             return;
 
         if (ModLoader.hasNvidium())
@@ -99,7 +98,7 @@ public class Config {
     }
 
     public static int getShaderDynamicDelay() {
-        return CullingHandler.enabledShader() ? 1 : 0;
+        return CullingStateManager.enabledShader() ? 1 : 0;
     }
 
     public static int getDepthUpdateDelay() {
@@ -138,7 +137,7 @@ public class Config {
     static {
         ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
         CLIENT_BUILDER.push("Sampling multiple");
-        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.05, 0.0, 1.0);
+        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.2, 0.0, 1.0);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Culling Map update delay");

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.CullingRenderEvent;
 import rogo.renderingculling.api.impl.ICullingShader;
 
@@ -147,7 +147,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
 
     @Inject(at = @At("TAIL"), method = "apply")
     public void onApply(CallbackInfo ci) {
-        if (CullingHandler.updatingDepth)
+        if (CullingStateManager.updatingDepth)
             ProgramManager.glUseProgram(this.programId);
     }
 

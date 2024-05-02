@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.util.SodiumSectionAsyncUtil;
 
@@ -41,13 +41,18 @@ public abstract class MixinRenderSectionManager {
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
         if (Config.shouldCullChunk())
-            cir.setReturnValue(CullingHandler.shouldRenderChunk((IRenderSectionVisibility) section, false));
+            cir.setReturnValue(CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false));
+    }
+
+    @Inject(method = "update", at = @At(value = "HEAD"), remap = false)
+    private void onUpdate(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci) {
+        CullingStateManager.updating();
     }
 
     @ModifyVariable(name = "visitor", method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller;findVisible(Lme/jellysquid/mods/sodium/client/render/chunk/occlusion/OcclusionCuller$Visitor;Lme/jellysquid/mods/sodium/client/render/viewport/Viewport;FZI)V", shift = At.Shift.BEFORE), remap = false)
     private VisibleChunkCollector onCreateTerrainRenderList(VisibleChunkCollector value) {
         if (Config.getAsyncChunkRebuild()) {
-            VisibleChunkCollector collector = CullingHandler.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
+            VisibleChunkCollector collector = CullingStateManager.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
             return collector == null ? value : collector;
         }
         return value;
@@ -56,7 +61,7 @@ public abstract class MixinRenderSectionManager {
     @Inject(method = "updateChunks", at = @At(value = "HEAD"), remap = false)
     private void onCreateTerrainRenderList(boolean updateImmediately, CallbackInfo ci) {
         if (Config.getAsyncChunkRebuild()) {
-            VisibleChunkCollector collector = CullingHandler.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
+            VisibleChunkCollector collector = CullingStateManager.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
             if(collector != null)
                 this.renderLists = collector.createRenderLists();
         }

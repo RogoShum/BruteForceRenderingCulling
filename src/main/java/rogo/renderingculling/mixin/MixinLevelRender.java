@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
 import rogo.renderingculling.util.VanillaAsyncUtil;
 
@@ -50,17 +50,18 @@ public abstract class MixinLevelRender implements IEntitiesForRender {
 
     @Inject(method = "applyFrustum", at = @At(value = "HEAD"))
     public void onApplyFrustumHead(Frustum p_194355_, CallbackInfo ci) {
-        CullingHandler.applyFrustum = true;
+        CullingStateManager.applyFrustum = true;
+        CullingStateManager.updating();
     }
 
     @Inject(method = "applyFrustum", at = @At(value = "RETURN"))
     public void onApplyFrustumReturn(Frustum p_194355_, CallbackInfo ci) {
-        CullingHandler.applyFrustum = false;
+        CullingStateManager.applyFrustum = false;
     }
 
     @Inject(method = "prepareCullFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;<init>(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"))
     public void onPrepareCullFrustum(PoseStack p_172962_, Vec3 p_172963_, Matrix4f p_172964_, CallbackInfo ci) {
-        CullingHandler.PROJECTION_MATRIX = new Matrix4f(p_172964_);
+        CullingStateManager.PROJECTION_MATRIX = new Matrix4f(p_172964_);
     }
 
     @Override

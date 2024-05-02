@@ -22,7 +22,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -45,21 +44,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 
 import static java.lang.Thread.MAX_PRIORITY;
-import static rogo.renderingculling.api.CullingHandler.*;
+import static rogo.renderingculling.api.CullingStateManager.*;
 
 @Mod("brute_force_rendering_culling")
 public class ModLoader {
-
-    int BG = ((200 & 0xFF) << 24) |
-            ((0) << 16) |
-            ((0) << 8) |
-            ((0));
-
-    int B = ((100 & 0xFF) << 24) |
-            ((0xFF) << 16) |
-            ((0xFF) << 8) |
-            ((0xFF));
-
     public ModLoader() {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             registerShader();
@@ -68,7 +56,7 @@ public class ModLoader {
             ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
             FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerKeyBinding);
 
-            CullingHandler.init();
+            CullingStateManager.init();
         });
     }
 
@@ -93,7 +81,7 @@ public class ModLoader {
     public void registerKeyBinding(RegisterKeyMappingsEvent event) {
         event.register(CONFIG_KEY);
         event.register(DEBUG_KEY);
-        event.register(TEST_CULL_KEY);
+        //event.register(TEST_CULL_KEY);
     }
 
     private void registerShader() {
@@ -137,9 +125,9 @@ public class ModLoader {
                 Level level = Minecraft.getInstance().player.level();
                 Vec3 vec31 = Minecraft.getInstance().player.getEyePosition();
                 HitResult hitResult = level.clip(new ClipContext(vec31, vec31.add(vec3), ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, Minecraft.getInstance().player));
-                if(hitResult instanceof BlockHitResult) {
+                if (hitResult instanceof BlockHitResult) {
                     BlockPos pos = ((BlockHitResult) hitResult).getBlockPos();
-                    testPos = new BlockPos(pos.getX()>>4, pos.getY()>>4, pos.getZ()>>4);
+                    testPos = new BlockPos(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
                 }
             }
         }
@@ -148,16 +136,6 @@ public class ModLoader {
     public static BlockPos testPos = new BlockPos(0, 8, 0);
 
     public static void onKeyPress() {
-    }
-
-    @SubscribeEvent
-    public void onTooltip(RenderTooltipEvent.Color event) {
-        if (reColorToolTip) {
-            event.setBackgroundStart(BG);
-            event.setBackgroundEnd(BG);
-            event.setBorderStart(B);
-            event.setBorderEnd(B);
-        }
     }
 
     @SubscribeEvent
@@ -214,7 +192,7 @@ public class ModLoader {
 
     public static AABB getObjectAABB(Object o) {
         if (o instanceof BlockEntity) {
-            return  ((BlockEntity) o).getRenderBoundingBox();
+            return ((BlockEntity) o).getRenderBoundingBox();
         } else if (o instanceof Entity) {
             return ((Entity) o).getBoundingBox();
         } else if (o instanceof IAABBObject) {
@@ -222,5 +200,11 @@ public class ModLoader {
         }
 
         return null;
+    }
+
+    public static void pauseAsync() {
+        if (ModLoader.hasMod("embeddium")) {
+            fullChunkUpdateCooldown = 60;
+        }
     }
 }

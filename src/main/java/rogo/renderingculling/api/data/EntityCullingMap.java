@@ -5,7 +5,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.util.LifeTimer;
 
@@ -23,13 +23,18 @@ public class EntityCullingMap extends CullingMap {
     }
 
     @Override
+    protected boolean shouldUpdate() {
+        return true;
+    }
+
+    @Override
     int configDelayCount() {
         return Config.getDepthUpdateDelay();
     }
 
     @Override
     int bindFrameBufferId() {
-        return CullingHandler.ENTITY_CULLING_MAP_TARGET.frameBufferId;
+        return CullingStateManager.ENTITY_CULLING_MAP_TARGET.frameBufferId;
     }
 
     public boolean isObjectVisible(Object o) {
@@ -42,12 +47,12 @@ public class EntityCullingMap extends CullingMap {
         int idx = entityMap.getIndex(o);
         idx = 1 + idx * 4;
         if (entityMap.tempObjectTimer.contains(o))
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
 
         if (idx > -1 && idx < cullingBuffer.limit()) {
             return (cullingBuffer.get(idx) & 0xFF) > 0;
         } else {
-            entityMap.addTemp(o, CullingHandler.clientTickCount);
+            entityMap.addTemp(o, CullingStateManager.clientTickCount);
         }
         return true;
     }

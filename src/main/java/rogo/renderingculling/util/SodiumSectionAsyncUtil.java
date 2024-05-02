@@ -9,7 +9,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
 import me.jellysquid.mods.sodium.client.render.chunk.region.RenderRegion;
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.world.level.Level;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.impl.ICollectorAccessor;
 
 import java.util.ArrayDeque;
@@ -39,13 +39,13 @@ public class SodiumSectionAsyncUtil {
 
     public static void asyncSearchRebuildSection() {
         shouldUpdate.acquireUninterruptibly();
-        if (CullingHandler.enabledShader() && shadowViewport != null) {
+        if (CullingStateManager.enabledShader() && shadowViewport != null) {
             frame++;
-            CullingHandler.useOcclusionCulling = false;
+            CullingStateManager.useOcclusionCulling = false;
             AsynchronousChunkCollector shadowCollector = new AsynchronousChunkCollector(frame);
             occlusionCuller.findVisible(shadowCollector, shadowViewport, shadowSearchDistance, shadowUseOcclusionCulling, frame);
             SodiumSectionAsyncUtil.shadowCollector = shadowCollector;
-            CullingHandler.useOcclusionCulling = true;
+            CullingStateManager.useOcclusionCulling = true;
         }
 
         if (viewport != null) {
@@ -54,8 +54,8 @@ public class SodiumSectionAsyncUtil {
             occlusionCuller.findVisible(collector, viewport, searchDistance, useOcclusionCulling, frame);
             SodiumSectionAsyncUtil.collector = collector;
 
-            if(CullingHandler.CHUNK_CULLING_MAP != null)
-                CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
+            if(CullingStateManager.CHUNK_CULLING_MAP != null)
+                CullingStateManager.CHUNK_CULLING_MAP.queueUpdateCount++;
             Map<ChunkUpdateType, ArrayDeque<RenderSection>> rebuildList = SodiumSectionAsyncUtil.collector.getRebuildLists();
             for(ArrayDeque<RenderSection> arrayDeque : rebuildList.values()) {
                 if (!arrayDeque.isEmpty()) {
@@ -67,7 +67,7 @@ public class SodiumSectionAsyncUtil {
     }
 
     public static void update(Viewport viewport, float searchDistance, boolean useOcclusionCulling) {
-        if (CullingHandler.renderingShader()) {
+        if (CullingStateManager.renderingShader()) {
             SodiumSectionAsyncUtil.shadowViewport = viewport;
             SodiumSectionAsyncUtil.shadowSearchDistance = searchDistance;
             SodiumSectionAsyncUtil.shadowUseOcclusionCulling = useOcclusionCulling;
@@ -126,7 +126,7 @@ public class SodiumSectionAsyncUtil {
 
         @Override
         public Map<ChunkUpdateType, ArrayDeque<RenderSection>> getRebuildLists() {
-            if(CullingHandler.needPauseRebuild()) {
+            if(CullingStateManager.needPauseRebuild()) {
                 return syncRebuildLists;
             }
             super.getRebuildLists().forEach(((chunkUpdateType, renderSections) -> {

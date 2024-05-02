@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import org.jetbrains.annotations.NotNull;
 import rogo.renderingculling.api.Config;
-import rogo.renderingculling.api.CullingHandler;
+import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
 import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
@@ -40,7 +40,7 @@ public class VanillaAsyncUtil {
         while (!queue.isEmpty()) {
             LevelRenderer.RenderChunkInfo last = queue.poll();
             ChunkRenderDispatcher.RenderChunk lastRenderChunk = ((IRenderChunkInfo) last).getRenderChunk();
-            if (originChunk != last && (!CullingHandler.FRUSTUM.isVisible(lastRenderChunk.getBoundingBox()) || !CullingHandler.shouldRenderChunk((IRenderSectionVisibility) lastRenderChunk, true))) {
+            if (originChunk != last && (!CullingStateManager.FRUSTUM.isVisible(lastRenderChunk.getBoundingBox()) || !CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) lastRenderChunk, true))) {
                 continue;
             }
 
@@ -61,8 +61,8 @@ public class VanillaAsyncUtil {
                 }
             }
         }
-        if(CullingHandler.CHUNK_CULLING_MAP != null)
-            CullingHandler.CHUNK_CULLING_MAP.queueUpdateCount++;
+        if(CullingStateManager.CHUNK_CULLING_MAP != null)
+            CullingStateManager.CHUNK_CULLING_MAP.queueUpdateCount++;
         storage = renderChunkStorage;
     }
 

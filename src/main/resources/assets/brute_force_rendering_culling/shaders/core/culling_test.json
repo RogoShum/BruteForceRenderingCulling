@@ -10,18 +10,11 @@
     "Position"
   ],
   "samplers": [
-    {
-      "name": "Sampler0"
-    },
-    {
-      "name": "Sampler1"
-    },
-    {
-      "name": "Sampler2"
-    },
-    {
-      "name": "Sampler3"
-    }
+    { "name": "Sampler0" },
+    { "name": "Sampler1" },
+    { "name": "Sampler2" },
+    { "name": "Sampler3" },
+    { "name": "Sampler4" }
   ],
   "uniforms": [
     {
