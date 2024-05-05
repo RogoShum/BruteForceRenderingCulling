@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "brute_force_rendering_culling",
-	"version": "0.5.8",
+	"version": "0.5.9",
 	"name": "Brute force Rendering Culling",
 	"description": "",
 	"authors": [
@@ -23,12 +23,12 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.15.9",
-		"minecraft": "~1.20.1",
+		"minecraft": ">=1.20.4",
 		"java": ">=17",
 		"fabric-api": "*"
 	},
-	"suggests": {
-		"another-mod": "*"
+	"breaks": {
+		"iris": "<1.7.0"
 	},
 	"accessWidener" : "brute_force_rendering_culling.accesswidener"
 }

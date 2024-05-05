@@ -58,8 +58,8 @@ public abstract class MixinRenderSectionManager {
         return value;
     }
 
-    @Inject(method = "updateChunks", at = @At(value = "HEAD"), remap = false)
-    private void onCreateTerrainRenderList(boolean updateImmediately, CallbackInfo ci) {
+    @Inject(method = "tickVisibleRenders", at = @At(value = "HEAD"), remap = false)
+    private void onCreateTerrainRenderList(CallbackInfo ci) {
         if (Config.getAsyncChunkRebuild()) {
             VisibleChunkCollector collector = CullingStateManager.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
             if(collector != null)

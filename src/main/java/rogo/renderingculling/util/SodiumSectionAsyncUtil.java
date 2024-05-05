@@ -1,5 +1,6 @@
 package rogo.renderingculling.util;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkUpdateType;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
@@ -95,13 +96,19 @@ public class SodiumSectionAsyncUtil {
     public static class AsynchronousChunkCollector extends VisibleChunkCollector {
         private final HashMap<RenderRegion, ChunkRenderList> renderListMap = new HashMap<>();
         private final EnumMap<ChunkUpdateType, ArrayDeque<RenderSection>> syncRebuildLists;
+        private static final EnumMap<ChunkUpdateType, ArrayDeque<RenderSection>> EMPTY_LIST = new EnumMap<>(ChunkUpdateType.class);
+        static {
+            for (ChunkUpdateType type : ChunkUpdateType.values()) {
+                EMPTY_LIST.put(type, new ArrayDeque<>());
+            }
+
+        }
+        private boolean sent;
 
         public AsynchronousChunkCollector(int frame) {
             super(frame);
             this.syncRebuildLists = new EnumMap<>(ChunkUpdateType.class);
-            ChunkUpdateType[] var2 = ChunkUpdateType.values();
-
-            for (ChunkUpdateType type : var2) {
+            for (ChunkUpdateType type : ChunkUpdateType.values()) {
                 this.syncRebuildLists.put(type, new ArrayDeque<>());
             }
         }
@@ -126,6 +133,14 @@ public class SodiumSectionAsyncUtil {
 
         @Override
         public Map<ChunkUpdateType, ArrayDeque<RenderSection>> getRebuildLists() {
+            if(!RenderSystem.isOnRenderThread()) {
+                return super.getRebuildLists();
+            }
+            if(!sent) {
+                sent = true;
+            } else {
+                return EMPTY_LIST;
+            }
             if(CullingStateManager.needPauseRebuild()) {
                 return syncRebuildLists;
             }

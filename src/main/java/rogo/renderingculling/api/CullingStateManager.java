@@ -11,6 +11,7 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -27,10 +28,10 @@ import org.slf4j.Logger;
 import rogo.renderingculling.api.data.ChunkCullingMap;
 import rogo.renderingculling.api.data.EntityCullingMap;
 import rogo.renderingculling.api.impl.IEntitiesForRender;
-import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
+import rogo.renderingculling.mixin.AccessorSectionOcclusionGraph;
 import rogo.renderingculling.util.DepthContext;
 import rogo.renderingculling.util.LifeTimer;
 import rogo.renderingculling.util.OcclusionCullerThread;
@@ -313,7 +314,7 @@ public class CullingStateManager {
     public static void onProfilerPopPush(String s) {
         switch (s) {
             case "beforeRunTick" -> {
-                if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
+                if (((AccessorSectionOcclusionGraph)((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getSectionOcclusionGraph()).getNeedsFullUpdate() && Minecraft.getInstance().level != null) {
                     ModLoader.pauseAsync();
 
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
@@ -595,8 +596,8 @@ public class CullingStateManager {
                     CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tick(clientTickCount);
                     Iterable<Entity> entities = Minecraft.getInstance().level.entitiesForRendering();
                     entities.forEach(entity -> CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
-                    for (Object levelrenderer$renderchunkinfo : ((IEntitiesForRender) Minecraft.getInstance().levelRenderer).renderChunksInFrustum()) {
-                        List<BlockEntity> list = ((IRenderChunkInfo) levelrenderer$renderchunkinfo).getRenderChunk().getCompiledChunk().getRenderableBlockEntities();
+                    for (SectionRenderDispatcher.RenderSection section : ((IEntitiesForRender) Minecraft.getInstance().levelRenderer).renderChunksInFrustum()) {
+                        List<BlockEntity> list = section.getCompiled().getRenderableBlockEntities();
                         list.forEach(entity -> CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
                     }
 
