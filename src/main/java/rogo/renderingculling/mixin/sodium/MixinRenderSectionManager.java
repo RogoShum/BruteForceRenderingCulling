@@ -44,8 +44,11 @@ public abstract class MixinRenderSectionManager {
             cir.setReturnValue(CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false));
     }
 
-    @Inject(method = "update", at = @At(value = "HEAD"), remap = false)
+    @Inject(method = "update", at = @At(value = "HEAD"), remap = false, cancellable = true)
     private void onUpdate(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci) {
+        if(CullingStateManager.checkCulling && CullingStateManager.DEBUG > 1) {
+            ci.cancel();
+        }
         CullingStateManager.updating();
     }
 

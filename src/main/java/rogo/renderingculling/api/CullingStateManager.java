@@ -207,9 +207,6 @@ public class CullingStateManager {
             render = actualRender;
         }
 
-        if (checkCulling)
-            render = !render;
-
         if (actualRender) {
             section.updateVisibleTick(lastVisibleUpdatedFrame);
         }
@@ -255,9 +252,6 @@ public class CullingStateManager {
 
         preBlockCullingTime += System.nanoTime() - time;
 
-        if (checkCulling)
-            visible = !visible;
-
         if (!visible) {
             blockCulling++;
         } else if (actualVisible)
@@ -297,9 +291,6 @@ public class CullingStateManager {
         }
 
         preEntityCullingTime += System.nanoTime() - time;
-
-        if (checkCulling)
-            visible = !visible;
 
         if (!visible) {
             entityCulling++;

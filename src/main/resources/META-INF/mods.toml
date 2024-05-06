@@ -56,6 +56,14 @@ description='''${mod_description}'''
     side="CLIENT"
 # Here's another dependency
 [[dependencies.brute_force_rendering_culling]]
+    modId="oculus"
+    mandatory=false
+    # This version range declares a minimum of the current minecraft version up to but not including the next major version
+    versionRange="[1.7.0,)"
+    ordering="NONE"
+    side="CLIENT"
+
+[[dependencies.brute_force_rendering_culling]]
     modId="minecraft"
     mandatory=true
     # This version range declares a minimum of the current minecraft version up to but not including the next major version

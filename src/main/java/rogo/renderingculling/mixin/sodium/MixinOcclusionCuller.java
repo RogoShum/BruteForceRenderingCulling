@@ -18,7 +18,7 @@ public abstract class MixinOcclusionCuller {
 
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, cancellable = true)
     private static void onIsSectionVisible(RenderSection section, Viewport viewport, float maxDistance, CallbackInfoReturnable<Boolean> cir) {
-        if (Config.shouldCullChunk() && cir.getReturnValue() && !CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, true))
+        if (Config.shouldCullChunk() && !CullingStateManager.checkCulling && cir.getReturnValue() && !CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, true))
             cir.setReturnValue(false);
     }
 

@@ -154,8 +154,8 @@ dependencies {
     compileOnly fg.deobf("maven.modrinth:embeddium:0.3.12+mc1.20.1")
     implementation fg.deobf("maven.modrinth:embeddium:0.3.12+mc1.20.1")
 
-    compileOnly fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
-    implementation fg.deobf('maven.modrinth:oculus:1.20.1-1.6.15a')
+    compileOnly fg.deobf('maven.modrinth:oculus:1.20.1-1.7.0')
+    implementation fg.deobf('maven.modrinth:oculus:1.20.1-1.7.0')
 }
 
 mixin {
