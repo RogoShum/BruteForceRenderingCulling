@@ -271,7 +271,6 @@ public class CullingRenderEvent {
             RenderSystem.getModelViewStack().pushPose();
             RenderSystem.getModelViewStack().translate(0, 0, -1);
             RenderSystem.applyModelViewMatrix();
-            bufferbuilder.end();
             BufferUploader.draw(bufferbuilder.end());
             RenderSystem.getModelViewStack().popPose();
             RenderSystem.applyModelViewMatrix();
