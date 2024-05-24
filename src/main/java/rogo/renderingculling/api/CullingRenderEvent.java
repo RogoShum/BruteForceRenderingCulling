@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import rogo.renderingculling.api.impl.ICullingShader;
@@ -271,7 +270,7 @@ public class CullingRenderEvent {
             RenderSystem.getModelViewStack().pushPose();
             RenderSystem.getModelViewStack().translate(0, 0, -1);
             RenderSystem.applyModelViewMatrix();
-            BufferUploader.draw(bufferbuilder.end());
+            BufferUploader.drawWithShader(bufferbuilder.end());
             RenderSystem.getModelViewStack().popPose();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
@@ -283,7 +282,7 @@ public class CullingRenderEvent {
             bufferbuilder.vertex(left, top, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
             bufferbuilder.vertex(right, top, 0.0D).color(1.0F, 1.0F, 1.0F, 1.0F).endVertex();
             RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            BufferUploader.draw(bufferbuilder.end());
+            BufferUploader.drawWithShader(bufferbuilder.end());
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableBlend();
             renderText(event.getPoseStack(), monitorTexts, width, top);

@@ -76,7 +76,7 @@ public class ConfigScreen extends Screen {
                 .color(bgColor, bgColor, bgColor, bgAlpha)
                 .uv(u(right - 1), v(top - 1)).endVertex();
         RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
-        BufferUploader.draw(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.end());
         bgAlpha = 1.0f;
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
@@ -90,7 +90,7 @@ public class ConfigScreen extends Screen {
                 .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
-        BufferUploader.draw(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
@@ -274,7 +274,7 @@ public class ConfigScreen extends Screen {
                 .color(bgColor, bgColor, bgColor, bgAlpha).endVertex();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        BufferUploader.draw(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.disableBlend();
 
         partHeight = 0;

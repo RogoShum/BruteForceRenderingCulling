@@ -75,7 +75,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY() + height, 90.0D).color(color, color, color, 1.0f).endVertex();
         bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)) + 8, this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
         bufferbuilder.vertex(this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(), 90.0D).color(color, color, color, 1.0f).endVertex();
-        BufferUploader.draw(bufferbuilder.end());
+        BufferUploader.drawWithShader(bufferbuilder.end());
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
