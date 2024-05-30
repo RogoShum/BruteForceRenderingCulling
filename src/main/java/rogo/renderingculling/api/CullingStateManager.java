@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.ViewportEvent;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Checks;
@@ -232,26 +233,27 @@ public class CullingStateManager {
         if (Config.getBlockEntitiesSkip().contains(type))
             return false;
 
+        boolean visible = false;
+        boolean actualVisible;
+
         if (DEBUG < 2) {
-            if (visibleBlock.contains(pos)) {
-                return false;
-            } else if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
+            if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
                 visibleBlock.updateUsageTick(pos, clientTickCount);
-                return false;
+                visible = true;
+            } else if (visibleBlock.contains(pos)) {
+                visible = true;
             }
-            return true;
+            return !visible;
         }
 
         long time = System.nanoTime();
 
-        boolean visible;
-        boolean actualVisible = false;
+        actualVisible = ENTITY_CULLING_MAP.isObjectVisible(blockEntity);
 
-        if (visibleBlock.contains(pos)) {
+        if (actualVisible) {
             visible = true;
-        } else {
-            actualVisible = ENTITY_CULLING_MAP.isObjectVisible(blockEntity);
-            visible = actualVisible;
+        } else if(visibleBlock.contains(pos)) {
+            visible = true;
         }
 
         preBlockCullingTime += System.nanoTime() - time;
@@ -275,26 +277,27 @@ public class CullingStateManager {
             return false;
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
+        boolean visible = false;
+        boolean actualVisible;
+
         if (DEBUG < 2) {
-            if (visibleEntity.contains(entity)) {
-                return false;
-            } else if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
+            if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
                 visibleEntity.updateUsageTick(entity, clientTickCount);
-                return false;
+                visible = true;
+            } else if (visibleEntity.contains(entity)) {
+                visible = true;
             }
-            return true;
+            return !visible;
         }
 
         long time = System.nanoTime();
 
-        boolean visible;
-        boolean actualVisible = false;
+        actualVisible = ENTITY_CULLING_MAP.isObjectVisible(entity);
 
-        if (visibleEntity.contains(entity)) {
+        if (actualVisible) {
             visible = true;
-        } else {
-            actualVisible = ENTITY_CULLING_MAP.isObjectVisible(entity);
-            visible = actualVisible;
+        } else if(visibleEntity.contains(entity)) {
+            visible = true;
         }
 
         preEntityCullingTime += System.nanoTime() - time;
@@ -524,7 +527,7 @@ public class CullingStateManager {
             });
 
             bindMainFrameTarget();
-            ViewportEvent.ComputeCameraAngles cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
+            ViewportEvent.ComputeCameraAngles cameraSetup = ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer
                     , CAMERA, Minecraft.getInstance().getFrameTime());
             PoseStack viewMatrix = new PoseStack();
             Vec3 cameraPos = CAMERA.getPosition();

@@ -122,7 +122,7 @@ public class EntityCullingMap extends CullingMap {
                 buffer.put((float) index);
 
                 float size = (float) Math.max(aabb.getXsize(), aabb.getZsize());
-                buffer.put(size);
+                buffer.put(size*1.5F);
                 buffer.put((float) aabb.getYsize());
 
                 Vec3 pos = aabb.getCenter();
