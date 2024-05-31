@@ -228,7 +228,7 @@ public class CullingStateManager {
             return false;
         }
 
-        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullBlockEntity()) return false;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
         if (Config.getBlockEntitiesSkip().contains(type))
             return false;
@@ -426,7 +426,7 @@ public class CullingStateManager {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 long time = System.nanoTime();
                 if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
                     ENTITY_CULLING_MAP.readData();
@@ -572,7 +572,7 @@ public class CullingStateManager {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 if (ENTITY_CULLING_MAP == null) {
                     ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
                     if (CHUNK_CULLING_MAP != null) {
@@ -677,7 +677,7 @@ public class CullingStateManager {
     }
 
     public static boolean anyCulling() {
-        return Config.getCullChunk() || Config.getCullEntity();
+        return Config.getCullChunk() || Config.doEntityCulling();
     }
 
     public static boolean anyNeedTransfer() {

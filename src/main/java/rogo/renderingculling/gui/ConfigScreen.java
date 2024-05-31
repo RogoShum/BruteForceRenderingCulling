@@ -172,6 +172,14 @@ public class ConfigScreen extends Screen {
 
         addConfigButton(Config::getCullChunk, Config::setCullChunk, () -> ComponentUtil.translatable("brute_force_rendering_culling.cull_chunk"))
                 .setDetailMessage(() -> ComponentUtil.translatable("brute_force_rendering_culling.detail.cull_chunk"));
+        addConfigButton(Config::getCullBlockEntity, Config::setCullBlockEntity, () -> ComponentUtil.translatable("brute_force_rendering_culling.cull_block_entity"))
+                .setDetailMessage(() -> {
+                    if (CullingStateManager.gl33()) {
+                        return ComponentUtil.translatable("brute_force_rendering_culling.detail.cull_block_entity");
+                    } else {
+                        return ComponentUtil.translatable("brute_force_rendering_culling.detail.gl33");
+                    }
+                });
         addConfigButton(Config::getCullEntity, Config::setCullEntity, () -> ComponentUtil.translatable("brute_force_rendering_culling.cull_entity"))
                 .setDetailMessage(() -> {
                     if (CullingStateManager.gl33()) {

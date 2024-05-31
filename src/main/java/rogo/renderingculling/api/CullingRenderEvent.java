@@ -43,7 +43,7 @@ public class CullingRenderEvent {
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
 
-        if (Config.getCullEntity() && CullingStateManager.ENTITY_CULLING_MAP != null && CullingStateManager.ENTITY_CULLING_MAP.needTransferData()) {
+        if (Config.doEntityCulling() && CullingStateManager.ENTITY_CULLING_MAP != null && CullingStateManager.ENTITY_CULLING_MAP.needTransferData()) {
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
             CullingStateManager.callDepthTexture();
@@ -205,6 +205,10 @@ public class CullingRenderEvent {
                     + (Config.getCullEntity() ? ComponentUtil.translatable("brute_force_rendering_culling.enable").getString() : ComponentUtil.translatable("brute_force_rendering_culling.disable").getString());
             addString(monitorTexts, cull);
 
+            String cull_block_entity = ComponentUtil.translatable("brute_force_rendering_culling.cull_block_entity").getString() + ": "
+                    + (Config.getCullBlockEntity() ? ComponentUtil.translatable("brute_force_rendering_culling.enable").getString() : ComponentUtil.translatable("brute_force_rendering_culling.disable").getString());
+            addString(monitorTexts, cull_block_entity);
+
             String cull_chunk = ComponentUtil.translatable("brute_force_rendering_culling.cull_chunk").getString() + ": "
                     + (Config.getCullChunk() ? ComponentUtil.translatable("brute_force_rendering_culling.enable").getString() : ComponentUtil.translatable("brute_force_rendering_culling.disable").getString());
             addString(monitorTexts, cull_chunk);
@@ -213,7 +217,7 @@ public class CullingRenderEvent {
                 String Sampler = ComponentUtil.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
                 addString(monitorTexts, Sampler);
 
-                if (Config.getCullEntity()) {
+                if (Config.doEntityCulling()) {
                     String blockCullingTime = ComponentUtil.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingStateManager.blockCullingTime / 1000 / CullingStateManager.fps) + " μs";
                     addString(monitorTexts, blockCullingTime);
 
@@ -311,7 +315,7 @@ public class CullingRenderEvent {
                 screenScale *= 0.5f;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
