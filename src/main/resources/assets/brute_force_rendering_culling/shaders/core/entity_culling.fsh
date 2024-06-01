@@ -174,10 +174,13 @@ void main() {
         minY = screenPos.y;
     }
 
+    /*
     if (!inside) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
+    */
+
 
     minX = min(1.0, max(0.0, minX));
     maxX = min(1.0, max(0.0, maxX));
@@ -195,7 +198,7 @@ void main() {
     minY = max(minY-yStep, 0.0);
     maxY = min(maxY+yStep, 1.0);
 
-    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z);
+    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth)+DepthOffset)).z);
     for (float x = minX; x <= maxX; x += xStep) {
         for (float y = minY; y <= maxY; y += yStep) {
             float pixelDepth = getUVDepth(idx, vec2(x, y));

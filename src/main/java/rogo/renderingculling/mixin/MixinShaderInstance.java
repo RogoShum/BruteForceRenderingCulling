@@ -31,6 +31,8 @@ public abstract class MixinShaderInstance implements ICullingShader {
     @Nullable
     public Uniform BOX_SCALE;
     @Nullable
+    public Uniform DEPTH_OFFSET;
+    @Nullable
     public Uniform RENDER_DISTANCE;
     @Nullable
     public Uniform DEPTH_SIZE;
@@ -60,6 +62,7 @@ public abstract class MixinShaderInstance implements ICullingShader {
         this.CULLING_CAMERA_POS = this.getUniform("CullingCameraPos");
         this.CULLING_CAMERA_DIR = this.getUniform("CullingCameraDir");
         this.BOX_SCALE = this.getUniform("BoxScale");
+        this.DEPTH_OFFSET = this.getUniform("DepthOffset");
         this.RENDER_DISTANCE = this.getUniform("RenderDistance");
         this.DEPTH_SIZE = this.getUniform("DepthSize");
         this.CULLING_SIZE = this.getUniform("CullingSize");
@@ -134,6 +137,11 @@ public abstract class MixinShaderInstance implements ICullingShader {
 
     @Override
     public Uniform getBoxScale() {
+        return BOX_SCALE;
+    }
+
+    @Override
+    public Uniform getDepthOffset() {
         return BOX_SCALE;
     }
 

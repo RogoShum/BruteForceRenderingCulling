@@ -11,6 +11,7 @@ import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 import static net.minecraftforge.common.extensions.IForgeBlockEntity.INFINITE_EXTENT_AABB;
@@ -51,10 +52,16 @@ public class EntityCullingMap extends CullingMap {
 
         if (idx > -1 && idx < cullingBuffer.limit()) {
             return (cullingBuffer.get(idx) & 0xFF) > 0;
-        } else {
+        } else if(delayCount <= 0) {
             entityMap.addTemp(o, CullingStateManager.clientTickCount);
         }
         return true;
+    }
+
+    @Override
+    public void readData() {
+        super.readData();
+        entityMap.clearNew();
     }
 
     public EntityMap getEntityTable() {
@@ -70,7 +77,7 @@ public class EntityCullingMap extends CullingMap {
     public static class EntityMap {
         private final HashMap<Object, Integer> indexMap = new HashMap<>();
         private final LifeTimer<Object> tempObjectTimer = new LifeTimer<>();
-        private int innerCount;
+        private final HashSet<Object> newToTemp = new HashSet<>();
 
         public EntityMap() {
         }
@@ -88,23 +95,31 @@ public class EntityCullingMap extends CullingMap {
 
         public void addTemp(Object obj, int tickCount) {
             tempObjectTimer.updateUsageTick(obj, tickCount);
+            if(!tempObjectTimer.contains(obj)) {
+                newToTemp.add(obj);
+            }
         }
 
         public void copyTemp(EntityMap entityMap, int tickCount) {
             entityMap.tempObjectTimer.foreach(o -> addTemp(o, tickCount));
-            innerCount = tickCount;
         }
 
         public Integer getIndex(Object obj) {
+            if(newToTemp.contains(obj))
+                return -1;
             return indexMap.getOrDefault(obj, -1);
         }
 
-        public void tick(int tickCount) {
+        public void clearNew() {
+            newToTemp.clear();
+        }
+
+        public void clearIndexMap() {
             indexMap.clear();
-            if (innerCount < tickCount) {
-                tempObjectTimer.tick(tickCount, 40);
-                innerCount = tickCount;
-            }
+        }
+
+        public void tickTemp(int tickCount) {
+            tempObjectTimer.tick(tickCount, 2);
         }
 
         public void addAllTemp() {
@@ -114,7 +129,6 @@ public class EntityCullingMap extends CullingMap {
         public void clear() {
             indexMap.clear();
             tempObjectTimer.clear();
-            innerCount = 0;
         }
 
         private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, AABB aabb, int index) {

@@ -383,6 +383,8 @@ public class CullingStateManager {
             if (isNextLoop()) {
                 visibleBlock.tick(clientTickCount, 1);
                 visibleEntity.tick(clientTickCount, 1);
+                if(CullingStateManager.ENTITY_CULLING_MAP != null)
+                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tickTemp(clientTickCount);
 
                 applyFrustumTime = preApplyFrustumTime;
                 preApplyFrustumTime = 0;
@@ -598,7 +600,7 @@ public class CullingStateManager {
                 preEntityCullingInitTime += System.nanoTime() - time;
 
                 if (Minecraft.getInstance().level != null) {
-                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tick(clientTickCount);
+                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().clearIndexMap();
                     Iterable<Entity> entities = Minecraft.getInstance().level.entitiesForRendering();
                     entities.forEach(entity -> CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
                     for (Object levelrenderer$renderchunkinfo : ((IEntitiesForRender) Minecraft.getInstance().levelRenderer).renderChunksInFrustum()) {

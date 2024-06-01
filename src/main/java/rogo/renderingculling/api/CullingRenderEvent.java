@@ -93,6 +93,9 @@ public class CullingRenderEvent {
         if (shaderInstance.getBoxScale() != null) {
             shaderInstance.getBoxScale().set(8.0f);
         }
+        if (shaderInstance.getDepthOffset() != null) {
+            shaderInstance.getDepthOffset().set(8.0f);
+        }
         if (shaderInstance.getFrustumPos() != null && CullingStateManager.FRUSTUM != null) {
             Vec3 pos = new Vec3(
                     ((AccessorFrustum) CullingStateManager.FRUSTUM).camX(),
