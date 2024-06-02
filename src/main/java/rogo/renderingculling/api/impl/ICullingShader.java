@@ -7,7 +7,6 @@ public interface ICullingShader {
     Uniform getCullingCameraPos();
     Uniform getCullingCameraDir();
     Uniform getBoxScale();
-    Uniform getDepthOffset();
     Uniform getDepthSize();
     Uniform getCullingSize();
     Uniform getLevelHeightOffset();

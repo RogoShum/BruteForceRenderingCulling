@@ -47,6 +47,7 @@ public class CullingRenderEvent {
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
             CullingStateManager.callDepthTexture();
+            CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingStateManager.INSTANCED_ENTITY_CULLING_SHADER);
         }
 
@@ -92,9 +93,6 @@ public class CullingRenderEvent {
         }
         if (shaderInstance.getBoxScale() != null) {
             shaderInstance.getBoxScale().set(8.0f);
-        }
-        if (shaderInstance.getDepthOffset() != null) {
-            shaderInstance.getDepthOffset().set(8.0f);
         }
         if (shaderInstance.getFrustumPos() != null && CullingStateManager.FRUSTUM != null) {
             Vec3 pos = new Vec3(

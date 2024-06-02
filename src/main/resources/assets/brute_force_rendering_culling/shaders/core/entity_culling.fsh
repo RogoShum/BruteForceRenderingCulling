@@ -5,7 +5,6 @@ uniform mat4 CullingViewMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
 uniform mat4 CullingProjMat;
-uniform float DepthOffset;
 uniform vec3 FrustumPos;
 
 uniform sampler2D Sampler0;
@@ -198,7 +197,7 @@ void main() {
     minY = max(minY-yStep, 0.0);
     maxY = min(maxY+yStep, 1.0);
 
-    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth)+DepthOffset)).z);
+    float entityDepth = LinearizeDepth(worldToScreenSpace(moveTowardsCamera(Pos, sqrt(halfWidth*halfWidth+halfWidth*halfWidth))).z);
     for (float x = minX; x <= maxX; x += xStep) {
         for (float y = minY; y <= maxY; y += yStep) {
             float pixelDepth = getUVDepth(idx, vec2(x, y));

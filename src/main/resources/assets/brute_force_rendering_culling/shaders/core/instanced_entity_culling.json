@@ -21,7 +21,6 @@
         { "name": "CullingCameraDir", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingCameraPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
         { "name": "DepthSize", "type": "float", "count": 10, "values": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
-        { "name": "DepthOffset", "type": "float", "count": 1, "values": [1.0] },
         { "name": "FrustumPos", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0] },
         { "name": "CullingFrustum", "type": "float", "count": 24, "values": [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ] }
     ]

@@ -17,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.AABB;
@@ -263,8 +264,9 @@ public class CullingStateManager {
 
         if (!visible) {
             blockCulling++;
-        } else if (actualVisible)
+        } else if (actualVisible) {
             visibleBlock.updateUsageTick(pos, clientTickCount);
+        }
 
         return !visible;
     }
@@ -307,8 +309,9 @@ public class CullingStateManager {
 
         if (!visible) {
             entityCulling++;
-        } else if (actualVisible)
+        } else if (actualVisible) {
             visibleEntity.updateUsageTick(entity, clientTickCount);
+        }
 
         return !visible;
     }
@@ -381,8 +384,8 @@ public class CullingStateManager {
             }
 
             if (isNextLoop()) {
-                visibleBlock.tick(clientTickCount, 1);
-                visibleEntity.tick(clientTickCount, 1);
+                visibleBlock.tick(clientTickCount, 3);
+                visibleEntity.tick(clientTickCount, 3);
                 if(CullingStateManager.ENTITY_CULLING_MAP != null)
                     CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tickTemp(clientTickCount);
 
@@ -582,11 +585,9 @@ public class CullingStateManager {
                     }
                 }
 
-                int tableCapacity = CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 64;
-                tableCapacity = tableCapacity * 64 + 64;
-                int cullingSize = (int) Math.sqrt(tableCapacity) + 1;
-                if (CullingStateManager.ENTITY_CULLING_MAP_TARGET.width != cullingSize || CullingStateManager.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
-                    CullingStateManager.ENTITY_CULLING_MAP_TARGET.resize(cullingSize, cullingSize, Minecraft.ON_OSX);
+                int cullingSize = CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 8 + 1;
+                if (CullingStateManager.ENTITY_CULLING_MAP_TARGET.width != 8 || CullingStateManager.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
+                    CullingStateManager.ENTITY_CULLING_MAP_TARGET.resize(8, cullingSize, Minecraft.ON_OSX);
                     if (ENTITY_CULLING_MAP != null) {
                         EntityCullingMap temp = ENTITY_CULLING_MAP;
                         ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
@@ -610,8 +611,6 @@ public class CullingStateManager {
 
                     CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addAllTemp();
                 }
-
-                CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             }
 
             fps = ((AccessorMinecraft) Minecraft.getInstance()).getFps();
@@ -644,7 +643,7 @@ public class CullingStateManager {
         for (DEPTH_INDEX = 0; DEPTH_INDEX < DEPTH_BUFFER_TARGET.length; ++DEPTH_INDEX) {
             int lastTexture = DEPTH_INDEX == 0 ? MAIN_DEPTH_TEXTURE : DEPTH_BUFFER_TARGET[DEPTH_INDEX - 1].getColorTextureId();
             consumer.accept(new DepthContext(DEPTH_BUFFER_TARGET[DEPTH_INDEX], DEPTH_INDEX, f, lastTexture));
-            f *= 0.3f;
+            f *= 0.4f;
         }
     }
 
