@@ -78,7 +78,7 @@ public class EntityCullingMap extends CullingMap {
     public static class EntityMap {
         private final IndexedSet<Object> indexMap = new IndexedSet<>();
         private final LifeTimer<Object> tempObjectTimer = new LifeTimer<>();
-        private HashSet<Object> upload = new HashSet<>();
+        private HashSet<Object> uploadTemp = new HashSet<>();
         private HashSet<Object> readTemp = new HashSet<>();
         private HashMap<Object, Integer> uploadEntity = new HashMap<>();
         private HashMap<Object, Integer> readEntity = new HashMap<>();
@@ -101,6 +101,10 @@ public class EntityCullingMap extends CullingMap {
 
         public void copyTemp(EntityMap entityMap, int tickCount) {
             entityMap.tempObjectTimer.foreach(o -> addTemp(o, tickCount));
+            this.uploadTemp.addAll(entityMap.uploadTemp);
+            this.uploadEntity.putAll(entityMap.uploadEntity);
+            this.readTemp = uploadTemp;
+            this.readEntity = uploadEntity;
         }
 
         public Integer getIndex(Object obj) {
@@ -110,14 +114,14 @@ public class EntityCullingMap extends CullingMap {
         }
 
         public void readUpload() {
-            readTemp = upload;
-            upload = new HashSet<>();
+            readTemp = uploadTemp;
+            uploadTemp = new HashSet<>();
             readEntity = uploadEntity;
             uploadEntity = new HashMap<>();
         }
 
         public void clearUpload() {
-            upload.clear();
+            uploadTemp.clear();
             uploadEntity.clear();
         }
 
@@ -157,7 +161,7 @@ public class EntityCullingMap extends CullingMap {
             clearUpload();
             indexMap.forEach((o, index) -> {
                 addAttribute(consumer, ModLoader.getObjectAABB(o), index);
-                upload.add(o);
+                uploadTemp.add(o);
                 uploadEntity.put(o, index);
             });
         }
