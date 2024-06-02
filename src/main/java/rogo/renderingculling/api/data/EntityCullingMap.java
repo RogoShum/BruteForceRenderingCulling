@@ -7,10 +7,12 @@ import net.minecraft.world.phys.Vec3;
 import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingStateManager;
 import rogo.renderingculling.api.ModLoader;
+import rogo.renderingculling.util.IndexedSet;
 import rogo.renderingculling.util.LifeTimer;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 import static net.minecraftforge.common.extensions.IForgeBlockEntity.INFINITE_EXTENT_AABB;
@@ -44,17 +46,23 @@ public class EntityCullingMap extends CullingMap {
             return true;
         }
 
-        int idx = entityMap.getIndex(o);
+        int idx = getEntityTable().getIndex(o);
         idx = 1 + idx * 4;
-        if (entityMap.tempObjectTimer.contains(o))
-            entityMap.addTemp(o, CullingStateManager.clientTickCount);
+        if (getEntityTable().tempObjectTimer.contains(o))
+            getEntityTable().addTemp(o, CullingStateManager.clientTickCount);
 
         if (idx > -1 && idx < cullingBuffer.limit()) {
             return (cullingBuffer.get(idx) & 0xFF) > 0;
         } else {
-            entityMap.addTemp(o, CullingStateManager.clientTickCount);
+            getEntityTable().addTemp(o, CullingStateManager.clientTickCount);
         }
         return true;
+    }
+
+    @Override
+    public void readData() {
+        super.readData();
+        getEntityTable().readUpload();
     }
 
     public EntityMap getEntityTable() {
@@ -64,26 +72,27 @@ public class EntityCullingMap extends CullingMap {
     @Override
     public void cleanup() {
         super.cleanup();
-        entityMap.clear();
+        getEntityTable().clear();
     }
 
     public static class EntityMap {
-        private final HashMap<Object, Integer> indexMap = new HashMap<>();
+        private final IndexedSet<Object> indexMap = new IndexedSet<>();
         private final LifeTimer<Object> tempObjectTimer = new LifeTimer<>();
-        private int innerCount;
+        private HashSet<Object> upload = new HashSet<>();
+        private HashSet<Object> readTemp = new HashSet<>();
+        private HashMap<Object, Integer> uploadEntity = new HashMap<>();
+        private HashMap<Object, Integer> readEntity = new HashMap<>();
 
         public EntityMap() {
         }
 
         public void addObject(Object obj) {
-            if (indexMap.containsKey(obj))
-                return;
             if (obj instanceof Entity && ((Entity) obj).isAlive())
-                indexMap.put(obj, indexMap.size());
+                indexMap.add(obj);
             else if (obj instanceof BlockEntity && !((BlockEntity) obj).isRemoved())
-                indexMap.put(obj, indexMap.size());
+                indexMap.add(obj);
             else
-                indexMap.put(obj, indexMap.size());
+                indexMap.add(obj);
         }
 
         public void addTemp(Object obj, int tickCount) {
@@ -92,19 +101,32 @@ public class EntityCullingMap extends CullingMap {
 
         public void copyTemp(EntityMap entityMap, int tickCount) {
             entityMap.tempObjectTimer.foreach(o -> addTemp(o, tickCount));
-            innerCount = tickCount;
         }
 
         public Integer getIndex(Object obj) {
-            return indexMap.getOrDefault(obj, -1);
+            if(!readTemp.contains(obj))
+                return -1;
+            return readEntity.getOrDefault(obj, -1);
         }
 
-        public void tick(int tickCount) {
+        public void readUpload() {
+            readTemp = upload;
+            upload = new HashSet<>();
+            readEntity = uploadEntity;
+            uploadEntity = new HashMap<>();
+        }
+
+        public void clearUpload() {
+            upload.clear();
+            uploadEntity.clear();
+        }
+
+        public void clearIndexMap() {
             indexMap.clear();
-            if (innerCount < tickCount) {
-                tempObjectTimer.tick(tickCount, 40);
-                innerCount = tickCount;
-            }
+        }
+
+        public void tickTemp(int tickCount) {
+            tempObjectTimer.tick(tickCount, 3);
         }
 
         public void addAllTemp() {
@@ -114,7 +136,6 @@ public class EntityCullingMap extends CullingMap {
         public void clear() {
             indexMap.clear();
             tempObjectTimer.clear();
-            innerCount = 0;
         }
 
         private void addAttribute(Consumer<Consumer<FloatBuffer>> consumer, AABB aabb, int index) {
@@ -122,8 +143,8 @@ public class EntityCullingMap extends CullingMap {
                 buffer.put((float) index);
 
                 float size = (float) Math.max(aabb.getXsize(), aabb.getZsize());
-                buffer.put(size);
-                buffer.put((float) aabb.getYsize());
+                buffer.put(size+0.5F);
+                buffer.put((float) aabb.getYsize()+0.5F);
 
                 Vec3 pos = aabb.getCenter();
                 buffer.put((float) pos.x);
@@ -133,8 +154,11 @@ public class EntityCullingMap extends CullingMap {
         }
 
         public void addEntityAttribute(Consumer<Consumer<FloatBuffer>> consumer) {
+            clearUpload();
             indexMap.forEach((o, index) -> {
                 addAttribute(consumer, ModLoader.getObjectAABB(o), index);
+                upload.add(o);
+                uploadEntity.put(o, index);
             });
         }
 

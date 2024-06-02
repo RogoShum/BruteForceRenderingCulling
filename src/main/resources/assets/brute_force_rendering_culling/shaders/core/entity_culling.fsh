@@ -5,7 +5,6 @@ uniform mat4 CullingViewMat;
 uniform vec3 CullingCameraPos;
 uniform vec3 CullingCameraDir;
 uniform mat4 CullingProjMat;
-uniform float DepthOffset;
 uniform vec3 FrustumPos;
 
 uniform sampler2D Sampler0;
@@ -174,10 +173,13 @@ void main() {
         minY = screenPos.y;
     }
 
+    /*
     if (!inside) {
         fragColor = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
+    */
+
 
     minX = min(1.0, max(0.0, minX));
     maxX = min(1.0, max(0.0, maxX));

@@ -9,6 +9,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.lists.VisibleChunkCollector
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,8 +41,13 @@ public abstract class MixinRenderSectionManager {
 
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
-        if (Config.shouldCullChunk())
-            cir.setReturnValue(CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false));
+        if (Config.shouldCullChunk()) {
+            cir.setReturnValue(
+                    CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false)
+                            && CullingStateManager.FRUSTUM.isVisible(new AABB(section.getOriginX(), section.getOriginY(), section.getOriginZ()
+                            , section.getOriginX()+16, section.getOriginY()+16, section.getOriginZ()+16))
+            );
+        }
     }
 
     @Inject(method = "update", at = @At(value = "HEAD"), remap = false, cancellable = true)
