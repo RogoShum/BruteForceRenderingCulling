@@ -23,6 +23,7 @@
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
+    "MixinWindow",
     "sodium.AccessorRenderSectionManager",
     "sodium.MixinOcclusionCuller",
     "sodium.MixinRenderRegion",
