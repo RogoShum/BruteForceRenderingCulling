@@ -24,8 +24,8 @@ void main() {
     float maxY = min(gl_FragCoord.y+1, DepthScreenSize.y)/DepthScreenSize.y;
     float depth;
 
-    for(float x = minX; x <= maxX; x+=xStep) {
-        for(float y = minY; y <= maxY; y+=yStep) {
+    for(float x = minX-xStep; x <= maxX+xStep; x+=xStep) {
+        for(float y = minY-xStep; y <= maxY+xStep; y+=yStep) {
             vec2 depthUV = vec2(min(x, 1.0), min(y, 1.0));
             depth = max(depth, texture(Sampler0, depthUV).r);
         }

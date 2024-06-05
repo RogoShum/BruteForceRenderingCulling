@@ -21,10 +21,11 @@
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
-    "sodium.MixinRenderSection",
-    "sodium.MixinRenderSectionManager",
+    "MixinWindow",
     "sodium.AccessorRenderSectionManager",
     "sodium.MixinRegionChunkRenderer",
+    "sodium.MixinRenderSection",
+    "sodium.MixinRenderSectionManager",
     "sodium.MixinSodiumWorldRenderer"
   ]
 }

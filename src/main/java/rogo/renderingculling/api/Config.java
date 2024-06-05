@@ -10,6 +10,7 @@ public class Config {
     public static ForgeConfigSpec CLIENT_CONFIG;
     private static ForgeConfigSpec.DoubleValue SAMPLING;
     private static ForgeConfigSpec.BooleanValue CULL_ENTITY;
+    private static ForgeConfigSpec.BooleanValue CULL_BLOCK_ENTITY;
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
     private static ForgeConfigSpec.BooleanValue ASYNC;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
@@ -28,6 +29,10 @@ public class Config {
         SAMPLING.save();
     }
 
+    public static boolean doEntityCulling() {
+        return getCullBlockEntity() || getCullEntity();
+    }
+
     public static boolean getCullEntity() {
         if (unload() || !CullingStateManager.gl33())
             return false;
@@ -37,6 +42,17 @@ public class Config {
     public static void setCullEntity(boolean value) {
         CULL_ENTITY.set(value);
         CULL_ENTITY.save();
+    }
+
+    public static boolean getCullBlockEntity() {
+        if (unload() || !CullingStateManager.gl33())
+            return false;
+        return CULL_BLOCK_ENTITY.get();
+    }
+
+    public static void setCullBlockEntity(boolean value) {
+        CULL_BLOCK_ENTITY.set(value);
+        CULL_BLOCK_ENTITY.save();
     }
 
     public static boolean getCullChunk() {
@@ -137,7 +153,7 @@ public class Config {
     static {
         ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
         CLIENT_BUILDER.push("Sampling multiple");
-        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.2, 0.0, 1.0);
+        SAMPLING = CLIENT_BUILDER.defineInRange("multiple", 0.5, 0.0, 1.0);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Culling Map update delay");
@@ -146,6 +162,10 @@ public class Config {
 
         CLIENT_BUILDER.push("Cull entity");
         CULL_ENTITY = CLIENT_BUILDER.define("enabled", true);
+        CLIENT_BUILDER.pop();
+
+        CLIENT_BUILDER.push("Cull block entity");
+        CULL_BLOCK_ENTITY = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
         CLIENT_BUILDER.push("Cull chunk");
