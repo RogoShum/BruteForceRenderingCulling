@@ -4,6 +4,7 @@
   "brute_force_rendering_culling.key.debug": "测试界面",
 
   "brute_force_rendering_culling.cull_entity": "剔除实体",
+  "brute_force_rendering_culling.cull_block_entity": "剔除方块实体",
   "brute_force_rendering_culling.cull_chunk": "剔除区块",
   "brute_force_rendering_culling.async": "异步构建区块",
   "brute_force_rendering_culling.sampler": "深度采样率",
@@ -22,6 +23,7 @@
   "brute_force_rendering_culling.enable": "开启",
   "brute_force_rendering_culling.disable": "关闭",
   "brute_force_rendering_culling.detail.cull_entity": "剔除视觉上不可见的实体",
+  "brute_force_rendering_culling.detail.cull_block_entity": "剔除视觉上不可见的方块实体",
   "brute_force_rendering_culling.detail.cull_chunk": "剔除视觉上不可见的区块",
   "brute_force_rendering_culling.detail.async": "使用独立线程异步更新可见区块，并同步到主渲染线程。可以加速移动时的区块构建速度，提升帧数。\nwarn:剔除结果同步到主线程会有延迟，高速旋转视角时边缘区块加载速度变慢。\n\n可以适当提高游戏设置的多线程加载区块数量辅助此功能。处于测试阶段，如在加载区块时崩溃请尝试关掉此设置。",
   "brute_force_rendering_culling.detail.sampler": "剔除所用深度纹理的缩放比例，比例越高剔除越精准、效果越好。\n\n如果提高比例之后对帧数无负面影响，能提多高提多高。不建议低于20%。",

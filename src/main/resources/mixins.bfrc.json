@@ -16,16 +16,17 @@
     "MixinFrustum",
     "MixinInactiveProfiler",
     "MixinLevelRender",
+    "MixinMinecraft",
     "MixinRenderChunk",
     "MixinRenderChunkInfo",
     "MixinShaderInstance",
     "MixinShaderInstance$MixinRenderSystem",
     "fabric.MixinKeyboardHandler",
-    "MixinMinecraft",
-    "sodium.MixinRenderSection",
-    "sodium.MixinRenderSectionManager",
+    "fabric.MixinWindow",
     "sodium.AccessorRenderSectionManager",
     "sodium.MixinRegionChunkRenderer",
+    "sodium.MixinRenderSection",
+    "sodium.MixinRenderSectionManager",
     "sodium.MixinSodiumWorldRenderer"
   ]
 }

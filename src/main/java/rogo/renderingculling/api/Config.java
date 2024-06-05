@@ -8,18 +8,17 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.serialization.JanksonValueSerial
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.PropertyMirror;
+import net.minecraft.network.chat.Component;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
     private static final PropertyMirror<Double> SAMPLING = PropertyMirror.create(ConfigTypes.DOUBLE);
     private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
+    private static final PropertyMirror<Boolean> CULL_BLOCK_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Boolean> ASYNC = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
@@ -27,19 +26,23 @@ public class Config {
     private static final PropertyMirror<List<String>> BLOCK_ENTITY_SKIP = PropertyMirror.create(ConfigTypes.makeList(ConfigTypes.STRING));
 
     public static double getSampling() {
-        if (unload())
+        if(unload())
             return 0.5;
 
-        return SAMPLING.getValue();
+        return Math.max(SAMPLING.getValue(), 0.05);
     }
 
     public static void setSampling(double value) {
-        SAMPLING.setValue(value);
+        SAMPLING.setValue(Math.max(0.05, value));
         save();
     }
 
+    public static boolean doEntityCulling() {
+        return getCullBlockEntity() || getCullEntity();
+    }
+
     public static boolean getCullEntity() {
-        if (unload() || !CullingStateManager.gl33())
+        if(unload() || !CullingStateManager.gl33())
             return false;
         return CULL_ENTITY.getValue();
     }
@@ -49,8 +52,19 @@ public class Config {
         save();
     }
 
+    public static boolean getCullBlockEntity() {
+        if (unload() || !CullingStateManager.gl33())
+            return false;
+        return CULL_BLOCK_ENTITY.getValue();
+    }
+
+    public static void setCullBlockEntity(boolean value) {
+        CULL_BLOCK_ENTITY.setValue(value);
+        save();
+    }
+
     public static boolean getCullChunk() {
-        if (unload())
+        if(unload())
             return false;
         return CULL_CHUNK.getValue();
     }
@@ -74,32 +88,32 @@ public class Config {
         if (unload())
             return false;
 
-        if (!shouldCullChunk())
+        if(!shouldCullChunk())
             return false;
 
         if (CullingStateManager.needPauseRebuild())
             return false;
 
-        if (ModLoader.hasNvidium())
+        if(ModLoader.hasNvidium())
             return false;
 
-        if (!ModLoader.hasSodium())
+        if(!ModLoader.hasSodium())
             return false;
 
         return ASYNC.getValue();
     }
 
     public static void setAsyncChunkRebuild(boolean value) {
-        if (!shouldCullChunk())
+        if(!shouldCullChunk())
             return;
 
-        if (ModLoader.hasNvidium())
+        if(ModLoader.hasNvidium())
             return;
 
         if (CullingStateManager.needPauseRebuild())
             return;
 
-        if (!ModLoader.hasSodium())
+        if(!ModLoader.hasSodium())
             return;
 
         ASYNC.setValue(value);
@@ -111,7 +125,7 @@ public class Config {
     }
 
     public static int getDepthUpdateDelay() {
-        if (unload())
+        if(unload())
             return 1;
         return UPDATE_DELAY.getValue() <= 9 ? UPDATE_DELAY.getValue() + getShaderDynamicDelay() : UPDATE_DELAY.getValue();
     }
@@ -122,13 +136,13 @@ public class Config {
     }
 
     public static List<String> getEntitiesSkip() {
-        if (unload())
+        if(unload())
             return ImmutableList.of();
         return ENTITY_SKIP.getValue();
     }
 
     public static List<String> getBlockEntitiesSkip() {
-        if (unload())
+        if(unload())
             return ImmutableList.of();
         return BLOCK_ENTITY_SKIP.getValue();
     }
@@ -146,7 +160,7 @@ public class Config {
     }
 
     public static void save() {
-        if (CONTEXT != null) {
+        if(CONTEXT != null) {
             try (OutputStream s = new BufferedOutputStream(Files.newOutputStream(CONTEXT.path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING))) {
                 FiberSerialization.serialize(CONTEXT.config, s, CONTEXT.serializer);
             } catch (IOException ignored) {
@@ -162,7 +176,7 @@ public class Config {
         blockList.add("minecraft:beacon");
 
         BRANCH = ConfigTree.builder()
-                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.05)
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.5)
                 .finishValue(SAMPLING::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.culling_map_update_delay"), ConfigTypes.INTEGER, 1)
@@ -170,6 +184,9 @@ public class Config {
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_entity"), ConfigTypes.BOOLEAN, true)
                 .finishValue(CULL_ENTITY::mirror)
+
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_block_entity"), ConfigTypes.BOOLEAN, true)
+                .finishValue(CULL_BLOCK_ENTITY::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_chunk"), ConfigTypes.BOOLEAN, true)
                 .finishValue(CULL_CHUNK::mirror)
@@ -186,7 +203,7 @@ public class Config {
     }
 
     public static void loadConfig() {
-        if (!configLoaded) {
+        if(!configLoaded) {
             Config.init();
             try {
                 Files.createDirectory(Paths.get("config"));
@@ -215,6 +232,5 @@ public class Config {
         }
     }
 
-    public record ConfigContext(ConfigTree config, Path path, JanksonValueSerializer serializer) {
-    }
+    public record ConfigContext(ConfigTree config, Path path, JanksonValueSerializer serializer){}
 }

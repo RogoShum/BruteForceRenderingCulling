@@ -12,6 +12,7 @@ import me.jellysquid.mods.sodium.client.util.frustum.Frustum;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -79,13 +80,18 @@ public abstract class MixinRenderSectionManager {
 
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
-        if (Config.shouldCullChunk())
-            cir.setReturnValue(CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false));
+        if (Config.shouldCullChunk()) {
+            cir.setReturnValue(
+                    CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false)
+                            && CullingStateManager.FRUSTUM.isVisible(new AABB(section.getOriginX(), section.getOriginY(), section.getOriginZ()
+                            , section.getOriginX()+16, section.getOriginY()+16, section.getOriginZ()+16))
+            );
+        }
     }
 
-    @Inject(method = "isWithinRenderDistance", at = @At(value = "RETURN"), remap = false, cancellable = true)
+    @Inject(method = "isWithinRenderDistance", at = @At(value = "HEAD"), remap = false, cancellable = true)
     public void onIsWithinRenderDistance(RenderSection section, CallbackInfoReturnable<Boolean> cir) {
-        if (Config.shouldCullChunk() && cir.getReturnValue() && !CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, true))
+        if (Config.shouldCullChunk() && !CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, true))
             cir.setReturnValue(false);
     }
 

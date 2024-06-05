@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "brute_force_rendering_culling",
-	"version": "0.5.8",
+	"version": "0.5.12",
 	"name": "Brute force Rendering Culling",
 	"description": "",
 	"authors": [
