@@ -584,7 +584,7 @@ public class CullingStateManager {
                     }
                 }
 
-                int cullingSize = CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 8 + 1;
+                int cullingSize = (CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 64 * 64 + 64) / 8 + 1;
                 if (CullingStateManager.ENTITY_CULLING_MAP_TARGET.width != 8 || CullingStateManager.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
                     CullingStateManager.ENTITY_CULLING_MAP_TARGET.resize(8, cullingSize, Minecraft.ON_OSX);
                     if (ENTITY_CULLING_MAP != null) {
