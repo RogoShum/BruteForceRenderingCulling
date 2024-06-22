@@ -16,10 +16,11 @@ flat out vec3 Pos;
 flat out vec2 Size;
 
 void main() {
-    vec2 pixelPos = vec2(Position.x / EntityCullingSize.x * 0.5, Position.y / EntityCullingSize.y * 0.5);
-    int y = int(index / EntityCullingSize.x);
-    int x = int(index - (y*EntityCullingSize.x));
-    vec2 pos = vec2((2.0 * (float(x)+0.5) / EntityCullingSize.x) - 1.0, (2.0 * (float(y)+0.5) / EntityCullingSize.y) - 1.0);
+    int xSize = 8;
+    vec2 pixelPos = vec2(Position.x / xSize * 0.5, Position.y / EntityCullingSize.y * 0.5);
+    int y = int(index / xSize);
+    int x = int(index - (y*xSize));
+    vec2 pos = vec2((2.0 * (float(x)+0.5) / xSize) - 1.0, (2.0 * (float(y)+0.5) / EntityCullingSize.y) - 1.0);
 
     vec4[6] frustumData = vec4[](
     vec4(CullingFrustum[0], CullingFrustum[1], CullingFrustum[2], CullingFrustum[3]),

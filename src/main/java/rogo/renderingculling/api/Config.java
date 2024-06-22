@@ -18,6 +18,7 @@ import java.util.List;
 public class Config {
     private static final PropertyMirror<Double> SAMPLING = PropertyMirror.create(ConfigTypes.DOUBLE);
     private static final PropertyMirror<Boolean> CULL_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
+    private static final PropertyMirror<Boolean> CULL_BLOCK_ENTITY = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Boolean> CULL_CHUNK = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Boolean> ASYNC = PropertyMirror.create(ConfigTypes.BOOLEAN);
     private static final PropertyMirror<Integer> UPDATE_DELAY = PropertyMirror.create(ConfigTypes.INTEGER);
@@ -36,6 +37,10 @@ public class Config {
         save();
     }
 
+    public static boolean doEntityCulling() {
+        return getCullBlockEntity() || getCullEntity();
+    }
+
     public static boolean getCullEntity() {
         if(unload() || !CullingStateManager.gl33())
             return false;
@@ -44,6 +49,17 @@ public class Config {
 
     public static void setCullEntity(boolean value) {
         CULL_ENTITY.setValue(value);
+        save();
+    }
+
+    public static boolean getCullBlockEntity() {
+        if (unload() || !CullingStateManager.gl33())
+            return false;
+        return CULL_BLOCK_ENTITY.getValue();
+    }
+
+    public static void setCullBlockEntity(boolean value) {
+        CULL_BLOCK_ENTITY.setValue(value);
         save();
     }
 
@@ -160,7 +176,7 @@ public class Config {
         blockList.add("minecraft:beacon");
 
         BRANCH = ConfigTree.builder()
-                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.2)
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.sampler"), ConfigTypes.DOUBLE.withValidRange(0.0, 1.0, 0.01), 0.5)
                 .finishValue(SAMPLING::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.culling_map_update_delay"), ConfigTypes.INTEGER, 1)
@@ -168,6 +184,9 @@ public class Config {
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_entity"), ConfigTypes.BOOLEAN, true)
                 .finishValue(CULL_ENTITY::mirror)
+
+                .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_block_entity"), ConfigTypes.BOOLEAN, true)
+                .finishValue(CULL_BLOCK_ENTITY::mirror)
 
                 .beginValue(getTranslatedItem("brute_force_rendering_culling.cull_chunk"), ConfigTypes.BOOLEAN, true)
                 .finishValue(CULL_CHUNK::mirror)
