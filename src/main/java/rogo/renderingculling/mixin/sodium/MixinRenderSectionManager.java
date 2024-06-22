@@ -9,6 +9,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.lists.VisibleChunkCollector
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,12 +41,20 @@ public abstract class MixinRenderSectionManager {
 
     @Inject(method = "isSectionVisible", at = @At(value = "RETURN"), remap = false, locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable<Boolean> cir, RenderSection section) {
-        if (Config.shouldCullChunk())
-            cir.setReturnValue(CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false));
+        if (Config.shouldCullChunk()) {
+            cir.setReturnValue(
+                    CullingStateManager.shouldRenderChunk((IRenderSectionVisibility) section, false)
+                            && CullingStateManager.FRUSTUM.isVisible(new AABB(section.getOriginX(), section.getOriginY(), section.getOriginZ()
+                            , section.getOriginX()+16, section.getOriginY()+16, section.getOriginZ()+16))
+            );
+        }
     }
 
-    @Inject(method = "update", at = @At(value = "HEAD"), remap = false)
+    @Inject(method = "update", at = @At(value = "HEAD"), remap = false, cancellable = true)
     private void onUpdate(Camera camera, Viewport viewport, int frame, boolean spectator, CallbackInfo ci) {
+        if(CullingStateManager.checkCulling && CullingStateManager.DEBUG > 1) {
+            ci.cancel();
+        }
         CullingStateManager.updating();
     }
 
@@ -58,8 +67,8 @@ public abstract class MixinRenderSectionManager {
         return value;
     }
 
-    @Inject(method = "tickVisibleRenders", at = @At(value = "HEAD"), remap = false)
-    private void onCreateTerrainRenderList(CallbackInfo ci) {
+    @Inject(method = "updateChunks", at = @At(value = "HEAD"), remap = false)
+    private void onCreateTerrainRenderList(boolean updateImmediately, CallbackInfo ci) {
         if (Config.getAsyncChunkRebuild()) {
             VisibleChunkCollector collector = CullingStateManager.renderingIris() ? SodiumSectionAsyncUtil.getShadowCollector() : SodiumSectionAsyncUtil.getChunkCollector();
             if(collector != null)

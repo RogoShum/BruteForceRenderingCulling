@@ -224,35 +224,36 @@ public class CullingStateManager {
 
         //for valkyrien skies
         if (CAMERA.getPosition().distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) >
-                Minecraft.getInstance().options.getEffectiveRenderDistance() * Minecraft.getInstance().options.getEffectiveRenderDistance() * 2) {
+                Minecraft.getInstance().options.getEffectiveRenderDistance() * 16 * Minecraft.getInstance().options.getEffectiveRenderDistance() * 16 * 2) {
             return false;
         }
 
-        if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
+        if (ENTITY_CULLING_MAP == null || !Config.getCullBlockEntity()) return false;
         String type = BlockEntityType.getKey(blockEntity.getType()).toString();
         if (Config.getBlockEntitiesSkip().contains(type))
             return false;
 
+        boolean visible = false;
+        boolean actualVisible;
+
         if (DEBUG < 2) {
-            if (visibleBlock.contains(pos)) {
-                return false;
-            } else if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
+            if (ENTITY_CULLING_MAP.isObjectVisible(blockEntity)) {
                 visibleBlock.updateUsageTick(pos, clientTickCount);
-                return false;
+                visible = true;
+            } else if (visibleBlock.contains(pos)) {
+                visible = true;
             }
-            return true;
+            return !visible;
         }
 
         long time = System.nanoTime();
 
-        boolean visible;
-        boolean actualVisible = false;
+        actualVisible = ENTITY_CULLING_MAP.isObjectVisible(blockEntity);
 
-        if (visibleBlock.contains(pos)) {
+        if (actualVisible) {
             visible = true;
-        } else {
-            actualVisible = ENTITY_CULLING_MAP.isObjectVisible(blockEntity);
-            visible = actualVisible;
+        } else if (visibleBlock.contains(pos)) {
+            visible = true;
         }
 
         preBlockCullingTime += System.nanoTime() - time;
@@ -262,8 +263,9 @@ public class CullingStateManager {
 
         if (!visible) {
             blockCulling++;
-        } else if (actualVisible)
+        } else if (actualVisible) {
             visibleBlock.updateUsageTick(pos, clientTickCount);
+        }
 
         return !visible;
     }
@@ -276,26 +278,27 @@ public class CullingStateManager {
             return false;
         if (ENTITY_CULLING_MAP == null || !Config.getCullEntity()) return false;
 
+        boolean visible = false;
+        boolean actualVisible;
+
         if (DEBUG < 2) {
-            if (visibleEntity.contains(entity)) {
-                return false;
-            } else if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
+            if (ENTITY_CULLING_MAP.isObjectVisible(entity)) {
                 visibleEntity.updateUsageTick(entity, clientTickCount);
-                return false;
+                visible = true;
+            } else if (visibleEntity.contains(entity)) {
+                visible = true;
             }
-            return true;
+            return !visible;
         }
 
         long time = System.nanoTime();
 
-        boolean visible;
-        boolean actualVisible = false;
+        actualVisible = ENTITY_CULLING_MAP.isObjectVisible(entity);
 
-        if (visibleEntity.contains(entity)) {
+        if (actualVisible) {
             visible = true;
-        } else {
-            actualVisible = ENTITY_CULLING_MAP.isObjectVisible(entity);
-            visible = actualVisible;
+        } else if (visibleEntity.contains(entity)) {
+            visible = true;
         }
 
         preEntityCullingTime += System.nanoTime() - time;
@@ -305,8 +308,9 @@ public class CullingStateManager {
 
         if (!visible) {
             entityCulling++;
-        } else if (actualVisible)
+        } else if (actualVisible) {
             visibleEntity.updateUsageTick(entity, clientTickCount);
+        }
 
         return !visible;
     }
@@ -379,8 +383,10 @@ public class CullingStateManager {
             }
 
             if (isNextLoop()) {
-                visibleBlock.tick(clientTickCount, 1);
-                visibleEntity.tick(clientTickCount, 1);
+                visibleBlock.tick(clientTickCount, 3);
+                visibleEntity.tick(clientTickCount, 3);
+                if(CullingStateManager.ENTITY_CULLING_MAP != null)
+                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tickTemp(clientTickCount);
 
                 applyFrustumTime = preApplyFrustumTime;
                 preApplyFrustumTime = 0;
@@ -424,7 +430,7 @@ public class CullingStateManager {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 long time = System.nanoTime();
                 if (ENTITY_CULLING_MAP != null && ENTITY_CULLING_MAP.isTransferred()) {
                     ENTITY_CULLING_MAP.readData();
@@ -567,7 +573,7 @@ public class CullingStateManager {
                 preChunkCullingInitTime += System.nanoTime() - time;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 if (ENTITY_CULLING_MAP == null) {
                     ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
                     if (CHUNK_CULLING_MAP != null) {
@@ -575,11 +581,9 @@ public class CullingStateManager {
                     }
                 }
 
-                int tableCapacity = CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 64;
-                tableCapacity = tableCapacity * 64 + 64;
-                int cullingSize = (int) Math.sqrt(tableCapacity) + 1;
-                if (CullingStateManager.ENTITY_CULLING_MAP_TARGET.width != cullingSize || CullingStateManager.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
-                    CullingStateManager.ENTITY_CULLING_MAP_TARGET.resize(cullingSize, cullingSize, Minecraft.ON_OSX);
+                int cullingSize = (CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().size() / 64 * 64 + 64) / 8 + 1;
+                if (CullingStateManager.ENTITY_CULLING_MAP_TARGET.width != 8 || CullingStateManager.ENTITY_CULLING_MAP_TARGET.height != cullingSize) {
+                    CullingStateManager.ENTITY_CULLING_MAP_TARGET.resize(8, cullingSize, Minecraft.ON_OSX);
                     if (ENTITY_CULLING_MAP != null) {
                         EntityCullingMap temp = ENTITY_CULLING_MAP;
                         ENTITY_CULLING_MAP = new EntityCullingMap(ENTITY_CULLING_MAP_TARGET.width, ENTITY_CULLING_MAP_TARGET.height);
@@ -593,7 +597,7 @@ public class CullingStateManager {
                 preEntityCullingInitTime += System.nanoTime() - time;
 
                 if (Minecraft.getInstance().level != null) {
-                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().tick(clientTickCount);
+                    CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().clearIndexMap();
                     Iterable<Entity> entities = Minecraft.getInstance().level.entitiesForRendering();
                     entities.forEach(entity -> CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addObject(entity));
                     for (SectionRenderDispatcher.RenderSection section : ((IEntitiesForRender) Minecraft.getInstance().levelRenderer).renderChunksInFrustum()) {
@@ -603,8 +607,6 @@ public class CullingStateManager {
 
                     CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addAllTemp();
                 }
-
-                CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             }
 
             fps = ((AccessorMinecraft) Minecraft.getInstance()).getFps();
@@ -637,7 +639,7 @@ public class CullingStateManager {
         for (DEPTH_INDEX = 0; DEPTH_INDEX < DEPTH_BUFFER_TARGET.length; ++DEPTH_INDEX) {
             int lastTexture = DEPTH_INDEX == 0 ? MAIN_DEPTH_TEXTURE : DEPTH_BUFFER_TARGET[DEPTH_INDEX - 1].getColorTextureId();
             consumer.accept(new DepthContext(DEPTH_BUFFER_TARGET[DEPTH_INDEX], DEPTH_INDEX, f, lastTexture));
-            f *= 0.3f;
+            f *= 0.35f;
         }
     }
 
@@ -672,7 +674,7 @@ public class CullingStateManager {
     }
 
     public static boolean anyCulling() {
-        return Config.getCullChunk() || Config.getCullEntity();
+        return Config.getCullChunk() || Config.doEntityCulling();
     }
 
     public static boolean anyNeedTransfer() {

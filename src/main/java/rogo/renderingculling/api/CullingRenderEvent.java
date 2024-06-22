@@ -68,6 +68,10 @@ public class CullingRenderEvent {
                     + (Config.getCullEntity() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
             addString(monitorTexts, cull);
 
+            String cull_block_entity = Component.translatable("brute_force_rendering_culling.cull_block_entity").getString() + ": "
+                    + (Config.getCullBlockEntity() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
+            addString(monitorTexts, cull_block_entity);
+
             String cull_chunk = Component.translatable("brute_force_rendering_culling.cull_chunk").getString() + ": "
                     + (Config.getCullChunk() ? Component.translatable("brute_force_rendering_culling.enable").getString() : Component.translatable("brute_force_rendering_culling.disable").getString());
             addString(monitorTexts, cull_chunk);
@@ -76,7 +80,7 @@ public class CullingRenderEvent {
                 String Sampler = Component.translatable("brute_force_rendering_culling.sampler").getString() + ": " + String.valueOf((Float.parseFloat(String.format("%.0f", Config.getSampling() * 100.0D))) + "%");
                 addString(monitorTexts, Sampler);
 
-                if (Config.getCullEntity()) {
+                if (Config.doEntityCulling()) {
                     String blockCullingTime = Component.translatable("brute_force_rendering_culling.block_culling_time").getString() + ": " + (CullingStateManager.blockCullingTime / 1000 / CullingStateManager.fps) + " μs";
                     addString(monitorTexts, blockCullingTime);
 
@@ -174,7 +178,7 @@ public class CullingRenderEvent {
                 screenScale *= 0.5f;
             }
 
-            if (Config.getCullEntity()) {
+            if (Config.doEntityCulling()) {
                 height = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.25f);
                 bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 bufferbuilder.vertex(minecraft.getWindow().getGuiScaledWidth() - height, height, 0.0D).uv(0.0F, 0.0F).color(255, 255, 255, 255).endVertex();
@@ -216,17 +220,18 @@ public class CullingRenderEvent {
         if (!CullingStateManager.anyCulling())
             return;
 
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuilder();
-
         if (CullingStateManager.checkCulling)
             return;
 
-        if (Config.getCullEntity() && CullingStateManager.ENTITY_CULLING_MAP != null && CullingStateManager.ENTITY_CULLING_MAP.needTransferData()) {
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+
+        CullingStateManager.callDepthTexture();
+
+        if (Config.doEntityCulling() && CullingStateManager.ENTITY_CULLING_MAP != null && CullingStateManager.ENTITY_CULLING_MAP.needTransferData()) {
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.clear(Minecraft.ON_OSX);
             CullingStateManager.ENTITY_CULLING_MAP_TARGET.bindWrite(false);
-            CullingStateManager.callDepthTexture();
-            CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
+            CullingStateManager.ENTITY_CULLING_MAP.getEntityTable().addEntityAttribute(CullingRenderEvent.ENTITY_CULLING_INSTANCE_RENDERER::addInstanceAttrib);
             ENTITY_CULLING_INSTANCE_RENDERER.drawWithShader(CullingStateManager.INSTANCED_ENTITY_CULLING_SHADER);
         }
 
@@ -239,7 +244,6 @@ public class CullingRenderEvent {
             bufferbuilder.vertex(1.0f, -1.0f, 0.0f).endVertex();
             bufferbuilder.vertex(1.0f, 1.0f, 0.0f).endVertex();
             bufferbuilder.vertex(-1.0f, 1.0f, 0.0f).endVertex();
-            CullingStateManager.callDepthTexture();
             tessellator.end();
         }
 
