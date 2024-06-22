@@ -38,6 +38,7 @@ public class EntityCullingMap extends CullingMap {
     }
 
     public boolean isObjectVisible(Object o) {
+
         int idx = getEntityTable().getIndex(o);
         idx = 1 + idx * 4;
         if (getEntityTable().tempObjectTimer.contains(o))
@@ -93,6 +94,10 @@ public class EntityCullingMap extends CullingMap {
 
         public void copyTemp(EntityMap entityMap, int tickCount) {
             entityMap.tempObjectTimer.foreach(o -> addTemp(o, tickCount));
+            this.uploadTemp.addAll(entityMap.uploadTemp);
+            this.uploadEntity.putAll(entityMap.uploadEntity);
+            this.readTemp = uploadTemp;
+            this.readEntity = uploadEntity;
         }
 
         public Integer getIndex(Object obj) {
