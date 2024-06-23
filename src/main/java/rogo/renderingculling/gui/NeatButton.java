@@ -20,6 +20,7 @@ public class NeatButton extends Button {
     public Supplier<Component> name;
     private Supplier<Boolean> enable = () -> true;
     private Supplier<Component> detailMessage;
+    private Supplier<Integer> textWidth;
 
     public NeatButton(int p_93721_, int p_93722_, int p_93723_, int p_93724_, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> name) {
         super(p_93721_, p_93722_, p_93723_, p_93724_, name.get(), (b) -> ((NeatButton) b).updateValue(setter), DEFAULT_NARRATION);
@@ -38,6 +39,10 @@ public class NeatButton extends Button {
         }
     }
 
+    public void setTextWidthGetter(Supplier<Integer> widthGetter) {
+        this.textWidth = widthGetter;
+    }
+
     public void setDetailMessage(Supplier<Component> detailMessage) {
         this.detailMessage = detailMessage;
     }
@@ -45,6 +50,8 @@ public class NeatButton extends Button {
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int p_93747_, int p_93748_, float p_93749_) {
         Minecraft minecraft = Minecraft.getInstance();
+        this.width = this.textWidth.get();
+        this.setX(minecraft.getWindow().getGuiScaledWidth() / 2 - width / 2);
         Font font = minecraft.font;
         boolean display = getter.get();
         int j = display && enable.get() ? 16777215 : 10526880;

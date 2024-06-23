@@ -20,6 +20,7 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     private final Function<NeatSliderButton, Component> name;
     private final Consumer<Double> applyValue;
     private Supplier<Component> detailMessage;
+    private Supplier<Integer> textWidth;
 
     protected NeatSliderButton(int p_93380_, int p_93381_, int p_93382_, int p_93383_, Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
         super(Minecraft.getInstance().options, p_93380_, p_93381_, p_93382_, p_93383_, getter.get());
@@ -36,6 +37,10 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
         this.detailMessage = detailMessage;
     }
 
+    public void setTextWidthGetter(Supplier<Integer> widthGetter) {
+        this.textWidth = widthGetter;
+    }
+
     @Override
     public void updateMessage() {
         this.setMessage(name.apply(this));
@@ -49,6 +54,8 @@ public class NeatSliderButton extends AbstractOptionSliderButton {
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int p_93677_, int p_93678_, float p_93679_) {
         Minecraft minecraft = Minecraft.getInstance();
+        this.width = this.textWidth.get();
+        this.setX(minecraft.getWindow().getGuiScaledWidth() / 2 - width / 2);
         Font font = minecraft.font;
         int j = this.active ? 16777215 : 10526880;
         guiGraphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);

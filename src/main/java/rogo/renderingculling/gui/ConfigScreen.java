@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
 public class ConfigScreen extends Screen {
     private boolean release = false;
     int heightScale;
+    int textWidth;
 
     public ConfigScreen(Component titleIn) {
         super(titleIn);
@@ -50,7 +52,7 @@ public class ConfigScreen extends Screen {
     public void renderBackground(GuiGraphics guiGraphics) {
         Minecraft minecraft = Minecraft.getInstance();
         int width = minecraft.getWindow().getGuiScaledWidth() / 2;
-        int widthScale = 85;
+        int widthScale = textWidth / 2 + 15;
         int right = width - widthScale;
         int left = width + widthScale;
         int bottom = (int) (minecraft.getWindow().getGuiScaledHeight() * 0.8) + 20;
@@ -190,30 +192,36 @@ public class ConfigScreen extends Screen {
         super.init();
     }
 
-    public NeatButton addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+    public NeatButton addConfigButton(Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> displayText) {
         int width = 150;
         int x = this.width / 2 - width / 2;
         NeatButton button = new NeatButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
-                , getter, setter, updateMessage);
+                , getter, setter, displayText);
         this.addWidget(button);
+        this.textWidth = Math.max(Math.max(width, font.width(displayText.get()) + 40), this.textWidth);
+        button.setTextWidthGetter(() -> this.textWidth);
         return button;
     }
 
-    public NeatButton addConfigButton(Supplier<Boolean> enable, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> updateMessage) {
+    public NeatButton addConfigButton(Supplier<Boolean> enable, Supplier<Boolean> getter, Consumer<Boolean> setter, Supplier<Component> displayText) {
         int width = 150;
         int x = this.width / 2 - width / 2;
         NeatButton button = new NeatButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
-                , enable, getter, setter, updateMessage);
+                , enable, getter, setter, displayText);
         this.addWidget(button);
+        this.textWidth = Math.max(Math.max(width, font.width(displayText.get()) + 40), this.textWidth);
+        button.setTextWidthGetter(() -> this.textWidth);
         return button;
     }
 
-    public NeatSliderButton addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> name) {
+    public NeatSliderButton addConfigButton(Supplier<Double> getter, Function<Double, Double> setter, Function<Double, String> display, Supplier<MutableComponent> displayText) {
         int width = 150;
         int x = this.width / 2 - width / 2;
         NeatSliderButton button = new NeatSliderButton(x, (int) ((height * 0.8) - heightScale * children().size()), width, 14
-                , getter, setter, display, name);
+                , getter, setter, display, displayText);
         this.addWidget(button);
+        this.textWidth = Math.max(Math.max(width, font.width(displayText.get()) + 40), this.textWidth);
+        button.setTextWidthGetter(() -> this.textWidth);
         return button;
     }
 

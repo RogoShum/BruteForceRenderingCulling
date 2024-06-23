@@ -11,7 +11,9 @@ import me.jellysquid.mods.sodium.client.render.chunk.occlusion.OcclusionCuller;
 import me.jellysquid.mods.sodium.client.render.chunk.region.RenderRegion;
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import net.minecraft.world.level.Level;
+import rogo.renderingculling.api.Config;
 import rogo.renderingculling.api.CullingStateManager;
+import rogo.renderingculling.api.ModLoader;
 import rogo.renderingculling.api.impl.ICollectorAccessor;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 
@@ -39,6 +41,9 @@ public class SodiumSectionAsyncUtil {
 
     public static void asyncSearchRebuildSection() {
         shouldUpdate.acquireUninterruptibly();
+        if(CullingStateManager.needPauseRebuild()) {
+            return;
+        }
         if (CullingStateManager.enabledShader() && shadowViewport != null) {
             frame++;
             CullingStateManager.useOcclusionCulling = false;
@@ -64,6 +69,11 @@ public class SodiumSectionAsyncUtil {
                 }
             }
         }
+    }
+
+    public static void pauseAsync() {
+        SodiumSectionAsyncUtil.collector = null;
+        SodiumSectionAsyncUtil.shadowCollector = null;
     }
 
     public static void update(Viewport viewport, float searchDistance, boolean useOcclusionCulling) {

@@ -203,8 +203,6 @@ public class ModLoader {
     }
 
     public static void pauseAsync() {
-        if (ModLoader.hasMod("embeddium")) {
-            fullChunkUpdateCooldown = 60;
-        }
+        fullChunkUpdateCooldown = 70;
     }
 }

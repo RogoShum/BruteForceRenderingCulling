@@ -31,10 +31,7 @@ import rogo.renderingculling.api.impl.IRenderChunkInfo;
 import rogo.renderingculling.api.impl.IRenderSectionVisibility;
 import rogo.renderingculling.mixin.AccessorLevelRender;
 import rogo.renderingculling.mixin.AccessorMinecraft;
-import rogo.renderingculling.util.DepthContext;
-import rogo.renderingculling.util.LifeTimer;
-import rogo.renderingculling.util.OcclusionCullerThread;
-import rogo.renderingculling.util.ShaderLoader;
+import rogo.renderingculling.util.*;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -173,6 +170,10 @@ public class CullingStateManager {
             ENTITY_CULLING_MAP = null;
         }
         SHADER_DEPTH_BUFFER_ID.clear();
+        ModLoader.pauseAsync();
+        if(ModLoader.hasSodium()) {
+            SodiumSectionAsyncUtil.pauseAsync();
+        }
     }
 
     public static boolean shouldRenderChunk(IRenderSectionVisibility section, boolean checkForChunk) {
@@ -314,8 +315,9 @@ public class CullingStateManager {
         switch (s) {
             case "beforeRunTick" -> {
                 if (((AccessorLevelRender) Minecraft.getInstance().levelRenderer).getNeedsFullRenderChunkUpdate() && Minecraft.getInstance().level != null) {
-                    ModLoader.pauseAsync();
-
+                    if (ModLoader.hasMod("embeddium")) {
+                        ModLoader.pauseAsync();
+                    }
                     LEVEL_SECTION_RANGE = Minecraft.getInstance().level.getMaxSection() - Minecraft.getInstance().level.getMinSection();
                     LEVEL_MIN_SECTION_ABS = Math.abs(Minecraft.getInstance().level.getMinSection());
                     LEVEL_MIN_POS = Minecraft.getInstance().level.getMinBuildHeight();

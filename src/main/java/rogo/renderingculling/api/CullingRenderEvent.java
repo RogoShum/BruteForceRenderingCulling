@@ -34,6 +34,7 @@ public class CullingRenderEvent {
     }
 
     float partialTick;
+    int textWidth;
 
     protected static void updateCullingMap() {
         if (!CullingStateManager.anyCulling() || CullingStateManager.checkCulling)
@@ -85,9 +86,11 @@ public class CullingRenderEvent {
     }
 
     public void renderText(GuiGraphics guiGraphics, List<String> list, int width, int height) {
+        textWidth = 0;
         Font font = Minecraft.getInstance().font;
         for (int i = 0; i < list.size(); ++i) {
             String text = list.get(i);
+            textWidth = Math.max(font.width(text), textWidth);
             guiGraphics.drawString(font, text, (int) (width - (font.width(text) / 2f)), height + font.lineHeight * i, 16777215);
         }
     }
@@ -201,7 +204,7 @@ public class CullingRenderEvent {
             Minecraft minecraft = Minecraft.getInstance();
             int width = minecraft.getWindow().getGuiScaledWidth() / 2;
             int height = 20;
-            int widthScale = 80;
+            int widthScale = Math.max(80, textWidth / 2 + 20);
 
             List<String> monitorTexts = new ArrayList<>();
 
