@@ -7,6 +7,7 @@
   "brute_force_rendering_culling.cull_block_entity": "Cull Block Entity",
   "brute_force_rendering_culling.cull_chunk": "Cull Chunk",
   "brute_force_rendering_culling.async": "Async Rebuild Chunk",
+  "brute_force_rendering_culling.auto_shader_async": "Auto Disable Async Rebuild",
   "brute_force_rendering_culling.sampler": "Depth Sampler Rate",
   "brute_force_rendering_culling.culling_map_update_delay": "Culling Map update delay",
   "brute_force_rendering_culling.entity_culling": "Culled entity",
@@ -31,6 +32,7 @@
   "brute_force_rendering_culling.detail.check_texture": "For testing purposes, enables checking of depth and culling texture functionality when the data monitoring panel is open.",
   "brute_force_rendering_culling.detail.debug": "For testing purposes, effective only in vanilla Minecraft, used to view culled chunks.",
   "brute_force_rendering_culling.detail.nvidium": "warn:Incompatible with Nvidium's Async bfs feature",
+  "brute_force_rendering_culling.detail.auto_shader_async": "On some devices, using shaders and asynchronous chunk building simultaneously can cause crashes. This setting can automatically disable asynchronous chunk building when shaders are enabled.",
   "brute_force_rendering_culling.detail.sodium": "warn:This feature requires of Sodium(Embeddium).",
   "brute_force_rendering_culling.detail.gl33": "warn:Need OpenGL 3.3 supported",
 

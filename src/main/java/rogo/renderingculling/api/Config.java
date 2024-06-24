@@ -13,6 +13,7 @@ public class Config {
     private static ForgeConfigSpec.BooleanValue CULL_BLOCK_ENTITY;
     private static ForgeConfigSpec.BooleanValue CULL_CHUNK;
     private static ForgeConfigSpec.BooleanValue ASYNC;
+    private static ForgeConfigSpec.BooleanValue AUTO_DISABLE_ASYNC;
     private static ForgeConfigSpec.IntValue UPDATE_DELAY;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_SKIP;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCK_ENTITY_SKIP;
@@ -93,6 +94,9 @@ public class Config {
         if (ModLoader.hasNvidium())
             return false;
 
+        if(getAutoDisableAsync() && CullingStateManager.enabledShader())
+            return false;
+
         return ASYNC.get();
     }
 
@@ -111,6 +115,18 @@ public class Config {
 
         ASYNC.set(value);
         ASYNC.save();
+    }
+
+    public static boolean getAutoDisableAsync() {
+        if (unload())
+            return false;
+
+        return AUTO_DISABLE_ASYNC.get();
+    }
+
+    public static void setAutoDisableAsync(boolean value) {
+        AUTO_DISABLE_ASYNC.set(value);
+        AUTO_DISABLE_ASYNC.save();
     }
 
     public static int getShaderDynamicDelay() {
@@ -174,6 +190,10 @@ public class Config {
 
         CLIENT_BUILDER.push("Async chunk rebuild");
         ASYNC = CLIENT_BUILDER.define("enabled", true);
+        CLIENT_BUILDER.pop();
+
+        CLIENT_BUILDER.push("Auto disable async rebuild");
+        AUTO_DISABLE_ASYNC = CLIENT_BUILDER.define("enabled", true);
         CLIENT_BUILDER.pop();
 
         List<String> list = new ArrayList<>();

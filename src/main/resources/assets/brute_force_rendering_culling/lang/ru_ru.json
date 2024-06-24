@@ -6,6 +6,7 @@
   "brute_force_rendering_culling.cull_block_entity": "Отбраковка блок-сущностей",
   "brute_force_rendering_culling.cull_chunk": "Отбраковка фрагментов",
   "brute_force_rendering_culling.async": "Асинхронно перестроить фрагменты",
+  "brute_force_rendering_culling.auto_shader_async": "Автоматическое отключение асинхронной перестройки",
   "brute_force_rendering_culling.sampler": "Скорость выборки глубины",
   "brute_force_rendering_culling.culling_map_update_delay": "Задержка обновления карты отбраковки",
   "brute_force_rendering_culling.entity_culling": "Отбракованных сущностей",
@@ -27,9 +28,10 @@
   "brute_force_rendering_culling.detail.culling_map_update_delay": "Количество кадров, задержанных до обновления текстуры отбраковки на ЦП, чтобы предотвратить задержку основного потока из-за неполной передачи данных. Чем выше значение, тем медленнее скорость отбраковки.\n\nНаблюдайте за временем обновления карты отбраковки для отладки. Включение шейдеров замедлит передачу данных и автоматически увеличит задержку отбраковки на 1 кадр.",
   "brute_force_rendering_culling.detail.check_texture": "В целях тестирования: включает проверку глубины и функциональности отбраковки текстур при открытой панели мониторинга данных.",
   "brute_force_rendering_culling.detail.debug": "В целях тестирования (эффективно только в ванильном Майнкрафте): используется для просмотра отбракованных фрагментов.",
-  "brute_force_rendering_culling.detail.nvidium": "Внимание: Несовместимо с функцией Async BFS мода Nvidium",
-  "brute_force_rendering_culling.detail.sodium": "Внимание: Для этой функции требуется Sodium (или Embeddium)",
-  "brute_force_rendering_culling.detail.gl33": "Внимание: Требуется поддержка OpenGL 3.3",
+  "brute_force_rendering_culling.detail.nvidium": "warn:Несовместимо с функцией Async BFS мода Nvidium",
+  "brute_force_rendering_culling.detail.auto_shader_async": "На некоторых устройствах одновременное использование шейдеров и асинхронной загрузки чанков может вызывать сбои. Эта настройка может автоматически отключать асинхронную загрузку чанков при включении шейдеров.",
+  "brute_force_rendering_culling.detail.sodium": "warn:Для этой функции требуется Sodium (или Embeddium)",
+  "brute_force_rendering_culling.detail.gl33": "warn:Требуется поддержка OpenGL 3.3",
   "brute_force_rendering_culling.skip_culling_entities": "Сущности, не подвергаемые отбраковке",
   "brute_force_rendering_culling.skip_culling_block_entities": "Блок-сущности, не подвергаемые отбраковке"
 }

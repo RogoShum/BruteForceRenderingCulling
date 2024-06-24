@@ -7,6 +7,7 @@
   "brute_force_rendering_culling.cull_block_entity": "剔除方块实体",
   "brute_force_rendering_culling.cull_chunk": "剔除区块",
   "brute_force_rendering_culling.async": "异步构建区块",
+  "brute_force_rendering_culling.auto_shader_async": "自动关闭异步",
   "brute_force_rendering_culling.sampler": "深度采样率",
   "brute_force_rendering_culling.culling_map_update_delay": "剔除图更新推迟",
   "brute_force_rendering_culling.entity_culling": "实体剔除",
@@ -31,6 +32,7 @@
   "brute_force_rendering_culling.detail.check_texture": "测试用，开启数据监控面板时可以查看深度纹理与剔除纹理工作是否正常。",
   "brute_force_rendering_culling.detail.debug": "测试用，仅在原版生效，用于查看被剔除区块。",
   "brute_force_rendering_culling.detail.nvidium": "warn:无法与Nvidium的Async bfs功能共用",
+  "brute_force_rendering_culling.detail.auto_shader_async": "在部分设备上同时使用光影与异步构建区块会发生崩溃现象，此设置可以在开启光影时自动关闭异步构建区块",
   "brute_force_rendering_culling.detail.sodium": "warn:此功能需要Sodium(Embeddium)",
   "brute_force_rendering_culling.detail.gl33": "warn:需要显卡支持OpenGL 3.3",
 
